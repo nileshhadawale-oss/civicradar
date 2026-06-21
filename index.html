@@ -109,7 +109,7 @@
   </button>
 
   <!-- First-run coach mark (Citizen persona) -->
-  <div id="coachMark" class="coach-mark hidden" role="dialog" aria-labelledby="coachTitle">
+  <div id="coachMark" class="coach-mark hidden" role="dialog" aria-modal="true" aria-labelledby="coachTitle">
     <div class="coach-mark__card">
       <span class="coach-mark__step" data-i18n="coach.step">Step 1 of 3</span>
       <h3 id="coachTitle" data-i18n="coach.title">Spot stagnant water?</h3>
@@ -228,7 +228,9 @@
         <label for="displayName" data-i18n="onboard.name">Display Name</label>
         <input type="text" id="displayName" placeholder="How should we call you?" data-i18n-ph="onboard.namePh" maxlength="30">
       </div>
-      <button type="button" class="btn btn--primary btn--full" id="btnOnboardingContinue" data-i18n="onboard.join">Join Community</button>
+      <div class="modal__sticky-footer">
+        <button type="button" class="btn btn--primary btn--full" id="btnOnboardingContinue" data-i18n="onboard.join">Join Community</button>
+      </div>
     </div>
   </div>
 
@@ -263,9 +265,11 @@
         <label for="reportNotes" data-i18n="report.notes">Notes (optional)</label>
         <textarea id="reportNotes" rows="2" maxlength="500" placeholder="Describe the hazard…" data-i18n-ph="report.notesPh"></textarea>
       </div>
-      <button type="button" class="btn btn--primary btn--full" id="btnSubmitReport">
-        <span class="btn__label" data-i18n="report.submit">Submit Report</span>
-      </button>
+      <div class="modal__sticky-footer">
+        <button type="button" class="btn btn--primary btn--full" id="btnSubmitReport">
+          <span class="btn__label" data-i18n="report.submit">Submit Report</span>
+        </button>
+      </div>
     </div>
   </div>
 

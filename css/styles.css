@@ -406,6 +406,11 @@ html, body {
   padding: 20px;
   box-shadow: var(--shadow);
   text-align: center;
+  outline: none;
+}
+
+.coach-mark__card:focus-visible {
+  box-shadow: var(--shadow), 0 0 0 3px rgba(99, 102, 241, 0.35);
 }
 
 .coach-mark__step {
@@ -2463,6 +2468,14 @@ body.persona-lead .map-empty-cta {
   margin-bottom: 12px;
 }
 
+#profileModal .section-title,
+#communityModal .section-title,
+#coordinatorModal .section-title {
+  margin-top: 8px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
 .photo-gallery {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -2551,8 +2564,9 @@ body.persona-lead .map-empty-cta {
   grid-column: 1 / -1;
   text-align: center;
   color: var(--text-muted);
-  font-size: 0.8125rem;
-  padding: 24px;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  padding: 24px 16px;
 }
 
 /* Hidden admin triggers (tap ward name 5×) */

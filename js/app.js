@@ -555,7 +555,7 @@ document.addEventListener('DOMContentLoaded', function () {
       'community.supportBody': 'Pledge supplies for cleanup crews tackling stagnant water in your ward.',
       'community.pledge': 'Pledge',
       'community.volunteerTitle': 'Volunteer in my ward',
-      'community.volunteerBody': 'Fix it together — clean stagnant water, spread awareness, or deliver pledged supplies. BMC filing is separate.',
+      'community.volunteerBody': 'Fix it together — clean stagnant water, spread awareness, or deliver pledged supplies. Filing with {corp} is separate.',
       'community.volunteerCta': 'Sign up',
       'volunteer.title': 'Volunteer in my ward',
       'volunteer.subtitle': 'Fix it together with neighbours — not a government volunteer programme.',
@@ -1247,7 +1247,8 @@ document.addEventListener('DOMContentLoaded', function () {
       'sync.cloud': 'सिंक हो रहा है',
       'sync.local': 'केवल स्थानीय',
       'sync.cloudTitle': 'रिपोर्ट सभी उपकरणों पर सिंक होती हैं',
-      'sync.localTitle': 'केवल इस उपकरण पर — js/config.js में Supabase जोड़ें',
+      'sync.localTitle': 'केवल इस उपकरण पर — क्लाउड कनेक्ट होने पर सिंक होगा',
+      'map.legend.aria': 'नक्शा किंवदंती: खुला, ठीक, और आप',
       'report.submitting': 'भेजा जा रहा है…',
       'success.clock': 'सामुदायिक मानचित्र पर — {corp} में अभी दर्ज नहीं।',
       'community.subtitleActive': '{ward}: {pending} खुले खतरे · {resolved} हल। पड़ोसियों को बुलाएँ!',
@@ -1726,7 +1727,7 @@ document.addEventListener('DOMContentLoaded', function () {
       'community.supportBody': 'साचलेल्या पाण्याशी लढणाऱ्या स्थानिक स्वच्छता पथकांना मदतीसाठी साहित्य द्या.',
       'community.pledge': 'देणगी',
       'community.volunteerTitle': 'माझ्या वार्डात स्वयंसेवा',
-      'community.volunteerBody': 'एकत्र ठीक करा — BMC नोंदी वेगळ्या.',
+      'community.volunteerBody': 'एकत्र ठीक करा — {corp} कडे नोंदवणे वेगळे.',
       'community.volunteerCta': 'नोंदणी',
       'volunteer.title': 'माझ्या वार्डात स्वयंसेवा',
       'popup.helpClean': 'मी साफ करण्यात मदत करू शकतो/शकते',
@@ -1769,7 +1770,7 @@ document.addEventListener('DOMContentLoaded', function () {
       'impact.week': 'या आठवड्यात: {reports} तक्रारी · {resolved} सोडवले · {confirms} पुष्टी',
       'impact.resolvedBreakdown': 'तुम्ही: {self} · समुदाय: {community} · BMC: {bmc} · सफाई: {cleanup}',
       'about.title': 'CivicRadar बद्दल',
-      'about.subtitle': 'मुंबई पावसाळ्यासाठी सामुदायिक तंत्र — विद्यार्थिनीने बनवले, नागरिकांसाठी मोफत.',
+      'about.subtitle': 'मुंबई, पुणे आणि ठाणे पावसाळ्यासाठी सामुदायिक अ‍ॅप — विद्यार्थिनीने बनवले, नागरिकांसाठी मोफत.',
       'about.impactTitle': 'सामुदायिक प्रभाव', 'about.builtTitle': 'आम्ही काय बांधले',
       'about.sustainTitle': 'शाश्वत आणि नागरिकांसाठी मोफत',
       'about.sustainBody': 'CivicRadar रहिवाशांसाठी नेहमी मोफत राहील. भविष्यातील उत्पन्न नैतिक स्थानिक भागीदारीतून येते.',
@@ -1777,7 +1778,7 @@ document.addEventListener('DOMContentLoaded', function () {
       'about.sponsored': 'प्रायोजित',       'about.copied': 'प्रभाव सारांश कॉपी झाला — अर्जात पेस्ट करा.',
       'about.operatorNote': '{name} 18 वर्षांचे होईपर्यंत, {operator} सेवा चालवतात — होस्टिंग, खाती आणि कायदेशीर संपर्क.',
       'inquiry.title': 'CivicRadar सोबत भागीदारी',
-      'inquiry.subtitle': 'तुमच्या व्यवसाय किंवा संस्थेसाठी महत्त्वाच्या वॉर्डमध्ये मुंबईच्या नागरिकांपर्यंत पोहोचा.',
+      'inquiry.subtitle': 'मुंबई, पुणे किंवा ठाण्यातील नागरिकांपर्यंत पोहोचा — तुमच्यासाठी महत्त्वाचे वॉर्ड.',
       'inquiry.localTitle': 'स्थानिक व्यवसाय प्रायोजक',
       'inquiry.localBody': 'विशिष्ट वॉर्डमध्ये मानसून-संबंधित ऑफर प्रचारित करा.',
       'inquiry.bmcTitle': 'नगरपालिका पायलट',
@@ -1802,7 +1803,7 @@ document.addEventListener('DOMContentLoaded', function () {
       'confirm.dupe': '10 मी.च्या आत CivicRadar वर पिन आहे{backing}. पाठिंबा द्या — सोडवल्यावर कळवू.',
       'confirm.dupeAction': 'मला पण',
       'confirm.ownDupe': 'तुम्ही येथे आधीच पिन केले आहे. प्रोफाइलमध्ये पहा.',
-      'profile.unfiledBanner': '{n} खुले धोके अद्याप अधिकृतपणे नोंदलेले नाहीत — शेअर करणेही मदत करते; नोंदवल्यास प्रत्येक ठिकाणासाठी वेगळी तक्रार (1916 / MyBMC).',
+      'profile.unfiledBanner': '{n} खुले — {corp} कडे अद्याप नोंदलेले नाही. शेअर करणेही मदत करते; अधिकृत नोंदवल्यास प्रत्येक ठिकाणासाठी वेगळी तक्रार.',
       'profile.fileNext': 'पुढील नोंदवा',
       'confirm.resolved': '{ward} मधील ज्या धोक्याला तुम्ही पाठिंबा दिला तो सोडवला गेला!',
       'confirm.resolvedMany': 'तुम्ही पाठिंबा दिलेले {n} धोके आत्ताच सोडवले गेले!',
@@ -1831,8 +1832,9 @@ document.addEventListener('DOMContentLoaded', function () {
       'toast.fixConfirmed': '+10 गुण — तपासणीसाठी धन्यवाद!',
       'toast.communityResolved': 'समुदाय-सत्यापित ठीक — तक्रारीसाठी धन्यवाद!',
       'sync.cloud': 'सिंक', 'sync.local': 'फक्त स्थानिक',
-      'sync.cloudTitle': 'तक्रारी सर्व उपकरणांवर सिंक', 'sync.localTitle': 'फक्त या उपकरणावर — js/config.js मध्ये Supabase जोडा',
-      'report.submitting': 'पाठवत आहे…',       'success.clock': 'सामुदायिक नकाशावर — BMC मध्ये अद्याप नोंदलेले नाही.',
+      'sync.cloudTitle': 'तक्रारी सर्व उपकरणांवर सिंक', 'sync.localTitle': 'फक्त या उपकरणावर — क्लाउड जोडल्यावर सिंक होईल',
+      'map.legend.aria': 'नकाशा किंवदंती: खुले, निराकरण, आणि तुम्ही',
+      'report.submitting': 'पाठवत आहे…',       'success.clock': 'सामुदायिक नकाशावर — {corp} कडे अद्याप नोंदलेले नाही.',
       'community.subtitleActive': '{ward}: {pending} खुले धोके · {resolved} सोडवले. शेजाऱ्यांना बोलवा!',
       'community.challenge.empty': '{ward} मध्ये मान्सून बोर्डवर पहिले व्हा — आजच तक्रार करा.',
       'community.challenge.beat': '{ward}: {pending} डेंगू-धोका स्पॉट — {rival} ({rivalPending} प्रलंबित) पेक्षा पुढे! 🔥',
@@ -1932,11 +1934,12 @@ document.addEventListener('DOMContentLoaded', function () {
       'profile.trackEscalate': 'ट्रॅक / पुढे', 'profile.fileBmc': 'BMC कडे नोंदवा',
       'profile.status.resolvedCitizen': 'सोडवले (तुम्ही)', 'profile.status.resolvedBmc': 'BMC ने सोडवले',
       'profile.status.notFiled': 'सामुदायिक नकाशावर खुले',
-      'profile.communityCleared': 'स्वयंसेवकांनी साफ केले — अधिकृत तक्रार अजून खुली असू शकते',
+      'profile.communityCleared': 'स्वयंसेवकांनी साफ केले — {corp} तक्रार अजून खुली असू शकते',
+      'popup.communityCleared': 'स्वयंसेवकांनी साफ केले — {corp} तक्रार अजून खुली असू शकते',
       'profile.neighbourOne': 'शेजाऱ्याने मला पण म्हटले',
       'profile.pointsHint.base': '50 गुण/तक्रार · +200 स्वयंसेवा', 'profile.pointsHint.bonus': '{n} × 50 · +{bonus} बोनस',
       'profile.greeting': 'नमस्कार, {name}', 'profile.greetingDefault': 'नमस्कार, नागरिक', 'profile.selectWard': 'वॉर्ड निवडा',
-      'about.subtitleNamed': 'मुंबई पावसाळा — {name} द्वारे, नागरिकांसाठी मोफत.',
+      'about.subtitleNamed': 'मुंबई, पुणे आणि ठाणे पावसाळा — {name} द्वारे, नागरिकांसाठी मोफत.',
       'safety.hide': 'फ्लॅग / लपवा', 'safety.hidden': 'तुमच्या नकाशावरून लपवले.', 'safety.hideConfirm': 'हा पिन लपवायचा? (तक्रार हटत नाही.)',
       'popup.pending': 'प्रलंबित', 'popup.resolved': 'सोडवले',
       'popup.communityCleared': 'स्वयंसेवकांनी साफ केले — अधिकृत तक्रार अजून खुली असू शकते',
@@ -2094,13 +2097,13 @@ document.addEventListener('DOMContentLoaded', function () {
       'toast.wardRequired': '{city}च्या अधिकृत यादीतून वॉर्ड निवडा.',
       'toast.welcome': 'स्वागत, {name}! तक्रारीसाठी तयार.',
       'tos.accept': 'मी 18+ आहे, <a href="terms.html" target="_blank" rel="noopener noreferrer">Terms</a> आणि <a href="privacy.html" target="_blank" rel="noopener noreferrer">Privacy Policy</a> स्वीकारतो/स्वीकारते',
-      'tos.age': 'तक्रार आणि समुदाय वैशिष्ट्यांसाठी 18+ आवश्यक.',
+      'tos.age': 'तक्रार आणि समुदाय वैशिष्ट्यांसाठी 18+ आवश्यक. 18 पेक्षा कमी? 18+ पालक, पालकत्वदाता किंवा NSS समन्वयकांनी Terms स्वीकारून सहभाग घ्या.',
       'tos.content': 'फक्त धोक्याचे ऑन-साइट फोटो. सेल्फी, ID किंवा असंबंधित चित्रे नाहीत.',
       'tos.continue': 'पुढे जा',
       'tos.emergency': 'आपत्कालीन नाही. जीवघेणा धोका असल्यास 112 वर कॉल करा.',
       'tos.gps': 'GPS फक्त स्थान चालू करता किंवा तक्रार पाठवता — Terms स्वीकारण्याशी जोडलेले नाही.',
       'tos.itAct': 'CivicRadar IT Act, 2000 अंतर्गत मध्यस्थ आहे. अपलोडची जबाबदारी तुमची.',
-      'tos.notBmc': 'CivicRadar स्वतंत्र — BMC/MCGM शी संलग्न किंवा चालवले नाही.',
+      'tos.notBmc': 'CivicRadar स्वतंत्र — BMC, PMC, TMC किंवा कोणत्याही सरकारी संस्थेशी संलग्न किंवा चालवले नाही.',
       'tos.share': 'WhatsApp, X वर शेअर केल्याने वैयक्तिक डेटा उघडू शकतो — स्वतःच्या जोखमीवर.',
       'tos.subtitle': 'CivicRadar वापरण्यापूर्वी वाचा आणि स्वीकारा.',
       'tos.title': 'सेवा अटी',
@@ -2180,7 +2183,7 @@ document.addEventListener('DOMContentLoaded', function () {
       'admin.health.avgPerf': 'सरासरी लोड वेळ (स्थानिक)',
       'admin.health.bufferedEvents': 'बफर इव्हेंट (डिव्हाइस)',
       'volunteer.neighbourhood': 'परिसर / सोसायटी / लेन',
-      'volunteer.subtitle': 'शेजाऱ्यांसोबत एकत्र — अधिकृत BMC स्वयंसेवा कार्यक्रम नाही.',
+      'volunteer.subtitle': 'शेजाऱ्यांसोबत एकत्र — सरकारी स्वयंसेवा कार्यक्रम नाही.',
       'volunteer.skill.awareness': 'जागरूकता आणि WhatsApp outreach',
       'volunteer.skill.cleanup': 'साचलेले पाणी साफ करणे',
       'volunteer.skill.pledge': 'देणगी वितरण (साहित्य)',
@@ -2189,7 +2192,7 @@ document.addEventListener('DOMContentLoaded', function () {
       'lang.name': 'Gujarati', 'lang.native': 'ગુજરાતી',
       'nav.map': 'નકશો', 'nav.community': 'સમુદાય', 'nav.profile': 'પ્રોફાઇલ',
       'fab.report': 'ફરિયાદ',
-      'header.context': 'મુંબઈ ચોમાસું — જોખમ નકશો',
+      'header.context': 'ચોમાસું જોખમ નકશો — મુંબઈ, પુણે અને ઠાણે',
       'header.contextCity': '{city} ચોમાસું — જોખમ નકશો',
       'location.banner': 'સચોટ ફરિયાદ માટે સ્થાન ચાલુ કરો.',
       'location.enable': 'ચાલુ કરો',
@@ -2203,7 +2206,7 @@ document.addEventListener('DOMContentLoaded', function () {
       'onboard.title': 'CivicRadar માં આપનું સ્વાગત છે',
       'onboard.subtitle': '30 સેકમાં ભરાયેલું પાણી પિન · પડોશીઓને બોલાવો · પ્રતિસ્પર્ધી વોર્ડને હરાવો. #MonsoonGuardian',
       'onboard.ward': 'તમારો વોર્ડ', 'onboard.wardPh': 'તમારો વોર્ડ ટાઈપ કરવાનું શરૂ કરો…',
-      'onboard.wardHint': 'મુંબઈ BMC ના સત્તાવાર 24 વોર્ડમાંથી પસંદ કરો.',
+      'onboard.wardHint': '{city}ના {n} સત્તાવાર વોર્ડમાંથી પસંદ કરો.',
       'onboard.city': 'તમારું શહેર',
       'onboard.cityHint': 'ક્યાં રહો છો પસંદ કરો — પછી GPS થી વોર્ડ શોધીશું.',
       'onboard.wardDetecting': 'તમારા સ્થાનથી વોર્ડ શોધી રહ્યા છીએ…',
@@ -2230,10 +2233,10 @@ document.addEventListener('DOMContentLoaded', function () {
       'moderation.blocked.offline': 'ફોટો સલામતી તપાસ માટે ઇન્ટરનેટથી કનેક્ટ થાઓ.',
       'success.title': 'ફરિયાદ નોંધાઈ', 'success.tagline': 'તમારા વોર્ડ નકશા પર પિન કરાયું',
       'success.taglineNeighbours': '{n} પડોશી નજીકના જોખમોને ટેકો આપે છે — તમારી ફરિયાદ પણ વોર્ડ નકશા પર દેખાય છે!',
-      'success.subtitle': 'વૈકલ્પિક: સરકારી ઘડિયાળ શરૂ કરવા અધિકૃત BMC ફરિયાદ નોંધાવો (મફત).',
+      'success.subtitle': 'વૈકલ્પિક: સરકારી ઘડિયાળ શરૂ કરવા {corp} પર અધિકૃત ફરિયાદ નોંધાવો (મફત).',
       'success.step1': 'WhatsApp પર શેર કરો જેથી પડોશીઓ વોર્ડ નકશા પર પિન જોઈ શકે',
-      'success.step2': 'વૈકલ્પિક: 1916 / MyBMC દ્વારા BMC માં ફરિયાદ નોંધાવો અને ફરિયાદ નંબર સાચવો',
-      'success.step3': 'સ્વયંસેવકો અથવા BMC ઠીક થાય ત્યારે પુષ્ટિ કરી શકે — 50 સિવિક પોઈન્ટ મેળવો',
+      'success.step2': 'વૈકલ્પિક: {corp} પર નોંધાવો અને ફરિયાદ નંબર સાચવો',
+      'success.step3': 'સ્વયંસેવકો અથવા {corp} ઠીક થાય ત્યારે પુષ્ટિ કરી શકે — સિવિક પોઈન્ટ મળે',
       'success.file': 'અધિકૃત ફરિયાદ નોંધાવો (વૈકલ્પિક)',
       'success.tag': '@mybmc ને ટૅગ કરો', 'success.alert': 'પડોશીઓને જાણ કરો', 'success.done': 'થઈ ગયું',
       'success.sharePrompt': 'હમણાં WhatsApp પર મોકલો — વધુ નજર = ઝડપથી ઠીક. ડેંગુ ટાળવું હોય તો શેર કરો!',
@@ -2289,7 +2292,7 @@ document.addEventListener('DOMContentLoaded', function () {
       'reminder.escAction': 'એસ્કેલેટ કરો',
       'reminder.corroboration': '{n} પડોશીઓએ તમારી {hazard} ફરિયાદ પર "મને પણ" કહ્યું — વોર્ડ નકશા પર વધુ નજર મદદ કરે.',
       'reminder.corroAction': 'ફરિયાદ જુઓ',
-      'reminder.cleanup': 'સ્વયંસેવકોએ {ward} માં {hazard} સાફ કર્યું — BMC ફરિયાદ ખુલ્લી હોઈ શકે.',
+      'reminder.cleanup': 'સ્વયંસેવકોએ {ward} માં {hazard} સાફ કર્યું — {corp} ફરિયાદ અધિકૃત રીતે ખુલ્લી હોઈ શકે.',
       'reminder.cleanupAction': 'સ્થિતિ જુઓ',
       'persona.ngo.pledges': '{deliver} વિતરણ · {verify} ચકાસણી',
       'persona.ngo.newHazards': 'વોર્ડમાં {n} નવા જોખમ',
@@ -2307,13 +2310,13 @@ document.addEventListener('DOMContentLoaded', function () {
       'esc.participate.btn': 'Participate Mumbai',
       'esc.participate.small': 'સ્વયંસેવા · CSR · પ્રોજેક્ટ',
       'community.title': 'સમુદાય',
-      'community.subtitle': '{ward} માં સાથે મળીને ઠીક કરો — સ્વયંસેવા, સામગ્રી દાન, અથવા અલગથી BMC નોંધ.',
+      'community.subtitle': '{ward} માં સાથે મળીને ઠીક કરો — સ્વયંસેવા, સામગ્રી દાન, અથવા અલગથી {corp} પર નોંધ.',
       'community.topWards': 'ટોચના વોર્ડ', 'community.localCitizens': 'સ્થાનિક નાગરિકો',
       'community.supportTitle': 'સ્વયંસેવકોને ટેકો આપો',
       'community.supportBody': 'ભરાયેલા પાણી સામે લડતા સ્થાનિક સફાઈ દળોને મદદ માટે સામગ્રી દાન કરો.',
       'community.pledge': 'દાન',
       'community.volunteerTitle': 'મારા વોર્ડમાં સ્વયંસેવા',
-      'community.volunteerBody': 'સાથે મળીને ઠીક કરો — BMC દાખલ અલગ રહે.',
+      'community.volunteerBody': 'સાથે મળીને ઠીક કરો — {corp} પર નોંધ અલગ છે.',
       'community.volunteerCta': 'સાઇન અપ',
       'volunteer.title': 'મારા વોર્ડમાં સ્વયંસેવા',
       'popup.helpClean': 'હું સાફ કરવામાં મદદ કરી શકું',
@@ -2356,7 +2359,7 @@ document.addEventListener('DOMContentLoaded', function () {
       'impact.week': 'આ અઠવાડિયે: {reports} ફરિયાદ · {resolved} ઉકેલાયા · {confirms} પુષ્ટિ',
       'impact.resolvedBreakdown': 'તમે: {self} · સમુદાય: {community} · BMC: {bmc} · સફાઈ: {cleanup}',
       'about.title': 'CivicRadar વિશે',
-      'about.subtitle': 'મુંબઈ ચોમાસા માટે સામુદાયિક ટેક — વિદ્યાર્થી દ્વારા બનાવેલ, નાગરિકો માટે મફત.',
+      'about.subtitle': 'મુંબઈ, પુણે અને ઠાણે ચોમાસા માટે સામુદાયિક એપ — વિદ્યાર્થી દ્વારા, નાગરિકો માટે મફત.',
       'about.impactTitle': 'સામુદાયિક પ્રભાવ', 'about.builtTitle': 'અમે શું બનાવ્યું',
       'about.sustainTitle': 'ટકાઉ અને નાગરિકો માટે મફત',
       'about.sustainBody': 'CivicRadar રહેવાસીઓ માટે હંમેશા મફત રહેશે. ભવિષ્યની આવક નૈતિક સ્થાનિક ભાગીદારીમાંથી આવે છે.',
@@ -2364,7 +2367,7 @@ document.addEventListener('DOMContentLoaded', function () {
       'about.sponsored': 'પ્રાયોજિત',       'about.copied': 'પ્રભાવ સારાંશ કૉપી થયો — અરજીમાં પેસ્ટ કરો.',
       'about.operatorNote': '{name} 18 ના થાય ત્યાં સુધી, {operator} સેવા ચલાવે છે — હોસ્ટિંગ, એકાઉન્ટ અને કાનૂની સંપર્ક.',
       'inquiry.title': 'CivicRadar સાથે ભાગીદારી',
-      'inquiry.subtitle': 'તમારા વ્યવસાય અથવા સંસ્થા માટે મહત્વના વોર્ડમાં મુંબઈના નાગરિકો સુધી પહોંચો.',
+      'inquiry.subtitle': 'મુંબઈ, પુણે અથવા ઠાણેના નાગરિકો સુધી પહોંચો — તમારા માટે મહત્વના વોર્ડમાં.',
       'inquiry.localTitle': 'સ્થાનિક વ્યવસાય પ્રાયોજક',
       'inquiry.localBody': 'વિશિષ્ટ વોર્ડમાં નાગરિકોને ચોમાસા-સંબંધિત ઑફર પ્રચારિત કરો.',
       'inquiry.bmcTitle': 'નગરપાલિકા પાયલટ',
@@ -2389,7 +2392,7 @@ document.addEventListener('DOMContentLoaded', function () {
       'confirm.dupe': '10 મી.ની અંદર CivicRadar પર પિન છે{backing}. ટેકો આપો — ઠીક થાય ત્યારે સૂચના.',
       'confirm.dupeAction': 'મને પણ',
       'confirm.ownDupe': 'તમે અહીં પહેલેથી પિન કર્યું છે. પ્રોફાઇલમાં જુઓ.',
-      'profile.unfiledBanner': '{n} ખુલ્લા જોખમો હજુ અધિકૃત રીતે નોંધાયા નથી — શેર કરવું પણ મદદ કરે; નોંધાવો તો દરેક સ્થળ માટે અલગ ફરિયાદ (1916 / MyBMC).',
+      'profile.unfiledBanner': '{n} ખુલ્લા — {corp} પર હજુ નોંધાયા નથી. શેર કરવું પણ મદદ કરે; અધિકૃત નોંધાવો તો દરેક સ્થળ માટે અલગ ફરિયાદ.',
       'profile.fileNext': 'આગળની નોંધાવો',
       'confirm.resolved': '{ward} માં તમે ટેકો આપેલ જોખમ ઠીક થઈ ગયું!',
       'confirm.resolvedMany': 'તમે ટેકો આપેલ {n} જોખમો હમણાં જ ઠીક થયાં!',
@@ -2418,8 +2421,10 @@ document.addEventListener('DOMContentLoaded', function () {
       'toast.fixConfirmed': '+10 પોઇન્ટ — તપાસ માટે આભાર!',
       'toast.communityResolved': 'સમુદાય-સત્યાપિત ઠીક — ફરિયાદ માટે આભાર!',
       'sync.cloud': 'સિંક', 'sync.local': 'ફક્ત સ્થાનિક',
-      'sync.cloudTitle': 'ફરિયાદો બધા ઉપકરણો પર સિંક', 'sync.localTitle': 'ફક્ત આ ઉપકરણ પર — js/config.js માં Supabase ઉમેરો',
-      'report.submitting': 'મોકલાઈ રહ્યું છે…', 'success.clock': 'સામુદાયિક નકશા પર — BMC માં હજુ નોંધાયું નથી.',
+      'sync.cloudTitle': 'તક્રારો બધા ઉપકરણો પર સિંક', 'sync.localTitle': 'ફક્ત આ ઉપકરણ પર — ક્લાઉડ જોડાય ત્યારે સિંક થશે',
+      'report.submitting': 'મોકલાઈ રહ્યું છે…',
+      'success.clock': 'સામુદાયિક નકશા પર — {corp} પર હજુ નોંધાયું નથી.',
+      'map.legend.aria': 'નકશા કિંવદંતી: ખુલ્લું, ઠીક, અને તમારા પિન',
       'community.subtitleActive': '{ward}: {pending} ખુલ્લા જોખમો · {resolved} ઉકેલાયા. પડોશીઓને બોલાવો!',
       'community.challenge.empty': '{ward} માં મોનસૂન બોર્ડ પર પહેલા બનો — આજે જ રિપોર્ટ કરો.',
       'community.challenge.beat': '{ward}: {pending} ડેંગુ-જોખમ સ્પોટ — {rival} ({rivalPending} બાકી) કરતાં આગળ! 🔥',
@@ -2516,11 +2521,12 @@ document.addEventListener('DOMContentLoaded', function () {
       'profile.trackEscalate': 'ટ્રૅક / આગળ', 'profile.fileBmc': 'BMC માં નોંધાવો',
       'profile.status.resolvedCitizen': 'ઉકેલ (તમે)', 'profile.status.resolvedBmc': 'BMC એ ઉકેલ્યું',
       'profile.status.notFiled': 'સામુદાયિક નકશા પર ખુલ્લું',
-      'profile.communityCleared': 'સ્વયંસેવકોએ સાફ કર્યું — અધિકૃત ફરિયાદ હજુ ખુલ્લી હોઈ શકે',
+      'profile.communityCleared': 'સ્વયંસેવકોએ સાફ કર્યું — {corp} ફરિયાદ હજુ ખુલ્લી હોઈ શકે',
+      'popup.communityCleared': 'સ્વયંસેવકોએ સાફ કર્યું — {corp} ફરિયાદ હજુ ખુલ્લી હોઈ શકે',
       'profile.neighbourOne': 'પડોશીએ મને પણ કહ્યું',
       'profile.pointsHint.base': '50 પોઈન્ટ/ફરિયાદ · +200 સ્વયંસેવા', 'profile.pointsHint.bonus': '{n} × 50 · +{bonus} બોનસ',
       'profile.greeting': 'નમસ્તે, {name}', 'profile.greetingDefault': 'નમસ્તે, નાગરિક', 'profile.selectWard': 'વોર્ડ પસંદ કરો',
-      'about.subtitleNamed': 'મુંબઈ ચોમાસું — {name} દ્વારા, નાગરિકો માટે મફત.',
+      'about.subtitleNamed': 'મુંબઈ, પુણે અને ઠાણે ચોમાસું — {name} દ્વારા, નાગરિકો માટે મફત.',
       'safety.hide': 'ફ્લેગ / છુપાવો', 'safety.hidden': 'તમારા નકશાથી છુપાવ્યું.', 'safety.hideConfirm': 'આ પિન છુપાવીએ? (ફરિયાદ ડિલીટ નથી.)',
       'popup.pending': 'બાકી', 'popup.resolved': 'ઉકેલાયું',
       'popup.communityCleared': 'સ્વયંસેવકોએ સાફ કર્યું — અધિકૃત ફરિયાદ હજુ ખુલ્લી હોઈ શકે',
@@ -2678,13 +2684,13 @@ document.addEventListener('DOMContentLoaded', function () {
       'toast.wardRequired': '{city}ની અધિકૃત યાદીમાંથી વોર્ડ પસંદ કરો.',
       'toast.welcome': 'સ્વાગત, {name}! ફરિયાદ માટે તૈયાર.',
       'tos.accept': 'હું 18+ છું, <a href="terms.html" target="_blank" rel="noopener noreferrer">Terms</a> અને <a href="privacy.html" target="_blank" rel="noopener noreferrer">Privacy Policy</a> સ્વીકારું છું',
-      'tos.age': 'ફરિયાદ અને સમુદાય ફીચર માટે 18+ જરૂરી.',
+      'tos.age': 'ફરિયાદ અને સમુદાય ફીચર માટે 18+ જરૂરી. 18 થી ઓછી ઉંમર? 18+ માતા-પિતા, સંભાળક અથવા NSS સંકલાક દ્વારા Terms સ્વીકારીને ભાગ લો.',
       'tos.content': 'ફક્ત જોખમના ઑન-સાઇટ ફોટો. સેલ્ફી, ID અથવા અનિયુક્ત ચિત્રો નહીં.',
       'tos.continue': 'આગળ વધો',
       'tos.emergency': 'આપત્તિ માટે નહીં. જીવને જોખમ હોય તો 112 ડાયલ કરો.',
       'tos.gps': 'GPS ફક્ત સ્થાન ચાલુ કરો અથવા ફરિયાદ મોકલો ત્યારે — Terms સ્વીકારવાથી અલગ.',
       'tos.itAct': 'CivicRadar IT Act, 2000 અંતર્ગત મધ્યસ્થ છે. અપલોડની જવાબદારી તમારી.',
-      'tos.notBmc': 'CivicRadar સ્વતંત્ર — BMC/MCGM સાથે જોડાયેલું અથવા ચલાવેલું નથી.',
+      'tos.notBmc': 'CivicRadar સ્વતંત્ર — BMC, PMC, TMC અથવા કોઈ સરકારી સંસ્થા સાથે જોડાયેલું અથવા ચલાવેલું નથી.',
       'tos.share': 'WhatsApp, X પર શેર કરવાથી વ્યક્તિગત ડેટા ખુલી શકે — પોતાના જોખમે.',
       'tos.subtitle': 'CivicRadar વાપરતા પહેલાં વાંચો અને સ્વીકારો.',
       'tos.title': 'સેવાની શરતો',
@@ -2764,7 +2770,7 @@ document.addEventListener('DOMContentLoaded', function () {
       'admin.health.avgPerf': 'સરેરાશ લોડ સમય (સ્થાનિક)',
       'admin.health.bufferedEvents': 'બફર ઇવેન્ટ (ઉપકરણ)',
       'volunteer.neighbourhood': 'પડોશ / સોસાયટી / ગલી',
-      'volunteer.subtitle': 'પડોશીઓ સાથે મળીને — અધિકૃત BMC સ્વયંસેવક કાર્યક્રમ નથી.',
+      'volunteer.subtitle': 'પડોશીઓ સાથે મળીને — સરકારી સ્વયંસેવક કાર્યક્રમ નથી.',
       'volunteer.skill.awareness': 'જાગૃતિ અને WhatsApp outreach',
       'volunteer.skill.cleanup': 'ભરાયેલું પાણી સાફ કરવું',
       'volunteer.skill.pledge': 'દાન વિતરણ (સામગ્રી)',
@@ -5062,13 +5068,36 @@ document.addEventListener('DOMContentLoaded', function () {
     $$('#reportFlowSteps .flow-step').forEach((el) => {
       const s = el.dataset.step;
       el.classList.remove('is-active', 'is-done');
-      if (s === step) el.classList.add('is-active');
-      else if (
+      el.removeAttribute('aria-current');
+      if (s === step) {
+        el.classList.add('is-active');
+        el.setAttribute('aria-current', 'step');
+      } else if (
         (step === 'details' && s === 'photo') ||
         (step === 'submit' && (s === 'photo' || s === 'details'))
       ) {
         el.classList.add('is-done');
       }
+    });
+  }
+
+  function revealFieldError(el) {
+    if (!el) return;
+    el.classList.remove('hidden');
+    requestAnimationFrame(() => {
+      el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    });
+  }
+
+  function bindModalInputScroll() {
+    $$('.modal input, .modal textarea, .modal select').forEach((el) => {
+      if (el.dataset.scrollBound) return;
+      el.dataset.scrollBound = '1';
+      el.addEventListener('focus', () => {
+        setTimeout(() => {
+          el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        }, 320);
+      });
     });
   }
 
@@ -6016,13 +6045,13 @@ document.addEventListener('DOMContentLoaded', function () {
       const name = $('#displayName').value.trim() || 'Citizen';
       $('#wardError').classList.add('hidden');
       if (!ward) {
-        $('#wardError').classList.remove('hidden');
+        revealFieldError($('#wardError'));
         if ($('#wardManualGroup')?.classList.contains('hidden')) showOnboardingWardManual();
         else $('#wardInput')?.focus();
         return;
       }
       if (!isValidWard(ward, getOnboardingCity())) {
-        $('#wardError').classList.remove('hidden');
+        revealFieldError($('#wardError'));
         showToast(t('toast.wardRequired').replace('{city}', getCityLabel(getOnboardingCity())), 'error');
         return;
       }
@@ -6067,6 +6096,12 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     $('#btnDismissCoach').addEventListener('click', dismissCoachMark);
+    const coachMark = $('#coachMark');
+    if (coachMark) {
+      coachMark.addEventListener('click', (e) => {
+        if (e.target === coachMark) dismissCoachMark();
+      });
+    }
     $('#btnPartnerAccess').addEventListener('click', window.openPartnerPortal);
     $('#btnPartnerInquiry').addEventListener('click', window.openPartnerInquiry);
     const btnBecomeCoord = $('#btnBecomeCoordinator');
@@ -6335,6 +6370,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
+        const coach = $('#coachMark');
+        if (coach && !coach.classList.contains('hidden')) {
+          dismissCoachMark();
+          return;
+        }
         const open = Object.entries(overlays).find(([, el]) => el.classList.contains('open'));
         if (open && open[0] !== 'tos' && open[0] !== 'onboarding') closeModal(open[0]);
       }
@@ -6431,6 +6471,7 @@ document.addEventListener('DOMContentLoaded', function () {
     $('#btnAdminProofCapture').addEventListener('click', () => $('#adminProofInput').click());
     $('#adminProofInput').addEventListener('change', handleAdminProofCapture);
     $('#btnAdminReportClose').addEventListener('click', () => closeModal('adminReport'));
+    bindModalInputScroll();
   }
 
   /* ---------- Camera & Canvas Pipeline ---------- */
