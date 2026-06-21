@@ -191,7 +191,7 @@ founder: {
 
 ```
 
-**CI gotcha:** The deploy workflow runs E2E tests first (`deploy` needs `test`). With Supabase keys in `config.js`, **4 scenarios fail by design** and block deploy. Workarounds: temporarily empty keys for first green deploy, fix the workflow/tests, or use Cloudflare Pages (`deploy-cloudflare.md`). See detailed section below.
+**CI gotcha:** The deploy workflow runs E2E tests first (`deploy` needs `test`). With Supabase keys in `config.js`, **4 scenarios fail by design** (C05, E09, NGO/Admin, Edge admin) — CI now treats these as non-blocking so deploy proceeds. See detailed section below.
 
 
 
@@ -328,9 +328,9 @@ Use this checklist item together with **LAUNCH-WALKTHROUGH.md** Phase C–D. The
 | Live URL pattern | `https://YOUR-GITHUB-USERNAME.github.io/civicradar/` |
 | Files deployed | `index.html`, legal pages, `manifest.json`, `sw.js`, `robots.txt`, `css/`, `js/`, `assets/` only |
 | Excluded by workflow | `video/`, `tools/ffmpeg/`, `tests/`, `supabase/` SQL (also in `.gitignore` for large media) |
-| CI gate | E2E on push; **83/87 pass** with Supabase configured — **4 failures block deploy** |
-| Known failures | C05 (GPS unbundled from ToS), E09 (analytics separate opt-in), NGO/Admin demo suites (hidden when connected) |
-| Workarounds | Empty Supabase keys for first deploy → set `publicUrl` → re-add keys; or edit workflow; or Cloudflare |
+| CI gate | E2E on push (Python `http.server` on Linux CI); **83/87 pass** with Supabase — **4 expected failures allowed** |
+| Known failures (Supabase) | C05 (GPS unbundled from ToS), E09 (analytics separate opt-in), NGO/Admin + Edge admin steps (demo login hidden) |
+| Workarounds | None required — CI allowlists the 4 Supabase failures; or use Cloudflare Pages (`deploy-cloudflare.md`) |
 | After deploy | Hard refresh / clear site data (SW `civicradar-v42`); set `legal.grievanceEmail` before sharing legal pages |
 
 **Git status (local):** `C:\civicradar` is **not** a git repo yet — run `git init` before first push.
