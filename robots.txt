@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Allow: /privacy.html
+Allow: /terms.html
+Disallow: /video/
+
+Sitemap: https://civicradar.app/sitemap.xml

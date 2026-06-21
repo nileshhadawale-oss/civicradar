@@ -1,0 +1,21 @@
+# Dev tooling & large media (not needed for the static site)
+tools/ffmpeg/
+video/
+*.mp4
+*.wav
+*.webm
+
+# Python / test artifacts
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.playwright/
+
+# OS & editor
+.DS_Store
+Thumbs.db
+*.swp
+.cursor/
+
+# Agent / local scratch (if present)
+agent-transcripts/

@@ -1,0 +1,41 @@
+{
+  "hi": {
+    "admin.meta.neighbourConfirm": " · {n} ने मुझे भी कहा",
+    "coord.hazardsEmpty": "आपके क्षेत्र में अभी कोई खुला खतरा नहीं।",
+    "coord.volunteerOffers": "{n} स्वयंसेवक प्रस्ताव",
+    "coord.hazardCleaned": "साफ किया",
+    "coord.logCleanup": "सफाई दर्ज करें",
+    "admin.health.communityCleanups": "सामुदायिक सफाई",
+    "admin.health.whatsappShares": "WhatsApp शेयर",
+    "admin.health.errors": "त्रुटियाँ",
+    "admin.health.perfSamples": "प्रदर्शन नमूने",
+    "admin.health.avgPerf": "औसत लोड समय (स्थानीय)",
+    "admin.health.bufferedEvents": "बफर इवेंट (डिवाइस)"
+  },
+  "mr": {
+    "admin.meta.neighbourConfirm": " · {n} मला पण म्हटले",
+    "coord.hazardsEmpty": "तुमच्या क्षेत्रात सध्या खुले धोके नाहीत.",
+    "coord.volunteerOffers": "{n} स्वयंसेवक ऑफर",
+    "coord.hazardCleaned": "साफ केले",
+    "coord.logCleanup": "सफाई नोंदवा",
+    "admin.health.communityCleanups": "सामुदायिक सफाई",
+    "admin.health.whatsappShares": "WhatsApp शेअर",
+    "admin.health.errors": "त्रुटी",
+    "admin.health.perfSamples": "कार्यप्रदर्शन नमुने",
+    "admin.health.avgPerf": "सरासरी लोड वेळ (स्थानिक)",
+    "admin.health.bufferedEvents": "बफर इव्हेंट (डिव्हाइस)"
+  },
+  "gu": {
+    "admin.meta.neighbourConfirm": " · {n} એ મને પણ કહ્યું",
+    "coord.hazardsEmpty": "તમારા વિસ્તારમાં હમણાં ખુલ્લા જોખમ નથી.",
+    "coord.volunteerOffers": "{n} સ્વયંસેવક ઓફર",
+    "coord.hazardCleaned": "સાફ કર્યું",
+    "coord.logCleanup": "સફાઈ નોંધો",
+    "admin.health.communityCleanups": "સામુદાયિક સફાઈ",
+    "admin.health.whatsappShares": "WhatsApp શેર",
+    "admin.health.errors": " ભૂલો",
+    "admin.health.perfSamples": "પરફોર્મન્સ નમૂના",
+    "admin.health.avgPerf": "સરેરાશ લોડ સમય (સ્થાનિક)",
+    "admin.health.bufferedEvents": "બફર ઇવેન્ટ (ઉપકરણ)"
+  }
+}

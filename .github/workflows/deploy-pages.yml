@@ -1,0 +1,74 @@
+# Deploy CivicRadar static site to GitHub Pages (app files only — no ffmpeg/video dev assets).
+# After first push: GitHub repo → Settings → Pages → Source = "GitHub Actions".
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Playwright
+        run: |
+          pip install playwright
+          playwright install chromium --with-deps
+
+      - name: Start static server
+        run: |
+          pwsh -ExecutionPolicy Bypass -File serve.ps1 -Port 8095 &
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:8095/ && break
+            sleep 1
+          done
+          curl -sf http://localhost:8095/ || (echo "Server failed to start" && exit 1)
+
+      - name: Run E2E suite
+        run: python tests/e2e_comprehensive.py
+
+  deploy:
+    needs: test
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Prepare site artifact
+        run: |
+          mkdir -p _site
+          cp index.html privacy.html terms.html manifest.json sw.js robots.txt _site/
+          cp -r css js assets _site/
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload site artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
