@@ -2421,7 +2421,7 @@ document.addEventListener('DOMContentLoaded', function () {
       'toast.fixConfirmed': '+10 પોઇન્ટ — તપાસ માટે આભાર!',
       'toast.communityResolved': 'સમુદાય-સત્યાપિત ઠીક — ફરિયાદ માટે આભાર!',
       'sync.cloud': 'સિંક', 'sync.local': 'ફક્ત સ્થાનિક',
-      'sync.cloudTitle': 'તક્રારો બધા ઉપકરણો પર સિંક', 'sync.localTitle': 'ફક્ત આ ઉપકરણ પર — ક્લાઉડ જોડાય ત્યારે સિંક થશે',
+      'sync.cloudTitle': 'ફરિયાદો બધા ઉપકરણો પર સિંક', 'sync.localTitle': 'ફક્ત આ ઉપકરણ પર — ક્લાઉડ જોડાય ત્યારે સિંક થશે',
       'report.submitting': 'મોકલાઈ રહ્યું છે…',
       'success.clock': 'સામુદાયિક નકશા પર — {corp} પર હજુ નોંધાયું નથી.',
       'map.legend.aria': 'નકશા કિંવદંતી: ખુલ્લું, ઠીક, અને તમારા પિન',

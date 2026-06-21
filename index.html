@@ -83,7 +83,7 @@
   </div>
 
   <!-- Map overlays -->
-  <div id="mapLegend" class="map-legend" aria-label="Map legend">
+  <div id="mapLegend" class="map-legend" data-i18n-aria="map.legend.aria" aria-label="Map legend">
     <span class="map-legend__item"><i class="dot dot--pending"></i> <span data-i18n="map.legend.pending">Open</span></span>
     <span class="map-legend__item"><i class="dot dot--resolved"></i> <span data-i18n="map.legend.resolved">Fixed</span></span>
     <span class="map-legend__item"><i class="dot dot--you"></i> <span data-i18n="map.legend.you">You</span></span>
@@ -167,7 +167,7 @@
         <li data-i18n="tos.share"><strong>External sharing:</strong> Sharing on WhatsApp, X, etc. may expose personal data. You share at your own risk.</li>
         <li data-i18n="tos.gps"><strong>DPDP location consent:</strong> GPS is collected only when you enable location or submit a report — not bundled with Terms acceptance.</li>
         <li data-i18n="tos.analytics"><strong>Analytics (optional):</strong> Anonymous usage events help us improve reliability. No photos, GPS, or names are sent.</li>
-        <li data-i18n="tos.notBmc"><strong>Not official BMC:</strong> CivicRadar is independent — not affiliated with or run by BMC/MCGM.</li>
+        <li data-i18n="tos.notBmc"><strong>Not a government app:</strong> CivicRadar is independent — not affiliated with or run by BMC, PMC, TMC, or any government body.</li>
         <li data-i18n="tos.content"><strong>Content rules:</strong> Upload onsite hazard photos only. No selfies, IDs, or unrelated images. Reports may be moderated.</li>
       </ol>
       <label class="checkbox-row">
@@ -294,11 +294,11 @@
         </button>
       </div>
       <div class="success-optional-block">
-        <p class="modal__subtitle" data-i18n="success.subtitle">Optional: file an official BMC complaint (free) to start the government clock.</p>
+        <p class="modal__subtitle" data-i18n="success.subtitle">Optional: file with your local corporation (free) to start the official clock.</p>
         <ol class="next-steps">
           <li data-i18n="success.step1">Share on WhatsApp so neighbours see the pin on the ward map</li>
-          <li data-i18n="success.step2">Optional: file with BMC via 1916 / MyBMC and save the complaint number</li>
-          <li data-i18n="success.step3">Volunteers or BMC can confirm when fixed — earn 50 Civic Points</li>
+          <li data-i18n="success.step2">Optional: file with your corporation and save your complaint number</li>
+          <li data-i18n="success.step3">Volunteers or officials can confirm when fixed — earn Civic Points</li>
         </ol>
         <button type="button" class="btn btn--outline btn--full" id="btnSuccessFile">
           <i class="ph ph-megaphone"></i> <span data-i18n="success.file">File official complaint (optional)</span>
@@ -348,7 +348,7 @@
     <div class="modal modal--tall" id="communityModal" role="dialog" aria-labelledby="communityTitle">
       <div class="modal__handle"></div>
       <h2 id="communityTitle" data-i18n="community.title">Community</h2>
-      <p class="modal__subtitle" id="communitySubtitle" data-i18n="community.subtitle">Fix it together in your ward — volunteer, pledge supplies, or file with BMC separately.</p>
+      <p class="modal__subtitle" id="communitySubtitle" data-i18n="community.subtitle">Fix it together in your ward — volunteer, pledge supplies, or file with your corporation separately.</p>
 
       <!-- Live community impact (great for demos & college portfolios) -->
       <div class="impact-stats" id="communityImpactStats" aria-live="polite">
@@ -392,7 +392,7 @@
         <div class="pledge-card__icon"><i class="ph ph-broom"></i></div>
         <div class="pledge-card__body">
           <h3 data-i18n="community.volunteerTitle">Volunteer in my ward</h3>
-          <p data-i18n="community.volunteerBody">Fix it together — clean stagnant water, spread awareness, or deliver pledged supplies. BMC filing is separate.</p>
+          <p data-i18n="community.volunteerBody">Fix it together — clean stagnant water, spread awareness, or deliver pledged supplies. Official filing is separate.</p>
         </div>
         <button type="button" class="btn btn--secondary btn--sm" id="btnOpenVolunteer" data-i18n="community.volunteerCta">Sign up</button>
       </div>
@@ -418,7 +418,7 @@
       <div class="modal__handle"></div>
       <button type="button" class="modal__close" data-close="volunteer" aria-label="Close">&times;</button>
       <h2 id="volunteerTitle" data-i18n="volunteer.title">Volunteer in my ward</h2>
-      <p class="modal__subtitle" data-i18n="volunteer.subtitle">Fix it together with neighbours — not an official BMC volunteer programme.</p>
+      <p class="modal__subtitle" data-i18n="volunteer.subtitle">Fix it together with neighbours — not a government volunteer programme.</p>
       <div class="form-group">
         <label for="volunteerWard" data-i18n="volunteer.ward">Your ward</label>
         <input type="text" id="volunteerWard" readonly>
@@ -912,7 +912,7 @@
       <div class="modal__handle"></div>
       <button type="button" class="modal__close" data-close="about" aria-label="Close">&times;</button>
       <h2 id="aboutTitle"><i class="ph ph-radar"></i> <span data-i18n="about.title">About CivicRadar</span></h2>
-      <p class="modal__subtitle" id="aboutSubtitle" data-i18n="about.subtitle">Community tech for Mumbai's monsoon — built by a New Jersey student with family roots in the city, free for citizens.</p>
+      <p class="modal__subtitle" id="aboutSubtitle" data-i18n="about.subtitle">Community app for Mumbai, Pune &amp; Thane monsoon — built by a student with family in India. Free for citizens.</p>
 
       <div class="founder-card" id="founderCard">
         <div class="founder-card__avatar"><i class="ph ph-student"></i></div>
@@ -928,7 +928,7 @@
       <h3 class="section-title" data-i18n="about.impactTitle">Community impact</h3>
       <div class="impact-stats impact-stats--about" id="aboutImpactStats">
         <div class="impact-stat"><span id="aboutReports">0</span><label data-i18n="impact.reports">Reports</label></div>
-        <div class="impact-stat impact-stat--ok"><span id="aboutResolved">0</span><label data-i18n="impact.resolved">Resolved</label></div>
+        <div class="impact-stat impact-stat--ok"><span id="aboutResolved">0</span><label data-i18n="impact.resolved">Fixed</label></div>
         <div class="impact-stat"><span id="aboutConfirmations">0</span><label data-i18n="impact.confirms">Confirmations</label></div>
         <div class="impact-stat"><span id="aboutWards">0</span><label data-i18n="impact.wards">Wards</label></div>
       </div>
@@ -974,7 +974,7 @@
       <div class="modal__handle"></div>
       <button type="button" class="modal__close" data-close="inquiry" aria-label="Close">&times;</button>
       <h2 id="inquiryTitle"><i class="ph ph-handshake"></i> <span data-i18n="inquiry.title">Partner with CivicRadar</span></h2>
-      <p class="modal__subtitle" data-i18n="inquiry.subtitle">Reach Mumbai citizens in the wards that matter to your business or organisation.</p>
+      <p class="modal__subtitle" data-i18n="inquiry.subtitle">Reach citizens in Mumbai, Pune, or Thane — in the wards that matter to you.</p>
 
       <div class="inquiry-options">
         <div class="inquiry-option">
