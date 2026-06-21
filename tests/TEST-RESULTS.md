@@ -1,9 +1,9 @@
 # CivicRadar Test Results
 
-**Run:** 2026-06-21 19:20:17
+**Run:** 2026-06-21 19:44:45
 **Server:** http://localhost:8095/
 **Script:** `tests/e2e_comprehensive.py`
-**Total:** 112 | **Pass:** 111 | **Fail:** 1
+**Total:** 112 | **Pass:** 112 | **Fail:** 0
 
 ## Fixes applied this run
 
@@ -13,7 +13,8 @@
 - `js/app.js`: `getModCfg()` reads moderation config live at submit time
 - `js/app.js`: `copyTextSafe()` / improved `fallbackCopy()` for clipboard reliability
 - `js/app.js`: `applyTranslations()` calls `updatePersonaUI()` (was broken `renderPersonaBar`)
-- `sw.js`: cache bump v26 → v32
+- `tests/e2e_comprehensive.py`: E09 checks analytics opt-in checkbox (separate from ToS)
+- `sw.js`: cache bump v26 → v44
 
 ## Summary by category
 
@@ -23,7 +24,7 @@
 - **Citizen:** 37 pass / 0 fail
 - **Community:** 3 pass / 0 fail
 - **DeepLink:** 1 pass / 0 fail
-- **Edge:** 15 pass / 1 fail
+- **Edge:** 16 pass / 0 fail
 - **Escalation:** 1 pass / 0 fail
 - **Legal:** 2 pass / 0 fail
 - **Load:** 5 pass / 0 fail
@@ -41,7 +42,7 @@
 
 ## Failures
 
-- `E09` **Analytics allowed after ToS consent** — failed
+_None_
 
 ## Limitations
 
@@ -116,7 +117,7 @@
 | E06 | Edge | Double submit disables button | PASS |  |
 | E07 | Edge | XSS notes sanitized on save | PASS |  |
 | E08 | Edge | Analytics blocked without consent | PASS |  |
-| E09 | Edge | Analytics allowed after ToS consent | **FAIL** |  |
+| E09 | Edge | Analytics allowed after analytics opt-in | PASS |  |
 | E10 | Edge | Admin mode persists mid-flow | PASS |  |
 | E11 | Edge | Reminder snooze future date stored | PASS |  |
 | E12 | Edge | Hidden report IDs stored | PASS |  |
@@ -125,8 +126,8 @@
 | E15 | Edge | Map empty CTA visible | PASS |  |
 | E16 | Edge | Invalid ward cleared on load | PASS |  |
 | L01 | Load | 15 parallel report contexts | PASS | 15/15 |
-| L02 | Load | 200 reports refresh under 3s | PASS | 0.05s |
-| L03 | Load | 50x loadReports parse under 500ms | PASS | 5ms |
+| L02 | Load | 200 reports refresh under 3s | PASS | 0.01s |
+| L03 | Load | 50x loadReports parse under 500ms | PASS | 4ms |
 | L04 | Load | Rapid corroboration increments | PASS | n=5 |
 | L05 | Load | Analytics batch enqueue | PASS |  |
 | M01 | Map | Leaflet map container | PASS |  |

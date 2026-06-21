@@ -77,6 +77,9 @@
     <i class="ph ph-drop"></i>
     <p id="mapEmptyText" data-i18n="map.empty">No stagnant-water pins on your map yet.</p>
     <button type="button" class="btn btn--primary btn--sm" id="btnMapEmptyReport" data-i18n="map.emptyAction">Report the first one</button>
+    <button type="button" class="btn btn--whatsapp btn--sm map-empty-cta__share" id="btnMapEmptyShare">
+      <i class="ph ph-whatsapp-logo"></i> <span data-i18n="map.emptyShare">Invite neighbours on WhatsApp</span>
+    </button>
   </div>
 
   <!-- Map overlays -->
@@ -175,7 +178,9 @@
         <input type="checkbox" id="tosAnalytics">
         <span data-i18n="tos.analyticsOptIn">I consent to anonymous usage analytics (optional — can withdraw in Profile)</span>
       </label>
-      <button type="button" class="btn btn--primary btn--full" id="btnTosContinue" disabled data-i18n="tos.continue">Continue</button>
+      <div class="modal__sticky-footer">
+        <button type="button" class="btn btn--primary btn--full" id="btnTosContinue" disabled data-i18n="tos.continue">Continue</button>
+      </div>
     </div>
   </div>
 
@@ -313,6 +318,7 @@
       </div>
       <h2 id="shareWinTitle" data-i18n="shareWin.title">Share the win!</h2>
       <p class="modal__subtitle" id="shareWinSubtitle" data-i18n="shareWin.subtitle">Before → after proof on your ward map — neighbours love seeing fixes.</p>
+      <p class="share-win-impact hidden" id="shareWinImpact" aria-live="polite"></p>
       <div class="proof-compare share-win-proof" id="shareWinProof" hidden></div>
       <button type="button" class="btn btn--whatsapp btn--full" id="btnShareWinWhatsApp">
         <i class="ph ph-whatsapp-logo"></i> <span data-i18n="shareWin.whatsapp">Share win on WhatsApp</span>

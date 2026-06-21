@@ -15,10 +15,10 @@ ROOT = Path(__file__).resolve().parents[1]
 PORT = 8095
 BASE = f'http://localhost:{PORT}/'
 WARD = 'G/N Ward — Dadar, Shivaji Park'
+PUNE_WARD = 'Ward 1 — Kasba Vishrambag'
 
 # When Supabase keys are set, demo admin/lead UI is hidden and consent flows differ.
 KNOWN_SUPABASE_FAIL_IDS = frozenset({
-    'E09',            # Analytics requires separate opt-in after ToS
     'ERR-NGO/Admin',  # Demo NGO/BMC login hidden when cloud backend is active
     'ERR-Edge',       # Edge suite admin-login step (E10) blocked for same reason
 })
@@ -354,6 +354,31 @@ async def run_citizen_tests(s: Suite, browser):
     s.record('C08b', 'Citizen', 'City saved on onboarding', u.get('city') == 'mumbai')
     s.record('C09', 'Citizen', 'XSS display name sanitized', '<' not in (u.get('displayName') or ''))
 
+    ctx_pune = await new_ctx(
+        browser,
+        lat=18.5204,
+        lng=73.8567,
+        storage={'civicradar_user': default_user(id='c34', city='pune', ward=PUNE_WARD)},
+    )
+    page_pune = await ctx_pune.new_page()
+    await goto_app(page_pune, wait_map=True)
+    bmc_hidden = await page_pune.evaluate(
+        """() => {
+          window.openPartnerPortal();
+          const btn = document.getElementById('btnPartnerBmc');
+          return !!(btn && btn.classList.contains('hidden'));
+        }"""
+    )
+    s.record('C34', 'Citizen', 'Pune hides BMC partner card', bmc_hidden)
+    admin_blocked = await page_pune.evaluate(
+        """() => {
+          window.openAdminModal();
+          return !document.getElementById('adminOverlay').classList.contains('open');
+        }"""
+    )
+    s.record('C34b', 'Citizen', 'Pune blocks BMC admin modal', admin_blocked)
+    await ctx_pune.close()
+
     await page.evaluate('() => { if (!localStorage.getItem("civicradar_coach_seen")) localStorage.setItem("civicradar_coach_seen","1"); }')
     for code in ['hi', 'mr', 'gu', 'en']:
         await js_click(page, '#btnLang')
@@ -658,9 +683,10 @@ async def run_edge_tests(s: Suite, browser):
     )
     s.record('E08', 'Edge', 'Analytics blocked without consent', tracked is None or tracked.get('before') == tracked.get('after'))
     await page.evaluate('() => document.getElementById("tosAccept").click()')
+    await page.evaluate('() => document.getElementById("tosAnalytics").click()')
     await js_click(page, '#btnTosContinue')
     await page.wait_for_timeout(300)
-    s.record('E09', 'Edge', 'Analytics allowed after ToS consent', await page.evaluate(
+    s.record('E09', 'Edge', 'Analytics allowed after analytics opt-in', await page.evaluate(
         """() => {
           if (!window.CivicAnalytics) return false;
           for (let i = 0; i < 10; i++) CivicAnalytics.track('consent_test', { i });
@@ -934,7 +960,9 @@ def write_report(s: Suite, path: Path):
         '- `js/app.js`: `getModCfg()` reads moderation config live at submit time',
         '- `js/app.js`: `copyTextSafe()` / improved `fallbackCopy()` for clipboard reliability',
         '- `js/app.js`: `applyTranslations()` calls `updatePersonaUI()` (was broken `renderPersonaBar`)',
-        '- `sw.js`: cache bump v26 → v32',
+        '- `tests/e2e_comprehensive.py`: E09 checks analytics opt-in checkbox (separate from ToS)',
+        '- `js/app.js`: `saveComplaintId()` uses city-specific PMC/TMC complaint warn toast',
+        '- `sw.js`: cache bump v44 → v45',
         '',
         '## Summary by category',
         '',
