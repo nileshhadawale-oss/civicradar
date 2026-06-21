@@ -1,9 +1,9 @@
 # CivicRadar Test Results
 
-**Run:** 2026-06-21 17:02:45
+**Run:** 2026-06-21 19:20:17
 **Server:** http://localhost:8095/
 **Script:** `tests/e2e_comprehensive.py`
-**Total:** 87 | **Pass:** 83 | **Fail:** 4
+**Total:** 112 | **Pass:** 111 | **Fail:** 1
 
 ## Fixes applied this run
 
@@ -19,15 +19,16 @@
 
 - **API:** 5 pass / 0 fail
 - **Admin:** 2 pass / 0 fail
-- **Citizen:** 33 pass / 1 fail
+- **BMC:** 9 pass / 0 fail
+- **Citizen:** 37 pass / 0 fail
 - **Community:** 3 pass / 0 fail
 - **DeepLink:** 1 pass / 0 fail
-- **Edge:** 8 pass / 1 fail
+- **Edge:** 15 pass / 1 fail
 - **Escalation:** 1 pass / 0 fail
 - **Legal:** 2 pass / 0 fail
 - **Load:** 5 pass / 0 fail
 - **Map:** 4 pass / 0 fail
-- **NGO:** 2 pass / 0 fail
+- **NGO:** 10 pass / 0 fail
 - **PWA:** 2 pass / 0 fail
 - **Partner:** 1 pass / 0 fail
 - **Persona:** 1 pass / 0 fail
@@ -35,22 +36,12 @@
 - **Report:** 3 pass / 0 fail
 - **Storage:** 2 pass / 0 fail
 - **Sync:** 1 pass / 0 fail
-- **System:** 0 pass / 2 fail
 - **UI:** 2 pass / 0 fail
 - **i18n:** 1 pass / 0 fail
 
 ## Failures
 
-- `C05` **GPS consent stored on ToS accept** — failed
-- `ERR-NGO/Admin` **Suite NGO/Admin crashed** — Page.click: Timeout 30000ms exceeded.
-Call log:
-  - waiting for locator("#btnLeadSubmit")
-    - locator resolved to <but
 - `E09` **Analytics allowed after ToS consent** — failed
-- `ERR-Edge` **Suite Edge crashed** — Page.fill: Timeout 30000ms exceeded.
-Call log:
-  - waiting for locator("#adminUser")
-    - locator resolved to <input ty
 
 ## Limitations
 
@@ -67,10 +58,13 @@ Call log:
 | C02 | Citizen | ToS continue disabled without checkbox | PASS |  |
 | C03 | Citizen | ToS accept enables continue | PASS |  |
 | C04 | Citizen | Onboarding after ToS accept | PASS |  |
-| C05 | Citizen | GPS consent stored on ToS accept | **FAIL** |  |
-| C06 | Citizen | Empty ward rejected | PASS |  |
+| C04b | Citizen | City picker defaults to Mumbai | PASS | city=mumbai |
+| C05 | Citizen | GPS consent after ward detect | PASS |  |
+| C06 | Citizen | Ward auto-detected on onboarding | PASS | ward=L Ward — Kurla, Sakinaka |
+| C06b | Citizen | Empty ward rejected | PASS |  |
 | C07 | Citizen | Invalid/XSS ward rejected | PASS |  |
 | C08 | Citizen | Valid ward onboarding | PASS |  |
+| C08b | Citizen | City saved on onboarding | PASS |  |
 | C09 | Citizen | XSS display name sanitized | PASS |  |
 | C10-hi | Citizen | Language switch HI | PASS |  |
 | C10-mr | Citizen | Language switch MR | PASS |  |
@@ -92,15 +86,28 @@ Call log:
 | C27 | Citizen | Complaint ID saved | PASS |  |
 | C28 | Citizen | Invalid complaint # handled | PASS |  |
 | C29 | Citizen | Community modal opens | PASS |  |
-| C30 | Citizen | Leaderboard wards populated | PASS | items=1 |
+| C30 | Citizen | Leaderboard wards populated | PASS | items=5 |
 | C31 | Citizen | Pledge modal opens | PASS |  |
 | C32 | Citizen | Pledge saved | PASS |  |
 | C33 | Citizen | Sponsor wall renders | PASS |  |
 | C35 | Citizen | Coach mark dismiss sets flag | PASS | already dismissed |
-| ERR-NGO/Admin | System | Suite NGO/Admin crashed | **FAIL** | Page.click: Timeout 30000ms exceeded.
-Call log:
-  - waiting for locator("#btnLeadSubmit")
-    - locator resolved to <but |
+| N01 | NGO | Lead demo login | PASS |  |
+| N02 | NGO | Coordinator hub opens | PASS |  |
+| N03 | NGO | Coordinator pledges list | PASS |  |
+| N04 | NGO | Log community cleanup | PASS |  |
+| N05 | NGO | Mark pledge delivered | PASS |  |
+| N06 | NGO | Verify volunteer hours | PASS |  |
+| N07 | NGO | Persona bar lead styling | PASS |  |
+| N08 | NGO | Exit NGO mode | PASS |  |
+| A01 | BMC | Admin demo login | PASS |  |
+| A02 | BMC | Admin queue opens | PASS |  |
+| A03 | BMC | Queue ward filter options | PASS |  |
+| A04 | BMC | Queue sort options | PASS |  |
+| A05 | BMC | Copy for 1916 | PASS |  |
+| A06 | BMC | CSV export button present | PASS |  |
+| A07 | BMC | Resolve requires proof photo | PASS |  |
+| A08 | BMC | App health panel element | PASS |  |
+| A09 | BMC | Admin persona bar text | PASS |  |
 | E01 | Edge | Corrupt reports JSON recovery | PASS |  |
 | E02 | Edge | Corrupt user JSON -> default user | PASS |  |
 | E03 | Edge | i18n keys render | PASS |  |
@@ -110,12 +117,15 @@ Call log:
 | E07 | Edge | XSS notes sanitized on save | PASS |  |
 | E08 | Edge | Analytics blocked without consent | PASS |  |
 | E09 | Edge | Analytics allowed after ToS consent | **FAIL** |  |
-| ERR-Edge | System | Suite Edge crashed | **FAIL** | Page.fill: Timeout 30000ms exceeded.
-Call log:
-  - waiting for locator("#adminUser")
-    - locator resolved to <input ty |
+| E10 | Edge | Admin mode persists mid-flow | PASS |  |
+| E11 | Edge | Reminder snooze future date stored | PASS |  |
+| E12 | Edge | Hidden report IDs stored | PASS |  |
+| E13 | Edge | Empty community stats zero | PASS |  |
+| E14 | Edge | Local demo sync status shown | PASS |  |
+| E15 | Edge | Map empty CTA visible | PASS |  |
+| E16 | Edge | Invalid ward cleared on load | PASS |  |
 | L01 | Load | 15 parallel report contexts | PASS | 15/15 |
-| L02 | Load | 200 reports refresh under 3s | PASS | 0.01s |
+| L02 | Load | 200 reports refresh under 3s | PASS | 0.05s |
 | L03 | Load | 50x loadReports parse under 500ms | PASS | 5ms |
 | L04 | Load | Rapid corroboration increments | PASS | n=5 |
 | L05 | Load | Analytics batch enqueue | PASS |  |

@@ -4,17 +4,17 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#6366f1">
-  <meta name="description" content="CivicRadar — free Mumbai monsoon hazard map. Pin stagnant water in your ward, say Me too, beat other wards. WhatsApp-ready · 4 languages · no login.">
+  <meta name="description" content="CivicRadar — free monsoon hazard map for Mumbai, Pune &amp; Thane. Pin stagnant water in your ward, say Me too, beat other wards. WhatsApp-ready · 4 languages · no login.">
   <!-- Open Graph defaults (static). Crawlers do not run JS — per-report ward/thumbnail OG needs SSR or an edge function at scale. -->
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="CivicRadar">
   <meta property="og:locale" content="en_IN">
-  <meta property="og:title" content="CivicRadar — Mumbai monsoon hazard map | #MonsoonGuardian">
-  <meta property="og:description" content="🗺️ See open hazards in YOUR Mumbai ward. 30-sec report · Me too corroboration · ward leaderboard rivalry. Free PWA — English, Hindi, Marathi, Gujarati.">
+  <meta property="og:title" content="CivicRadar — Mumbai, Pune &amp; Thane monsoon hazard map | #MonsoonGuardian">
+  <meta property="og:description" content="🗺️ See open hazards in YOUR ward across Mumbai, Pune, or Thane. 30-sec report · Me too corroboration · ward leaderboard rivalry. Free PWA — English, Hindi, Marathi, Gujarati.">
   <meta property="og:image" content="assets/og-civicradar.svg">
-  <meta property="og:image:alt" content="CivicRadar — Mumbai ward hazard map for monsoon">
+  <meta property="og:image:alt" content="CivicRadar — ward hazard map for Mumbai, Pune, Thane monsoon">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="CivicRadar — Mumbai monsoon hazard map">
+  <meta name="twitter:title" content="CivicRadar — Mumbai, Pune &amp; Thane monsoon hazard map">
   <meta name="twitter:description" content="Pin hazards in your ward, rally neighbours, track fixes — #MonsoonGuardian #CivicRadar">
   <meta name="twitter:image" content="assets/og-civicradar.svg">
   <link rel="manifest" href="manifest.json">
@@ -134,33 +134,10 @@
     </button>
   </nav>
 
-  <!-- Mumbai Wards Datalist (shared) -->
-  <datalist id="mumbaiCommunities">
-    <option value="A Ward — Colaba, Fort"></option>
-    <option value="B Ward — Dongri, Umarkhadi"></option>
-    <option value="C Ward — Bhuleshwar, Kalbadevi"></option>
-    <option value="D Ward — Malabar Hill, Tardeo"></option>
-    <option value="E Ward — Byculla, Mazgaon"></option>
-    <option value="F/N Ward — Sion, Matunga"></option>
-    <option value="F/S Ward — Parel, Sewri"></option>
-    <option value="G/N Ward — Dadar, Shivaji Park"></option>
-    <option value="G/S Ward — Worli, Lower Parel"></option>
-    <option value="H/E Ward — Bandra East, Khar East"></option>
-    <option value="H/W Ward — Bandra West, Khar West"></option>
-    <option value="K/E Ward — Andheri East, Vile Parle East"></option>
-    <option value="K/W Ward — Andheri West, Vile Parle West"></option>
-    <option value="L Ward — Kurla, Sakinaka"></option>
-    <option value="M/E Ward — Chembur, Deonar"></option>
-    <option value="M/W Ward — Marol, Jogeshwari"></option>
-    <option value="N Ward — Ghatkopar, Vikhroli"></option>
-    <option value="P/N Ward — Goregaon, Malad"></option>
-    <option value="P/S Ward — Kandivali, Charkop"></option>
-    <option value="R/N Ward — Dahisar, Borivali"></option>
-    <option value="R/C Ward — Borivali West"></option>
-    <option value="R/S Ward — Kandivali West"></option>
-    <option value="S Ward — Bhandup, Mulund"></option>
-    <option value="T Ward — Mulund, Nahur"></option>
-  </datalist>
+  <!-- Ward datalists (populated from js/wards/*.js on load) -->
+  <datalist id="mumbaiCommunities"></datalist>
+  <datalist id="puneCommunities"></datalist>
+  <datalist id="thaneCommunities"></datalist>
 
   <!-- ========== MODALS ========== -->
 
@@ -209,15 +186,38 @@
       <h2 id="onboardingTitle" data-i18n="onboard.title">Welcome to CivicRadar</h2>
       <div class="flow-steps flow-steps--compact" aria-label="Setup progress">
         <span class="flow-step is-done" data-i18n="flow.legal">Legal</span>
-        <span class="flow-step is-active" data-i18n="flow.ward">Ward</span>
+        <span class="flow-step is-active" data-i18n="flow.city">City</span>
+        <span class="flow-step" data-i18n="flow.ward">Ward</span>
         <span class="flow-step" data-i18n="flow.ready">Ready</span>
       </div>
       <p class="modal__subtitle" data-i18n="onboard.subtitle">See hazards in your ward, rally neighbours, and earn Civic Points together.</p>
-      <div class="form-group">
-        <label for="wardInput" data-i18n="onboard.ward">Your Ward</label>
-        <input type="text" id="wardInput" list="mumbaiCommunities" placeholder="Start typing your ward…" data-i18n-ph="onboard.wardPh" autocomplete="off" aria-describedby="wardHint wardError">
-        <p class="field-hint" id="wardHint" data-i18n="onboard.wardHint">Pick from the official 24 Mumbai BMC wards.</p>
-        <p class="field-error hidden" id="wardError" role="alert" data-i18n="onboard.wardError">Pick a ward from the list.</p>
+      <div class="form-group" id="onboardCityGroup">
+        <label for="onboardCity" data-i18n="onboard.city">Your city</label>
+        <select id="onboardCity" aria-describedby="onboardCityHint">
+          <option value="mumbai" data-i18n-option="city.mumbai">Mumbai</option>
+          <option value="pune" data-i18n-option="city.pune">Pune</option>
+          <option value="thane" data-i18n-option="city.thane">Thane</option>
+        </select>
+        <p class="field-hint" id="onboardCityHint" data-i18n="onboard.cityHint">Choose where you live — we detect your ward from GPS next.</p>
+      </div>
+      <div class="form-group" id="wardDetectGroup">
+        <label data-i18n="onboard.ward">Your Ward</label>
+        <div id="wardDetectStatus" class="ward-detect-status" aria-live="polite">
+          <i class="ph ph-crosshair"></i>
+          <span id="wardDetectStatusText" data-i18n="onboard.wardDetecting">Detecting your ward from location…</span>
+        </div>
+        <div id="wardDetected" class="ward-detected hidden" aria-live="polite">
+          <i class="ph ph-map-pin"></i>
+          <span id="wardDetectedName"></span>
+        </div>
+        <p class="field-hint hidden" id="wardDetectedHint" data-i18n="onboard.wardDetectedHint">Approximate ward from GPS — not an official boundary survey.</p>
+        <div id="wardManualGroup" class="hidden">
+          <input type="text" id="wardInput" list="mumbaiCommunities" placeholder="Start typing your ward…" data-i18n-ph="onboard.wardPh" autocomplete="off" aria-describedby="wardHint wardError">
+          <p class="field-hint" id="wardHint" data-i18n="onboard.wardHint">Pick from your city's official wards.</p>
+        </div>
+        <button type="button" class="ward-manual-link hidden" id="btnWardManual" data-i18n="onboard.wardManual">Not right? Pick manually</button>
+        <button type="button" class="ward-manual-link hidden" id="btnWardRetry" data-i18n="onboard.wardRetry">Try detecting again</button>
+        <p class="field-error hidden" id="wardError" role="alert" data-i18n="onboard.wardError">Pick a ward from the list or allow location.</p>
       </div>
       <div class="form-group">
         <label for="displayName" data-i18n="onboard.name">Display Name</label>
@@ -791,12 +791,13 @@
     <div class="modal modal--tall" id="escalationModal" role="dialog" aria-labelledby="escalationTitle">
       <div class="modal__handle"></div>
       <button type="button" class="modal__close" data-close="escalation" aria-label="Close">&times;</button>
-      <h2 id="escalationTitle"><i class="ph ph-megaphone"></i> <span data-i18n="esc.title">File with BMC (optional)</span></h2>
-      <p class="modal__subtitle" data-i18n="esc.subtitle">CivicRadar shows hazards on the community map. Filing with BMC is your choice — it starts the official clock. This is not a BMC channel.</p>
+      <h2 id="escalationTitle"><i class="ph ph-megaphone"></i> <span id="escTitleText" data-i18n="esc.title">File with BMC (optional)</span></h2>
+      <p class="modal__subtitle" id="escSubtitle" data-i18n="esc.subtitle">CivicRadar shows hazards on the community map. Filing with BMC is your choice — it starts the official clock. This is not a BMC channel.</p>
       <p class="accountability-clock" id="escClock"></p>
 
       <div class="esc-progress" id="escProgress" aria-label="Filing progress"></div>
 
+      <div id="escBmcPanel">
       <h3 class="section-title" data-i18n="esc.fileTitle">File the complaint (free)</h3>
       <p class="field-hint esc-recommended" id="escRecommended" data-i18n="esc.recommended">Recommended: MyBMC WhatsApp — fastest for most Mumbai wards.</p>
       <p class="field-hint" data-i18n="esc.fileHint">Stagnant water goes to your ward’s Pest Control Officer. Use any channel:</p>
@@ -848,6 +849,31 @@
       <h3 class="section-title" data-i18n="esc.ladderTitle">Escalation ladder</h3>
       <ul class="esc-ladder" id="escLadder"></ul>
 
+      <div id="escParticipateBlock">
+        <h3 class="section-title" data-i18n="esc.participate.title">Community action (optional)</h3>
+        <p class="field-hint" data-i18n="esc.participate.hint">Participate Mumbai is BMC’s official portal for volunteering and CSR — not for filing pest-control complaints. Use it to join clean-ups or propose ward projects.</p>
+        <button type="button" class="esc-channel esc-channel--wide" id="btnEscParticipate">
+          <i class="ph ph-hand-heart"></i>
+          <span data-i18n="esc.participate.btn">Participate Mumbai</span>
+          <small data-i18n="esc.participate.small">Volunteer · CSR · projects</small>
+        </button>
+      </div>
+
+      <button type="button" class="btn btn--outline btn--full" id="btnEscAaple">
+        <i class="ph ph-bank"></i> <span data-i18n="esc.aaple">Aaple Sarkar (state grievance)</span>
+      </button>
+      </div>
+
+      <div id="escCorpPanel" class="hidden">
+        <h3 class="section-title" data-i18n="esc.corpTitle">File with local corporation (optional)</h3>
+        <p class="field-hint" id="escCorpHint" data-i18n="esc.corpHint">Use your city's official grievance portal to file stagnant-water / pest-control complaints.</p>
+        <button type="button" class="esc-channel esc-channel--wide" id="btnEscCorpPortal">
+          <i class="ph ph-globe"></i>
+          <span id="escCorpBtnLabel" data-i18n="esc.corpBtn">Open corporation portal</span>
+        </button>
+        <p class="field-hint hidden" id="escCorpHelpline"></p>
+      </div>
+
       <div class="esc-self-confirm hidden" id="escSelfConfirm">
         <div>
           <strong data-i18n="esc.selfTitle">BMC fixed it?</strong>
@@ -856,17 +882,6 @@
         <button type="button" class="btn btn--secondary btn--sm" id="btnEscResolveOwn" data-i18n="esc.selfBtn">Mark resolved</button>
       </div>
 
-      <h3 class="section-title" data-i18n="esc.participate.title">Community action (optional)</h3>
-      <p class="field-hint" data-i18n="esc.participate.hint">Participate Mumbai is BMC’s official portal for volunteering and CSR — not for filing pest-control complaints. Use it to join clean-ups or propose ward projects.</p>
-      <button type="button" class="esc-channel esc-channel--wide" id="btnEscParticipate">
-        <i class="ph ph-hand-heart"></i>
-        <span data-i18n="esc.participate.btn">Participate Mumbai</span>
-        <small data-i18n="esc.participate.small">Volunteer · CSR · projects</small>
-      </button>
-
-      <button type="button" class="btn btn--outline btn--full" id="btnEscAaple">
-        <i class="ph ph-bank"></i> <span data-i18n="esc.aaple">Aaple Sarkar (state grievance)</span>
-      </button>
       <button type="button" class="btn btn--ghost btn--full" id="btnEscClose" data-i18n="esc.close">Close</button>
     </div>
   </div>
@@ -1011,6 +1026,10 @@
   <script src="js/config.js"></script>
   <script src="js/analytics.js"></script>
   <script src="js/image-moderation.js"></script>
+  <script src="js/wards/mumbai.js"></script>
+  <script src="js/wards/pune.js"></script>
+  <script src="js/wards/thane.js"></script>
+  <script src="js/ward-detect.js"></script>
   <script src="js/app.js"></script>
   <script>
     (function () {

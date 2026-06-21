@@ -38,6 +38,15 @@ alter table public.reports add column if not exists cleared_by text;
 alter table public.reports add column if not exists confirmations int not null default 0;
 -- BMC resolution proof photo (compressed JPEG data URL — "after" photo). Added v19.
 alter table public.reports add column if not exists resolution_image text;
+-- Multi-city support (Mumbai · Pune · Thane) — migration v44
+alter table public.reports add column if not exists city text not null default 'mumbai';
+alter table public.profiles add column if not exists city text default 'mumbai';
+alter table public.pledges add column if not exists city text default 'mumbai';
+alter table public.volunteer_signups add column if not exists city text default 'mumbai';
+alter table public.ngo_codes add column if not exists city text default 'mumbai';
+
+create index if not exists reports_city_idx on public.reports (city);
+create index if not exists reports_city_ward_idx on public.reports (city, ward);
 
 create index if not exists reports_status_idx  on public.reports (status);
 create index if not exists reports_ward_idx     on public.reports (ward);
@@ -153,11 +162,13 @@ begin
   update public.profiles set
     role = 'ngo_lead',
     ward = coalesce(c.ward, ward),
+    city = coalesce(c.city, city, 'mumbai'),
     coordinator_scope = scope,
     neighbourhood_label = case when scope = 'neighbourhood' then c.neighbourhood else null end
   where id = auth.uid();
   return jsonb_build_object(
     'ward', c.ward,
+    'city', coalesce(c.city, 'mumbai'),
     'coordinator_scope', scope,
     'neighbourhood_label', c.neighbourhood,
     'ngo_name', c.ngo_name

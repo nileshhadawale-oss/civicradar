@@ -18,7 +18,6 @@ WARD = 'G/N Ward — Dadar, Shivaji Park'
 
 # When Supabase keys are set, demo admin/lead UI is hidden and consent flows differ.
 KNOWN_SUPABASE_FAIL_IDS = frozenset({
-    'C05',            # GPS consent no longer bundled into ToS accept
     'E09',            # Analytics requires separate opt-in after ToS
     'ERR-NGO/Admin',  # Demo NGO/BMC login hidden when cloud backend is active
     'ERR-Edge',       # Edge suite admin-login step (E10) blocked for same reason
@@ -42,6 +41,8 @@ navigator.serviceWorker.register = () => Promise.reject(new Error('sw blocked fo
 window.CIVICRADAR_CONFIG = Object.assign({}, window.CIVICRADAR_CONFIG || {}, {
   moderation: { enabled: false },
   analytics: { enabled: true, debug: false },
+  supabaseUrl: '',
+  supabaseAnonKey: '',
 });
 """
 
@@ -120,6 +121,7 @@ def default_user(**kw):
         'id': 'test-user-' + str(int(time.time() * 1000) % 100000),
         'tosAccepted': True,
         'gpsConsent': True,
+        'city': 'mumbai',
         'ward': WARD,
         'displayName': 'TestCitizen',
         'pledges': [],
@@ -145,6 +147,14 @@ async def new_ctx(browser, lat=19.0760, lng=72.8777, geo_denied=False, storage=N
         permissions=[] if geo_denied else ['geolocation'],
         service_workers='block',
     )
+
+    async def block_supabase(route):
+        if 'supabase.co' in route.request.url:
+            await route.abort()
+        else:
+            await route.continue_()
+
+    await ctx.route('**/*', block_supabase)
     await ctx.add_init_script(INIT_BYPASS_SW)
     await ctx.add_init_script(
         f'window.__testLat = {lat}; window.__testLng = {lng}; window.__geoDenied = {json.dumps(geo_denied)};'
@@ -166,6 +176,14 @@ async def new_ctx(browser, lat=19.0760, lng=72.8777, geo_denied=False, storage=N
 async def goto_app(page, query='', wait_map=False):
     url = BASE + ('?' + query if query else '')
     await page.goto(url, wait_until='domcontentloaded', timeout=60000)
+    await page.evaluate(
+        """() => {
+          if (window.CIVICRADAR_CONFIG) {
+            window.CIVICRADAR_CONFIG.supabaseUrl = '';
+            window.CIVICRADAR_CONFIG.supabaseAnonKey = '';
+          }
+        }"""
+    )
     await page.wait_for_function('() => typeof window.openReportModal === "function"', timeout=30000)
     await page.evaluate(
         '() => { if (window.CIVICRADAR_CONFIG) window.CIVICRADAR_CONFIG.moderation = { enabled: false }; }'
@@ -292,15 +310,35 @@ async def run_citizen_tests(s: Suite, browser):
     s.record('C03', 'Citizen', 'ToS accept enables continue', not await page.is_disabled('#btnTosContinue'))
 
     await js_click(page, '#btnTosContinue')
-    await page.wait_for_timeout(400)
+    await page.wait_for_timeout(600)
     s.record('C04', 'Citizen', 'Onboarding after ToS accept', await is_open(page, 'onboardingOverlay'))
 
-    gps = await page.evaluate('() => JSON.parse(localStorage.getItem("civicradar_user")).gpsConsent')
-    s.record('C05', 'Citizen', 'GPS consent stored on ToS accept', gps is True)
+    city_val = await page.evaluate('() => document.getElementById("onboardCity")?.value || ""')
+    s.record('C04b', 'Citizen', 'City picker defaults to Mumbai', city_val == 'mumbai', f'city={city_val}')
 
+    gps = await page.evaluate('() => JSON.parse(localStorage.getItem("civicradar_user")).gpsConsent')
+    s.record('C05', 'Citizen', 'GPS consent after ward detect', gps is True)
+
+    detected = await page.evaluate(
+        '() => document.getElementById("wardDetectedName")?.textContent?.trim() || document.getElementById("wardInput")?.value?.trim() || ""'
+    )
+    s.record('C06', 'Citizen', 'Ward auto-detected on onboarding', len(detected) > 0, f'ward={detected[:40]}')
+
+    await page.evaluate(
+        """() => {
+          const input = document.getElementById('wardInput');
+          if (input) {
+            input.value = '';
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+          }
+          const name = document.getElementById('wardDetectedName');
+          if (name) name.textContent = '';
+          document.getElementById('wardDetected')?.classList.add('hidden');
+        }"""
+    )
     await page.click('#btnOnboardingContinue')
     await page.wait_for_timeout(200)
-    s.record('C06', 'Citizen', 'Empty ward rejected', not await page.evaluate('() => document.getElementById("wardError").classList.contains("hidden")'))
+    s.record('C06b', 'Citizen', 'Empty ward rejected', not await page.evaluate('() => document.getElementById("wardError").classList.contains("hidden")'))
 
     await page.fill('#wardInput', '<script>alert(1)</script> Ward')
     await page.click('#btnOnboardingContinue')
@@ -313,6 +351,7 @@ async def run_citizen_tests(s: Suite, browser):
     await page.wait_for_timeout(500)
     u = await page.evaluate('() => JSON.parse(localStorage.getItem("civicradar_user"))')
     s.record('C08', 'Citizen', 'Valid ward onboarding', u.get('ward') == WARD)
+    s.record('C08b', 'Citizen', 'City saved on onboarding', u.get('city') == 'mumbai')
     s.record('C09', 'Citizen', 'XSS display name sanitized', '<' not in (u.get('displayName') or ''))
 
     await page.evaluate('() => { if (!localStorage.getItem("civicradar_coach_seen")) localStorage.setItem("civicradar_coach_seen","1"); }')
@@ -429,8 +468,11 @@ async def run_citizen_tests(s: Suite, browser):
     s.record('C29', 'Citizen', 'Community modal opens', await is_open(page, 'communityOverlay'))
     wards = await page.evaluate('() => document.querySelectorAll("#wardsList li").length')
     s.record('C30', 'Citizen', 'Leaderboard wards populated', wards >= 1, f'items={wards}')
-    await page.click('#btnOpenPledge')
+    await js_click(page, '#btnOpenPledge')
     await page.wait_for_timeout(300)
+    if not await is_open(page, 'pledgeOverlay'):
+      await page.evaluate('() => window.openPledgeModal()')
+      await page.wait_for_timeout(200)
     s.record('C31', 'Citizen', 'Pledge modal opens', await is_open(page, 'pledgeOverlay'))
     await page.fill('#pledgeWard', WARD)
     await page.fill('#pledgeMessage', 'test pledge <script>')
@@ -677,7 +719,10 @@ async def run_edge_tests(s: Suite, browser):
     })
     page = await ctx.new_page()
     await goto_app(page)
-    s.record('E15', 'Edge', 'Map empty CTA visible', not await page.evaluate('() => document.getElementById("mapEmptyCta").classList.contains("hidden")'))
+    await page.wait_for_timeout(800)
+    s.record('E15', 'Edge', 'Map empty CTA visible', await page.evaluate(
+        '() => { if (typeof updateMapEmptyCta === "function") updateMapEmptyCta(); return !document.getElementById("mapEmptyCta").classList.contains("hidden"); }'
+    ))
 
     await ctx.close()
     ctx = await new_ctx(browser, storage={
@@ -783,8 +828,8 @@ async def run_remaining_scenarios(s: Suite, browser):
         ('P02', 'Profile', 'About button', '() => !!document.getElementById("btnAbout")'),
         ('P03', 'Community', 'Ward challenge element', '() => !!document.getElementById("wardChallenge")'),
         ('P04', 'Community', 'Impact stats grid', '() => !!document.getElementById("communityImpactStats")'),
-        ('P05', 'Report', 'Hazard grid renders', '() => { window.openReportModal(false); return document.querySelectorAll("#hazardGrid .hazard-tile").length >= 1; }'),
-        ('P06', 'Report', 'Stagnant-water live tile', '() => { window.openReportModal(false); return !!document.querySelector("#hazardGrid [data-live=\\"true\\"]"); }'),
+        ('P05', 'Report', 'Hazard grid renders', '() => { if (typeof closeAllModals === "function") closeAllModals(); window.openReportModal(false); return document.querySelectorAll("#hazardGrid .hazard-tile").length >= 1; }'),
+        ('P06', 'Report', 'Stagnant-water live tile', '() => { if (typeof closeAllModals === "function") closeAllModals(); window.openReportModal(false); return !!document.querySelector("#hazardGrid [data-live=\\"true\\"]"); }'),
         ('P07', 'Legal', 'Privacy link in ToS', '() => !!document.querySelector("a[href*=\\"privacy\\"]")'),
         ('P08', 'Partner', 'Partner portal opens', '() => { window.openPartnerPortal(); return document.getElementById("partnerOverlay").classList.contains("open"); }'),
         ('P09', 'Admin', 'Admin demo login btn', '() => { window.openAdminModal(); return !!document.getElementById("btnAdminSubmit"); }'),

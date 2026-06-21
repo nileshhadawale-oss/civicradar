@@ -46,7 +46,8 @@ document.addEventListener('DOMContentLoaded', function () {
   const POINTS_FIX_CONFIRM = 10;
   const VERIFY_HOURS_BONUS = 200;
   const NEARBY_CORROB_M = 50;
-  const MUMBAI_CENTER = [19.076, 72.8777];
+  const DEFAULT_CITY = 'mumbai';
+  const CITY_IDS = ['mumbai', 'pune', 'thane'];
   const SCALE_CFG = Object.assign(
     {
       maxReportsPerDevice: 500,
@@ -129,11 +130,11 @@ document.addEventListener('DOMContentLoaded', function () {
   let focusTrapHandler = null;
 
   const DEMO_WARD_SEED = [
-    { name: 'G/N Ward — Dadar, Shivaji Park', points: 2840, reports: 142, isDemo: true },
-    { name: 'H/W Ward — Bandra West, Khar West', points: 2650, reports: 128, isDemo: true },
-    { name: 'K/E Ward — Andheri East, Vile Parle East', points: 2410, reports: 115, isDemo: true },
-    { name: 'L Ward — Kurla, Sakinaka', points: 2180, reports: 98, isDemo: true },
-    { name: 'F/N Ward — Sion, Matunga', points: 1950, reports: 87, isDemo: true },
+    { name: 'G/N Ward — Dadar, Shivaji Park', city: 'mumbai', points: 2840, reports: 142, isDemo: true },
+    { name: 'H/W Ward — Bandra West, Khar West', city: 'mumbai', points: 2650, reports: 128, isDemo: true },
+    { name: 'K/E Ward — Andheri East, Vile Parle East', city: 'mumbai', points: 2410, reports: 115, isDemo: true },
+    { name: 'L Ward — Kurla, Sakinaka', city: 'mumbai', points: 2180, reports: 98, isDemo: true },
+    { name: 'F/N Ward — Sion, Matunga', city: 'mumbai', points: 1950, reports: 87, isDemo: true },
   ];
 
   const DEMO_CITIZEN_SEED = [
@@ -168,12 +169,8 @@ document.addEventListener('DOMContentLoaded', function () {
     inquiry: $('#inquiryOverlay'),
   };
 
-  let user = loadUser();
+  let user;
   let deferredInstallPrompt = null;
-
-  if (window.CivicAnalytics) {
-    CivicAnalytics.init({ consent: !!(user.tosAccepted && user.analyticsConsent) });
-  }
 
   // Project config — founder story & monetization (see js/config.js)
   const CFG = window.CIVICRADAR_CONFIG || {};
@@ -187,6 +184,106 @@ document.addEventListener('DOMContentLoaded', function () {
   const LEGAL = CFG.legal || {};
   const FOUNDER = CFG.founder || {};
   const MONET = CFG.monetization || {};
+  const CITIES = CFG.cities || {};
+  const SERVICE_BOUNDS = CFG.serviceBounds || { minLat: 18.44, maxLat: 19.3, minLng: 72.78, maxLng: 73.95 };
+
+  user = loadUser();
+  if (window.CivicAnalytics) {
+    CivicAnalytics.init({ consent: !!(user.tosAccepted && user.analyticsConsent) });
+  }
+
+  function getCityConfig(cityId) {
+    const id = cityId || DEFAULT_CITY;
+    return CITIES[id] || CITIES.mumbai || {
+      id: 'mumbai',
+      label: 'Mumbai',
+      center: [19.076, 72.8777],
+      bounds: { minLat: 18.88, maxLat: 19.28, minLng: 72.78, maxLng: 73.0 },
+    };
+  }
+
+  function getUserCity() {
+    return user.city && CITIES[user.city] ? user.city : DEFAULT_CITY;
+  }
+
+  function getCityCenter(cityId) {
+    return getCityConfig(cityId || getUserCity()).center || [19.076, 72.8777];
+  }
+
+  function getCityLabel(cityId) {
+    return getCityConfig(cityId || getUserCity()).label || 'Mumbai';
+  }
+
+  function getCityCorpChannels(cityId) {
+    const city = getCityConfig(cityId || getUserCity());
+    if (cityId === 'mumbai' || (!cityId && getUserCity() === 'mumbai')) {
+      return Object.assign({}, BMC, CFG.bmcChannels || {});
+    }
+    return city.corpChannels || {};
+  }
+
+  function getReportCity(report) {
+    if (report && report.city && CITIES[report.city]) return report.city;
+    if (report && report.ward && window.CivicWardDetect && CivicWardDetect.isKnownWard) {
+      for (let i = 0; i < CITY_IDS.length; i++) {
+        if (CivicWardDetect.isKnownWard(report.ward, CITY_IDS[i])) return CITY_IDS[i];
+      }
+    }
+    return DEFAULT_CITY;
+  }
+
+  function cityScopedReports(reports) {
+    const city = getUserCity();
+    return reports.filter((r) => getReportCity(r) === city);
+  }
+
+  function wardDatalistId(cityId) {
+    const id = cityId || getUserCity();
+    if (id === 'pune') return 'puneCommunities';
+    if (id === 'thane') return 'thaneCommunities';
+    return 'mumbaiCommunities';
+  }
+
+  function populateWardDatalists() {
+    if (!window.CivicWardDetect || !CivicWardDetect.getWardNames) return;
+    CITY_IDS.forEach((cityId) => {
+      const list = document.getElementById(wardDatalistId(cityId));
+      if (!list) return;
+      const names = CivicWardDetect.getWardNames(cityId);
+      list.innerHTML = names.map((n) => {
+        const safe = String(n).replace(/"/g, '&quot;');
+        return `<option value="${safe}"></option>`;
+      }).join('');
+    });
+  }
+
+  function syncOnboardingCityUi(cityId) {
+    const city = cityId || getOnboardingCity();
+    const input = $('#wardInput');
+    if (input) input.setAttribute('list', wardDatalistId(city));
+    const hint = $('#wardHint');
+    if (hint) {
+      const wardCount = (CivicWardDetect && CivicWardDetect.getWardNames)
+        ? CivicWardDetect.getWardNames(city).length
+        : 0;
+      hint.textContent = t('onboard.wardHint').replace('{city}', getCityLabel(city)).replace('{n}', String(wardCount));
+    }
+    updateHeaderContext();
+  }
+
+  function getOnboardingCity() {
+    const sel = $('#onboardCity');
+    const val = sel && sel.value;
+    return val && CITIES[val] ? val : DEFAULT_CITY;
+  }
+
+  function updateHeaderContext() {
+    const el = $('#headerContext');
+    if (!el) return;
+    el.textContent = t('header.contextCity').replace('{city}', getCityLabel(getUserCity()));
+  }
+
+  populateWardDatalists();
   function getModCfg() {
     return window.ImageModeration
       ? ImageModeration.mergeConfig((window.CIVICRADAR_CONFIG || {}).moderation)
@@ -226,6 +323,7 @@ document.addEventListener('DOMContentLoaded', function () {
       'nav.map': 'Map', 'nav.community': 'Community', 'nav.profile': 'Profile',
       'fab.report': 'Report',
       'header.context': 'Monsoon hazard map for Mumbai',
+      'header.contextCity': 'Monsoon hazard map for {city}',
       'location.banner': 'Turn on location to pin hazards accurately.',
       'location.enable': 'Turn on',
       'coach.step': 'Step 1 of 3', 'coach.title': 'Spot stagnant water?',
@@ -243,11 +341,18 @@ document.addEventListener('DOMContentLoaded', function () {
       'persona.ngo.exit': 'Exit NGO mode',
       'onboard.title': 'Welcome to CivicRadar',
       'onboard.subtitle': 'See hazards in your ward, rally neighbours, earn Civic Points together.',
+      'onboard.city': 'Your city',
+      'onboard.cityHint': 'Choose where you live — we detect your ward from GPS next.',
       'onboard.ward': 'Your Ward', 'onboard.wardPh': 'Start typing your ward…',
-      'onboard.wardHint': 'Pick from Mumbai\'s 24 official BMC wards.',
+      'onboard.wardHint': 'Pick from {city}\'s {n} official wards.',
+      'onboard.wardDetecting': 'Detecting your ward from location…',
+      'onboard.wardDetectedHint': 'Approximate ward from GPS — not an official boundary survey.',
+      'onboard.wardManual': 'Not right? Pick manually',
+      'onboard.wardRetry': 'Try detecting again',
+      'onboard.wardDetectFailed': 'Could not detect ward — pick manually or allow location.',
       'onboard.name': 'Display Name', 'onboard.namePh': 'What should neighbours call you?',
       'onboard.join': 'Join your ward',
-      'onboard.wardError': 'Pick a ward from the list.',
+      'onboard.wardError': 'Pick a ward from the list or allow location.',
       'report.title': 'Report a hazard',
       'report.step.photo': 'Photo', 'report.step.details': 'Details', 'report.step.submit': 'Submit',
       'report.hazardType': 'Hazard Type', 'report.photoEvidence': 'Photo',
@@ -270,6 +375,7 @@ document.addEventListener('DOMContentLoaded', function () {
       'success.step2': 'Optional: file via 1916 / MyBMC and save your complaint number',
       'success.step3': 'Volunteers or BMC can confirm when fixed — earn 50 Civic Points',
       'success.file': 'File with BMC (optional)',
+      'success.fileCorp': 'File with {corp} (optional)',
       'success.tag': 'Tag @mybmc', 'success.alert': 'Alert neighbours', 'success.done': 'Done',
       'success.sharePrompt': 'WhatsApp your building group — more eyes = faster fix.',
       'success.shareWhatsapp': 'Share on WhatsApp',
@@ -339,6 +445,11 @@ document.addEventListener('DOMContentLoaded', function () {
       'esc.participate.hint': 'Participate Mumbai is BMC’s official portal for volunteering and CSR — not for filing pest-control complaints. Use it to join clean-ups or propose ward projects.',
       'esc.participate.btn': 'Participate Mumbai',
       'esc.participate.small': 'Volunteer · CSR · projects',
+      'esc.corpTitle': 'File with local corporation (optional)',
+      'esc.corpHint': 'Use {corp}\'s official grievance portal for stagnant-water / pest-control complaints.',
+      'esc.corpBtn': 'Open {corp} portal',
+      'esc.corpSubtitle': 'CivicRadar shows hazards on the community map. Filing with your local corporation is optional — it starts the official clock.',
+      'esc.titleCorp': 'File with {corp} (optional)',
       'community.title': 'Community',
       'community.subtitle': "Fix it together in {ward} — volunteer, pledge supplies, or file with BMC separately.",
       'community.subtitleActive': '{ward}: {pending} open on the map · {resolved} fixed — rally neighbours or volunteer.',
@@ -517,7 +628,7 @@ document.addEventListener('DOMContentLoaded', function () {
       'copy1916.wardLabel': 'Ward + area',
       'copy1916.landmarkLabel': 'Nearest landmark / notes',
       'copy1916.gpsLabel': 'GPS',
-      'copy1916.gpsWarning': '⚠ GPS looks outside Mumbai — confirm location before filing',
+      'copy1916.gpsWarning': '⚠ GPS looks outside {city} — confirm location before filing',
       'copy1916.mapsLabel': 'Maps',
       'copy1916.dateLabel': 'Date',
       'copy1916.complaintNotFiled': 'BMC complaint #: (not yet filed)',
@@ -614,8 +725,12 @@ document.addEventListener('DOMContentLoaded', function () {
       'profile.persona.admin': 'BMC Admin',
       'profile.persona.ngo': 'NGO Coordinator',
       'flow.legal': 'Legal',
+      'flow.city': 'City',
       'flow.ward': 'Ward',
       'flow.ready': 'Ready',
+      'city.mumbai': 'Mumbai',
+      'city.pune': 'Pune',
+      'city.thane': 'Thane',
       'tos.title': 'Terms of Service',
       'tos.subtitle': 'Please read and accept before using CivicRadar.',
       'tos.age': 'You must be 18 or older to submit reports and use community features.',
@@ -662,7 +777,7 @@ document.addEventListener('DOMContentLoaded', function () {
       'toast.reportNotFound': 'That report link is invalid or no longer on this device.',
       'toast.installed': 'CivicRadar installed — open from your home screen!',
       'toast.installHint': 'Browser menu → Add to Home screen.',
-      'toast.wardRequired': 'Pick a ward from the official Mumbai list.',
+      'toast.wardRequired': 'Pick a ward from the official {city} list.',
       'toast.contactConfig': 'Contact email not set — see js/config.js',
       'toast.citizenView': 'Back to citizen view.',
       'toast.noLocation': 'Location not available in this browser.',
@@ -798,6 +913,7 @@ document.addEventListener('DOMContentLoaded', function () {
       'nav.map': 'मानचित्र', 'nav.community': 'समुदाय', 'nav.profile': 'प्रोफ़ाइल',
       'fab.report': 'रिपोर्ट',
       'header.context': 'मुंबई मानसून — खतरा नक्शा',
+      'header.contextCity': '{city} मानसून — खतरा नक्शा',
       'location.banner': 'सटीक रिपोर्ट के लिए स्थान चालू करें।',
       'location.enable': 'चालू करें',
       'coach.step': '3 में से चरण 1', 'coach.title': 'रुका पानी दिखा?',
@@ -811,6 +927,13 @@ document.addEventListener('DOMContentLoaded', function () {
       'onboard.subtitle': 'अपने वार्ड में खतरे देखें, पड़ोसियों को बुलाएँ और साथ में सिविक अंक कमाएँ।',
       'onboard.ward': 'आपका वार्ड', 'onboard.wardPh': 'अपना वार्ड टाइप करना शुरू करें…',
       'onboard.wardHint': 'मुंबई BMC के आधिकारिक 24 वार्डों में से चुनें।',
+      'onboard.city': 'आपका शहर',
+      'onboard.cityHint': 'चुनें कि आप कहाँ रहते हैं — अगला कदम GPS से वार्ड पहचान।',
+      'onboard.wardDetecting': 'आपके स्थान से वार्ड पहचाना जा रहा है…',
+      'onboard.wardDetectedHint': 'GPS से अनुमानित वार्ड — आधिकारिक सीमा सर्वेक्षण नहीं।',
+      'onboard.wardManual': 'गलत है? मैन्युअल चुनें',
+      'onboard.wardRetry': 'फिर से पहचानें',
+      'onboard.wardDetectFailed': 'वार्ड नहीं मिला — मैन्युअल चुनें या लोकेशन अनुमति दें।',
       'onboard.name': 'प्रदर्शित नाम',       'onboard.namePh': 'पड़ोसी आपको क्या कहें?',
       'onboard.join': 'वार्ड से जुड़ें',
       'report.title': 'खतरे की रिपोर्ट करें',
@@ -1140,7 +1263,7 @@ document.addEventListener('DOMContentLoaded', function () {
       'copy1916.complaintNotFiled': 'BMC शिकायत #: (अभी दर्ज नहीं)',
       'copy1916.dateLabel': 'तारीख',
       'copy1916.gpsLabel': 'GPS',
-      'copy1916.gpsWarning': '⚠ GPS मुंबई से बाहर लगता है — दर्ज करने से पहले जगह पुष्टि करें',
+      'copy1916.gpsWarning': '⚠ GPS {city} से बाहर लगता है — दर्ज करने से पहले जगह पुष्टि करें',
       'copy1916.header': 'BMC शिकायत विवरण (1916 / MyBMC कॉल पर कॉपी-पेस्ट)',
       'copy1916.landmarkLabel': 'नज़दीकी लैंडमार्क / नोट',
       'copy1916.linkLocalhostNote': '(ऐप डिप्लॉय होने पर लिंक काम करेगा)',
@@ -1155,7 +1278,7 @@ document.addEventListener('DOMContentLoaded', function () {
       'map.legend.pending': 'खुला',
       'map.legend.resolved': 'ठीक',
       'map.legend.you': 'आप',
-      'onboard.wardError': 'सूची से वार्ड चुनें।',
+      'onboard.wardError': 'सूची से वार्ड चुनें या लोकेशन अनुमति दें।',
       'persona.admin.exit': 'BMC मोड बंद',
       'persona.admin.header': 'BMC समीक्षा मोड',
       'persona.admin.idleEmpty': 'कोई लंबित रिपोर्ट नहीं। नए पिन यहाँ दिखेंगे।',
@@ -1231,7 +1354,7 @@ document.addEventListener('DOMContentLoaded', function () {
       'toast.volunteerTaskDuplicate': 'आप पहले ही इस खतरे में मदद की पेशकश कर चुके।',
       'toast.volunteerTaskOffered': 'ऑफर भेजा — समन्वयक आपको इस स्पॉट से मिलाएगा।',
       'toast.volunteerWardRequired': 'पहले ऑनबोर्डिंग में वार्ड सेट करें।',
-      'toast.wardRequired': 'मुंबई की आधिकारिक सूची से वार्ड चुनें।',
+      'toast.wardRequired': '{city} की आधिकारिक सूची से वार्ड चुनें।',
       'toast.welcome': 'स्वागत, {name}! रिपोर्ट के लिए तैयार।',
       'tos.accept': 'मैं 18+ हूँ, <a href="terms.html" target="_blank" rel="noopener noreferrer">Terms</a> और <a href="privacy.html" target="_blank" rel="noopener noreferrer">Privacy Policy</a> स्वीकार करता/करती हूँ',
       'tos.age': 'रिपोर्ट और समुदाय फीचर के लिए 18+ होना ज़रूरी।',
@@ -1327,6 +1450,7 @@ document.addEventListener('DOMContentLoaded', function () {
       'nav.map': 'नकाशा', 'nav.community': 'समुदाय', 'nav.profile': 'प्रोफाइल',
       'fab.report': 'तक्रार',
       'header.context': 'मुंबई पावसाळ — धोका नकाशा',
+      'header.contextCity': '{city} पावसाळ — धोका नकाशा',
       'location.banner': 'अचूक तक्रारीसाठी स्थान चालू करा.',
       'location.enable': 'चालू करा',
       'coach.step': '3 पैकी पायरी 1', 'coach.title': 'साचलेले पाणी दिसले?',
@@ -1340,6 +1464,13 @@ document.addEventListener('DOMContentLoaded', function () {
       'onboard.subtitle': 'तुमच्या वॉर्डातील धोके पहा, शेजाऱ्यांना बोलवा आणि एकत्र सिव्हिक गुण मिळवा.',
       'onboard.ward': 'तुमचा वॉर्ड', 'onboard.wardPh': 'तुमचा वॉर्ड टाइप करायला सुरुवात करा…',
       'onboard.wardHint': 'मुंबई BMC च्या अधिकृत 24 वॉर्डांमधून निवडा.',
+      'onboard.city': 'तुमचे शहर',
+      'onboard.cityHint': 'कुठे राहता ते निवडा — पुढे GPS वरून वॉर्ड शोधू.',
+      'onboard.wardDetecting': 'तुमच्या स्थानावरून वॉर्ड शोधत आहे…',
+      'onboard.wardDetectedHint': 'GPS वरून अंदाजे वॉर्ड — अधिकृत सीमा सर्वेक्षण नाही.',
+      'onboard.wardManual': 'चुकीचे? स्वतः निवडा',
+      'onboard.wardRetry': 'पुन्हा शोधा',
+      'onboard.wardDetectFailed': 'वॉर्ड सापडला नाही — स्वतः निवडा किंवा लोकेशन परवानगी द्या.',
       'onboard.name': 'प्रदर्शित नाव', 'onboard.namePh': 'आम्ही तुम्हाला काय म्हणावे?',
       'onboard.join': 'समुदायात सामील व्हा',
       'report.title': 'धोक्याची तक्रार करा',
@@ -1664,7 +1795,7 @@ document.addEventListener('DOMContentLoaded', function () {
       'copy1916.complaintNotFiled': 'BMC तक्रार #: (अद्याप नोंद नाही)',
       'copy1916.dateLabel': 'तारीख',
       'copy1916.gpsLabel': 'GPS',
-      'copy1916.gpsWarning': '⚠ GPS मुंबई बाहेर दिसतो — नोंदणीपूर्वी ठिकाण पुष्टी करा',
+      'copy1916.gpsWarning': '⚠ GPS {city} बाहेर दिसतो — नोंदणीपूर्वी ठिकाण पुष्टी करा',
       'copy1916.header': 'BMC तक्रार तपशील (1916 / MyBMC कॉलवर कॉपी-पेस्ट)',
       'copy1916.landmarkLabel': 'जवळचे लँडमार्क / टीप',
       'copy1916.linkLocalhostNote': '(अ‍ॅप डिप्लॉय झाल्यावर लिंक काम करेल)',
@@ -1679,7 +1810,7 @@ document.addEventListener('DOMContentLoaded', function () {
       'map.legend.pending': 'उघडे',
       'map.legend.resolved': 'निराकरण',
       'map.legend.you': 'तुम्ही',
-      'onboard.wardError': 'यादीतून वॉर्ड निवडा.',
+      'onboard.wardError': 'यादीतून वॉर्ड निवडा किंवा लोकेशन परवानगी द्या.',
       'persona.admin.exit': 'BMC मोड बंद',
       'persona.admin.header': 'BMC पुनरावलोकन मोड',
       'persona.admin.idleEmpty': 'प्रलंबित तक्रारी नाहीत. नवीन पिन येथे दिसतील.',
@@ -1755,7 +1886,7 @@ document.addEventListener('DOMContentLoaded', function () {
       'toast.volunteerTaskDuplicate': 'या धोक्यासाठी आधीच ऑफर केले आहे.',
       'toast.volunteerTaskOffered': 'ऑफर पाठवला — समन्वयक या स्पॉटशी जुळवेल.',
       'toast.volunteerWardRequired': 'प्रथम ऑनबोर्डिंगमध्ये वॉर्ड सेट करा.',
-      'toast.wardRequired': 'मुंबईच्या अधिकृत यादीतून वॉर्ड निवडा.',
+      'toast.wardRequired': '{city}च्या अधिकृत यादीतून वॉर्ड निवडा.',
       'toast.welcome': 'स्वागत, {name}! तक्रारीसाठी तयार.',
       'tos.accept': 'मी 18+ आहे, <a href="terms.html" target="_blank" rel="noopener noreferrer">Terms</a> आणि <a href="privacy.html" target="_blank" rel="noopener noreferrer">Privacy Policy</a> स्वीकारतो/स्वीकारते',
       'tos.age': 'तक्रार आणि समुदाय वैशिष्ट्यांसाठी 18+ आवश्यक.',
@@ -1854,6 +1985,7 @@ document.addEventListener('DOMContentLoaded', function () {
       'nav.map': 'નકશો', 'nav.community': 'સમુદાય', 'nav.profile': 'પ્રોફાઇલ',
       'fab.report': 'ફરિયાદ',
       'header.context': 'મુંબઈ ચોમાસું — જોખમ નકશો',
+      'header.contextCity': '{city} ચોમાસું — જોખમ નકશો',
       'location.banner': 'સચોટ ફરિયાદ માટે સ્થાન ચાલુ કરો.',
       'location.enable': 'ચાલુ કરો',
       'coach.step': '3 માંથી પગલું 1', 'coach.title': 'ભરાયેલું પાણી દેખાયું?',
@@ -1867,6 +1999,13 @@ document.addEventListener('DOMContentLoaded', function () {
       'onboard.subtitle': 'તમારા વોર્ડમાં જોખમો જુઓ, પડોશીઓને બોલાવો અને સાથે સિવિક પોઈન્ટ મેળવો.',
       'onboard.ward': 'તમારો વોર્ડ', 'onboard.wardPh': 'તમારો વોર્ડ ટાઈપ કરવાનું શરૂ કરો…',
       'onboard.wardHint': 'મુંબઈ BMC ના સત્તાવાર 24 વોર્ડમાંથી પસંદ કરો.',
+      'onboard.city': 'તમારું શહેર',
+      'onboard.cityHint': 'ક્યાં રહો છો પસંદ કરો — પછી GPS થી વોર્ડ શોધીશું.',
+      'onboard.wardDetecting': 'તમારા સ્થાનથી વોર્ડ શોધી રહ્યા છીએ…',
+      'onboard.wardDetectedHint': 'GPS થી અંદાજિત વોર્ડ — અધિકૃત સીમા સર્વેક્ષણ નથી.',
+      'onboard.wardManual': 'ખોટું? જાતે પસંદ કરો',
+      'onboard.wardRetry': 'ફરી શોધો',
+      'onboard.wardDetectFailed': 'વોર્ડ મળ્યો નહીં — જાતે પસંદ કરો અથવા લોકેશન મંજૂરી આપો.',
       'onboard.name': 'પ્રદર્શિત નામ', 'onboard.namePh': 'અમે તમને શું કહીએ?',
       'onboard.join': 'સમુદાયમાં જોડાઓ',
       'report.title': 'જોખમની ફરિયાદ કરો',
@@ -2188,7 +2327,7 @@ document.addEventListener('DOMContentLoaded', function () {
       'copy1916.complaintNotFiled': 'BMC ફરિયાદ #: (હજુ નોંધ નથી)',
       'copy1916.dateLabel': 'તારીખ',
       'copy1916.gpsLabel': 'GPS',
-      'copy1916.gpsWarning': '⚠ GPS મુંબઈ બહાર લાગે છે — નોંધાવતા પહેલાં જગ્યા ચકાસો',
+      'copy1916.gpsWarning': '⚠ GPS {city} બહાર લાગે છે — નોંધાવતા પહેલાં જગ્યા ચકાસો',
       'copy1916.header': 'BMC ફરિયાદ વિગત (1916 / MyBMC કૉલ પર કૉપી-પેસ્ટ)',
       'copy1916.landmarkLabel': 'નજીકનું લેન્ડમાર્ક / નોંધ',
       'copy1916.linkLocalhostNote': '(એપ ડિપ્લોય થયા પછી લિંક કામ કરશે)',
@@ -2203,7 +2342,7 @@ document.addEventListener('DOMContentLoaded', function () {
       'map.legend.pending': 'ખુલ્લા',
       'map.legend.resolved': 'ઉકેલાયા',
       'map.legend.you': 'તમે',
-      'onboard.wardError': 'યાદીમાંથી વોર્ડ પસંદ કરો.',
+      'onboard.wardError': 'યાદીમાંથી વોર્ડ પસંદ કરો અથવા લોકેશન મંજૂરી આપો.',
       'persona.admin.exit': 'BMC મોડ બંધ',
       'persona.admin.header': 'BMC સમીક્ષા મોડ',
       'persona.admin.idleEmpty': 'બાકી ફરિયાદો નથી. નવા પિન અહીં દેખાશે.',
@@ -2279,7 +2418,7 @@ document.addEventListener('DOMContentLoaded', function () {
       'toast.volunteerTaskDuplicate': 'આ જોખમ માટે પહેલેથી ઓફર કરી છે.',
       'toast.volunteerTaskOffered': 'ઓફર મોકલી — સંકલક આ સ્પોટ સાથે મેળવશે.',
       'toast.volunteerWardRequired': 'પહેલા ઑનબોર્ડિંગમાં વોર્ડ સેટ કરો.',
-      'toast.wardRequired': 'મુંબઈની અધિકૃત યાદીમાંથી વોર્ડ પસંદ કરો.',
+      'toast.wardRequired': '{city}ની અધિકૃત યાદીમાંથી વોર્ડ પસંદ કરો.',
       'toast.welcome': 'સ્વાગત, {name}! ફરિયાદ માટે તૈયાર.',
       'tos.accept': 'હું 18+ છું, <a href="terms.html" target="_blank" rel="noopener noreferrer">Terms</a> અને <a href="privacy.html" target="_blank" rel="noopener noreferrer">Privacy Policy</a> સ્વીકારું છું',
       'tos.age': 'ફરિયાદ અને સમુદાય ફીચર માટે 18+ જરૂરી.',
@@ -2415,6 +2554,8 @@ document.addEventListener('DOMContentLoaded', function () {
     if (langBtn) langBtn.textContent = currentLang === 'en' ? 'EN' : t('lang.native');
     updateSyncStatus();
     updatePersonaUI();
+    updateHeaderContext();
+    if ($('#onboardCity')) syncOnboardingCityUi(getOnboardingCity());
   }
 
   function updateSyncStatus() {
@@ -2452,7 +2593,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function aggregateWardLeaderboard() {
     const byWard = {};
-    loadReports().forEach((r) => {
+    cityScopedReports(loadReports()).forEach((r) => {
       if (!r.ward || isReportHidden(r.id)) return;
       if (!byWard[r.ward]) {
         byWard[r.ward] = { name: r.ward, points: 0, reports: 0, resolved: 0, isUser: false, isDemo: false };
@@ -2469,11 +2610,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function aggregateCitizenLeaderboard() {
     const byCitizen = {};
-    loadReports().forEach((r) => {
+    cityScopedReports(loadReports()).forEach((r) => {
       if (isReportHidden(r.id)) return;
       const key = r.reporterId || r.reporter || 'anon';
       const name = r.reporter || 'Citizen';
-      const ward = r.ward ? r.ward.split('—')[0].trim() : 'Mumbai';
+      const ward = r.ward ? r.ward.split('—')[0].trim() : getCityLabel(getReportCity(r));
       if (!byCitizen[key]) {
         byCitizen[key] = { name, ward, points: 0, isUser: false, isDemo: false };
       }
@@ -2618,9 +2759,11 @@ document.addEventListener('DOMContentLoaded', function () {
       const raw = localStorage.getItem(USER_KEY);
       const parsed = raw ? JSON.parse(raw) : defaultUser();
       if (!parsed.id) parsed.id = generateId();
+      const cityCfg = (window.CIVICRADAR_CONFIG || {}).cities || CITIES || {};
+      if (!parsed.city || !cityCfg[parsed.city]) parsed.city = DEFAULT_CITY;
       if (parsed.analyticsConsent == null) parsed.analyticsConsent = false;
       if (parsed.displayName) parsed.displayName = sanitizeDisplayName(parsed.displayName);
-      if (parsed.ward && !isValidWard(parsed.ward)) parsed.ward = '';
+      if (parsed.ward && !isValidWard(parsed.ward, parsed.city)) parsed.ward = '';
       migrateLegacyReports(parsed);
       localStorage.setItem(USER_KEY, JSON.stringify(parsed));
       return parsed;
@@ -2635,6 +2778,7 @@ document.addEventListener('DOMContentLoaded', function () {
       tosAccepted: false,
       analyticsConsent: false,
       gpsConsent: false,
+      city: DEFAULT_CITY,
       ward: '',
       displayName: '',
       pledges: [],
@@ -2663,6 +2807,7 @@ document.addEventListener('DOMContentLoaded', function () {
       notes: sanitizeText(r.notes, 500),
       image: r.image || '',
       ward: r.ward || '',
+      city: r.city || getReportCity(r),
       reporter: sanitizeDisplayName(r.reporter || ''),
       lat: r.lat ?? null,
       lng: r.lng ?? null,
@@ -2851,6 +2996,7 @@ document.addEventListener('DOMContentLoaded', function () {
         notes: r.notes,
         image: r.image,
         ward: r.ward,
+        city: r.city || DEFAULT_CITY,
         lat: r.lat,
         lng: r.lng,
         status: r.status,
@@ -2878,6 +3024,7 @@ document.addEventListener('DOMContentLoaded', function () {
         notes: r.notes || '',
         image: r.image || '',
         ward: r.ward || '',
+        city: r.city || getUserCity(),
         lat: r.lat,
         lng: r.lng,
         status: r.status || 'pending',
@@ -2903,6 +3050,7 @@ document.addEventListener('DOMContentLoaded', function () {
         citizen_name: p.citizen || '',
         type: p.type,
         ward: p.ward || '',
+        city: p.city || getUserCity(),
         message: p.message || '',
         delivered: !!p.delivered,
         verified: !!p.hoursVerified || !!p.verified,
@@ -2917,6 +3065,7 @@ document.addEventListener('DOMContentLoaded', function () {
         citizen: r.citizen_name,
         type: r.type,
         ward: r.ward,
+        city: r.city || DEFAULT_CITY,
         message: r.message,
         delivered: !!r.delivered,
         hoursVerified: !!r.verified,
@@ -2930,6 +3079,7 @@ document.addEventListener('DOMContentLoaded', function () {
         userId: r.user_id,
         displayName: r.display_name,
         ward: r.ward,
+        city: r.city || DEFAULT_CITY,
         neighbourhood: r.neighbourhood,
         hours: Number(r.hours) || 2,
         skills: Array.isArray(r.skills) ? r.skills : [],
@@ -2945,6 +3095,7 @@ document.addEventListener('DOMContentLoaded', function () {
         user_id: v.userId || user.id,
         display_name: v.displayName || user.displayName || '',
         ward: v.ward,
+        city: v.city || getUserCity(),
         neighbourhood: v.neighbourhood,
         hours: v.hours,
         skills: v.skills || [],
@@ -3207,7 +3358,7 @@ document.addEventListener('DOMContentLoaded', function () {
     async getMyRole() {
       const { data: { user: u } } = await this.client.auth.getUser();
       if (!u) return null;
-      const { data, error } = await this.client.from('profiles').select('role, ward, coordinator_scope, neighbourhood_label').eq('id', u.id).single();
+      const { data, error } = await this.client.from('profiles').select('role, ward, city, coordinator_scope, neighbourhood_label').eq('id', u.id).single();
       if (error) return { role: 'citizen', ward: '' };
       return data;
     },
@@ -3312,6 +3463,17 @@ document.addEventListener('DOMContentLoaded', function () {
   // so the user keeps ownership of reports/pledges created in offline mode.
   function adoptBackendUserId(uid) {
     if (!uid || user.id === uid) return;
+    const preserved = {
+      tosAccepted: user.tosAccepted,
+      analyticsConsent: user.analyticsConsent,
+      gpsConsent: user.gpsConsent,
+      city: user.city || DEFAULT_CITY,
+      ward: user.ward,
+      displayName: user.displayName,
+      pledges: user.pledges || [],
+      coordinatorScope: user.coordinatorScope || '',
+      neighbourhoodLabel: user.neighbourhoodLabel || '',
+    };
     const oldId = user.id;
     const reports = loadReports().map((r) => {
       if (r.reporterId === oldId) r.reporterId = uid;
@@ -3328,7 +3490,7 @@ document.addEventListener('DOMContentLoaded', function () {
       return v;
     });
     saveVolunteerSignups(vols);
-    user.id = uid;
+    Object.assign(user, preserved, { id: uid });
     saveUser();
   }
 
@@ -4071,7 +4233,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const el = $('#mapEmptyCta');
     if (!el) return;
     const citizen = getActivePersona() === 'citizen';
-    const show = citizen && user.ward && getUserReports().length === 0 && loadReports().length === 0;
+    const show = citizen && user.ward && getUserReports().length === 0 && cityScopedReports(loadReports()).length === 0;
     el.classList.toggle('hidden', !show);
   }
 
@@ -4711,6 +4873,7 @@ document.addEventListener('DOMContentLoaded', function () {
       if (profile && profile.role === 'bmc') setAdminMode(true);
       else if (profile && profile.role === 'ngo_lead') {
         if (profile.ward) { user.ward = user.ward || profile.ward; }
+        if (profile.city) { user.city = user.city || profile.city; }
         user.coordinatorScope = profile.coordinator_scope || 'ward';
         user.neighbourhoodLabel = profile.neighbourhood_label || '';
         saveUser();
@@ -4816,12 +4979,128 @@ document.addEventListener('DOMContentLoaded', function () {
     );
   }
 
-  function getMumbaiWards() {
-    return Array.from($$('#mumbaiCommunities option')).map((o) => o.value);
+  function getCityWards(cityId) {
+    const city = cityId || getUserCity();
+    if (window.CivicWardDetect && CivicWardDetect.getWardNames) {
+      return CivicWardDetect.getWardNames(city);
+    }
+    return Array.from($$(`#${wardDatalistId(city)} option`)).map((o) => o.value);
   }
 
-  function isValidWard(ward) {
-    return getMumbaiWards().includes(ward);
+  function isValidWard(ward, cityId) {
+    const city = cityId || getUserCity();
+    if (window.CivicWardDetect && CivicWardDetect.isKnownWard) {
+      return CivicWardDetect.isKnownWard(ward, city);
+    }
+    return getCityWards(city).includes(ward);
+  }
+
+  let onboardingDetectedWard = '';
+
+  function detectWardFromCoords(lat, lng, cityId) {
+    const city = cityId || getOnboardingCity() || getUserCity();
+    if (window.CivicWardDetect && typeof CivicWardDetect.detectWard === 'function') {
+      return CivicWardDetect.detectWard(lat, lng, city);
+    }
+    return null;
+  }
+
+  function resolveReportWard(lat, lng) {
+    return detectWardFromCoords(lat, lng, getUserCity()) || user.ward || null;
+  }
+
+  function showOnboardingWardDetecting() {
+    const status = $('#wardDetectStatus');
+    const detected = $('#wardDetected');
+    const hint = $('#wardDetectedHint');
+    if (status) status.classList.remove('hidden');
+    if (detected) detected.classList.add('hidden');
+    if (hint) hint.classList.add('hidden');
+    $('#wardManualGroup')?.classList.add('hidden');
+    $('#btnWardManual')?.classList.add('hidden');
+    $('#btnWardRetry')?.classList.add('hidden');
+    const statusText = $('#wardDetectStatusText');
+    if (statusText) statusText.textContent = t('onboard.wardDetecting');
+  }
+
+  function showOnboardingWardDetected(ward) {
+    onboardingDetectedWard = ward;
+    const input = $('#wardInput');
+    if (input) input.value = ward;
+    $('#wardDetectStatus')?.classList.add('hidden');
+    $('#wardDetected')?.classList.remove('hidden');
+    const nameEl = $('#wardDetectedName');
+    if (nameEl) nameEl.textContent = ward;
+    $('#wardDetectedHint')?.classList.remove('hidden');
+    $('#btnWardManual')?.classList.remove('hidden');
+    $('#btnWardRetry')?.classList.add('hidden');
+  }
+
+  function showOnboardingWardDetectFailed() {
+    onboardingDetectedWard = '';
+    $('#wardDetectStatus')?.classList.add('hidden');
+    $('#wardDetected')?.classList.add('hidden');
+    $('#wardDetectedHint')?.classList.add('hidden');
+    $('#wardManualGroup')?.classList.remove('hidden');
+    $('#btnWardManual')?.classList.add('hidden');
+    $('#btnWardRetry')?.classList.remove('hidden');
+    const input = $('#wardInput');
+    if (input && !input.value.trim()) input.focus();
+  }
+
+  function showOnboardingWardManual() {
+    $('#wardManualGroup')?.classList.remove('hidden');
+    $('#btnWardManual')?.classList.add('hidden');
+    const input = $('#wardInput');
+    if (input) {
+      input.focus();
+      input.select();
+    }
+  }
+
+  function getOnboardingWard() {
+    const manual = ($('#wardInput') && $('#wardInput').value.trim()) || '';
+    if (manual) return manual;
+    return onboardingDetectedWard || '';
+  }
+
+  function applyWardFromCoords(lat, lng) {
+    const ward = detectWardFromCoords(lat, lng, getOnboardingCity());
+    if (!ward) return null;
+    if (overlays.onboarding && overlays.onboarding.classList.contains('open')) {
+      showOnboardingWardDetected(ward);
+    }
+    return ward;
+  }
+
+  function startOnboardingWardDetect() {
+    onboardingDetectedWard = '';
+    const input = $('#wardInput');
+    if (input) input.value = '';
+    syncOnboardingCityUi(getOnboardingCity());
+    showOnboardingWardDetecting();
+    if (!navigator.geolocation) {
+      showOnboardingWardDetectFailed();
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        user.gpsConsent = true;
+        saveUser();
+        currentLat = pos.coords.latitude;
+        currentLng = pos.coords.longitude;
+        const ward = applyWardFromCoords(currentLat, currentLng);
+        if (ward) {
+          showOnboardingWardDetected(ward);
+        } else {
+          showOnboardingWardDetectFailed();
+        }
+      },
+      () => {
+        showOnboardingWardDetectFailed();
+      },
+      { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 }
+    );
   }
 
   /* ---------- Modals ---------- */
@@ -4851,6 +5130,12 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     };
     document.addEventListener('keydown', focusTrapHandler);
+    if (name === 'onboarding') {
+      const citySel = $('#onboardCity');
+      if (citySel) citySel.value = user.city || DEFAULT_CITY;
+      syncOnboardingCityUi(getOnboardingCity());
+      startOnboardingWardDetect();
+    }
   }
 
   function closeModal(name) {
@@ -4921,6 +5206,8 @@ document.addEventListener('DOMContentLoaded', function () {
   window.openPledgeModal = function () {
     if (!requireCommunityConsent()) return;
     if (user.ward) $('#pledgeWard').value = user.ward;
+    const pledgeWard = $('#pledgeWard');
+    if (pledgeWard) pledgeWard.setAttribute('list', wardDatalistId());
     openModal('pledge');
   };
   window.closePledgeModal = function () { closeModal('pledge'); };
@@ -5110,6 +5397,7 @@ document.addEventListener('DOMContentLoaded', function () {
       if (!user.tosAccepted) user.tosAccepted = true;
       if (!user.analyticsConsent) user.analyticsConsent = true;
       if (!user.ward) user.ward = 'G/N Ward — Dadar, Shivaji Park';
+      if (!user.city) user.city = DEFAULT_CITY;
       if (!user.displayName) user.displayName = 'Priya';
       saveUser();
       if (window.CivicAnalytics) CivicAnalytics.setConsent(true);
@@ -5146,7 +5434,7 @@ document.addEventListener('DOMContentLoaded', function () {
       map = L.map('map', {
         zoomControl: false,
         attributionControl: true,
-      }).setView(MUMBAI_CENTER, 12);
+      }).setView(getCityCenter(), 12);
 
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
@@ -5218,6 +5506,7 @@ document.addEventListener('DOMContentLoaded', function () {
         currentLat = pos.coords.latitude;
         currentLng = pos.coords.longitude;
         hideLocationBanner();
+        applyWardFromCoords(currentLat, currentLng);
         if (recenter) map.setView([currentLat, currentLng], 14);
         if (userMarker) map.removeLayer(userMarker);
         userMarker = L.circleMarker([currentLat, currentLng], {
@@ -5291,7 +5580,7 @@ document.addEventListener('DOMContentLoaded', function () {
     return `
       <div class="map-popup">
         <div class="popup__title">${escapeHtml(hazardLabel(report.hazard))}</div>
-        <div class="popup__meta">${escapeHtml(status)} · ${escapeHtml((report.ward || 'Mumbai').split('—')[0].trim())}</div>
+        <div class="popup__meta">${escapeHtml(status)} · ${escapeHtml((report.ward || getCityLabel(getReportCity(report))).split('—')[0].trim())}</div>
         ${clearedLine}
         ${countLine}
         ${fixCountLine}
@@ -5301,9 +5590,11 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function reportsForMap() {
-    return loadReports().filter(
+    let reports = loadReports().filter(
       (r) => !isReportHidden(r.id) && r.lat != null && r.lng != null
     );
+    if (!isAdmin) reports = cityScopedReports(reports);
+    return reports;
   }
 
   function reportsInViewport(reports) {
@@ -5399,26 +5690,32 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     $('#btnOnboardingContinue').addEventListener('click', () => {
-      const ward = $('#wardInput').value.trim();
+      const ward = getOnboardingWard().trim();
       const name = $('#displayName').value.trim() || 'Citizen';
       $('#wardError').classList.add('hidden');
       if (!ward) {
         $('#wardError').classList.remove('hidden');
-        $('#wardInput').focus();
+        if ($('#wardManualGroup')?.classList.contains('hidden')) showOnboardingWardManual();
+        else $('#wardInput')?.focus();
         return;
       }
-      if (!isValidWard(ward)) {
+      if (!isValidWard(ward, getOnboardingCity())) {
         $('#wardError').classList.remove('hidden');
-        showToast(t('toast.wardRequired'), 'error');
+        showToast(t('toast.wardRequired').replace('{city}', getCityLabel(getOnboardingCity())), 'error');
         return;
       }
+      user.city = getOnboardingCity();
       user.ward = ward;
       user.displayName = sanitizeDisplayName(name);
       saveUser();
       if (window.CivicAnalytics) {
-        CivicAnalytics.track('onboarding_complete', { wardCode: ward.split('—')[0].trim() }, ward);
+        CivicAnalytics.track('onboarding_complete', {
+          wardCode: ward.split('—')[0].trim(),
+          city: user.city,
+        }, ward);
       }
       closeModal('onboarding');
+      updateHeaderContext();
       updateProfileUI();
       updatePersonaUI();
       renderLeaderboard('wards');
@@ -5429,7 +5726,22 @@ document.addEventListener('DOMContentLoaded', function () {
 
     $('#wardInput').addEventListener('input', () => {
       $('#wardError').classList.add('hidden');
+      onboardingDetectedWard = '';
     });
+
+    const btnWardManual = $('#btnWardManual');
+    if (btnWardManual) btnWardManual.addEventListener('click', showOnboardingWardManual);
+    const btnWardRetry = $('#btnWardRetry');
+    if (btnWardRetry) btnWardRetry.addEventListener('click', startOnboardingWardDetect);
+    const onboardCity = $('#onboardCity');
+    if (onboardCity) {
+      onboardCity.addEventListener('change', () => {
+        onboardingDetectedWard = '';
+        if ($('#wardInput')) $('#wardInput').value = '';
+        syncOnboardingCityUi(getOnboardingCity());
+        startOnboardingWardDetect();
+      });
+    }
 
     $('#btnDismissCoach').addEventListener('click', dismissCoachMark);
     $('#btnPartnerAccess').addEventListener('click', window.openPartnerPortal);
@@ -5560,6 +5872,8 @@ document.addEventListener('DOMContentLoaded', function () {
     $('#btnEscSaveId').addEventListener('click', saveComplaintId);
     $('#btnEscAaple').addEventListener('click', escalationOpenAapleSarkar);
     $('#btnEscParticipate').addEventListener('click', escalationOpenParticipateMumbai);
+    const btnEscCorp = $('#btnEscCorpPortal');
+    if (btnEscCorp) btnEscCorp.addEventListener('click', escalationOpenCorpPortal);
     $('#btnEscResolveOwn').addEventListener('click', (e) => resolveOwnReport(e.currentTarget.dataset.reportId));
     $('#btnEscClose').addEventListener('click', tryCloseEscalation);
     const escLadder = $('#escLadder');
@@ -5954,7 +6268,8 @@ document.addEventListener('DOMContentLoaded', function () {
           hazard,
           notes,
           image: lastReportDataUrl,
-          ward: user.ward,
+          ward: resolveReportWard(lat, lng),
+          city: getUserCity(),
           reporter: user.displayName || 'Citizen',
           lat,
           lng,
@@ -5980,6 +6295,7 @@ document.addEventListener('DOMContentLoaded', function () {
             hasGps: true,
             hasPhoto: true,
             path: 'new_report',
+            city: getUserCity(),
           }, user.ward);
           CivicAnalytics.perfEnd('report_submit_duration');
         }
@@ -6037,6 +6353,13 @@ document.addEventListener('DOMContentLoaded', function () {
       ptsEl.classList.add('is-animating');
     }
     openModal('success');
+    const fileBtn = $('#btnSuccessFile');
+    if (fileBtn) {
+      const corp = getCityCorpChannels(getUserCity());
+      fileBtn.textContent = getUserCity() === 'mumbai'
+        ? t('success.file')
+        : t('success.fileCorp').replace('{corp}', corp.name || getCityLabel());
+    }
   }
 
   function resetReportForm() {
@@ -6121,7 +6444,7 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function buildDefaultShareMessage() {
-    const ward = user.ward ? getWardShortName(user.ward) : 'Mumbai';
+    const ward = user.ward ? getWardShortName(user.ward) : getCityLabel();
     return fillShareTemplate(
       `🗺️ Stagnant water in ${ward}? See hazards on CivicRadar & rally neighbours:\n{link}\n\n{marathi}\n{hashtags}`,
       { ward, link: getShareAppUrl() }
@@ -6161,7 +6484,7 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function buildShareWardMapMessage() {
-    const wardLabel = user.ward ? getWardShortName(user.ward) : 'Mumbai';
+    const wardLabel = user.ward ? getWardShortName(user.ward) : getCityLabel();
     const userStat = user.ward
       ? getWardReportStats().find((s) => s.name === user.ward)
       : null;
@@ -6644,9 +6967,19 @@ document.addEventListener('DOMContentLoaded', function () {
     return (I18N.en && I18N.en[key]) || key;
   }
 
-  function isGpsOutsideMumbai(lat, lng) {
+  function isGpsOutsideCity(lat, lng, cityId) {
     if (lat == null || lng == null) return false;
-    return lat < 18.9 || lat > 19.3 || lng < 72.7 || lng > 73.0;
+    const city = cityId || getUserCity();
+    if (window.CivicWardDetect && CivicWardDetect.inCityBounds) {
+      return !CivicWardDetect.inCityBounds(lat, lng, city);
+    }
+    const b = getCityConfig(city).bounds;
+    if (!b) return false;
+    return lat < b.minLat || lat > b.maxLat || lng < b.minLng || lng > b.maxLng;
+  }
+
+  function isGpsOutsideMumbai(lat, lng) {
+    return isGpsOutsideCity(lat, lng, 'mumbai');
   }
 
   function formatWardForCopy(wardParts) {
@@ -6813,8 +7146,8 @@ document.addEventListener('DOMContentLoaded', function () {
       report.lat != null && report.lng != null
         ? ` GPS: ${report.lat.toFixed(6)}, ${report.lng.toFixed(6)}. Maps: https://maps.google.com/?q=${report.lat},${report.lng}.`
         : '';
-    const gpsWarn = (report.lat != null && isGpsOutsideMumbai(report.lat, report.lng))
-      ? ` ${te('copy1916.gpsWarning')}.`
+    const gpsWarn = (report.lat != null && isGpsOutsideCity(report.lat, report.lng, getReportCity(report)))
+      ? ` ${te('copy1916.gpsWarning').replace('{city}', getCityLabel(getReportCity(report)))}.`
       : '';
     const link = reportCopyDeepLink(report.id);
     const linkNote = isLocalhostOrigin() && !getPublicAppUrl() ? ` ${te('copy1916.linkLocalhostNote')}` : '';
@@ -6823,8 +7156,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const marathi = marathiLead
       ? ` Marathi: ${marathiLead.replace('{ward}', wardLine)} ${marathiAction}`
       : '';
+    const cityLabel = getCityLabel(getReportCity(report));
     return (
-      `${category} in Ward ${wardLine}, Mumbai.${loc}${gpsWarn} ` +
+      `${category} in Ward ${wardLine}, ${cityLabel}.${loc}${gpsWarn} ` +
       `Please depute the ward Pest Control Officer for anti-larval treatment.` +
       (report.notes ? ` Landmark: ${report.notes}.` : '') +
       ` CivicRadar: ${link}.${linkNote}${marathi}`
@@ -6832,7 +7166,7 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function buildFollowUpText(report, tier) {
-    const wardName = getWardShortName(report.ward) || 'Mumbai';
+    const wardName = getWardShortName(report.ward) || getCityLabel(getReportCity(report));
     const wardFull = report.ward || wardName;
     const cid = report.complaintId || '(complaint number)';
     const hazard = hazardLabel(report.hazard);
@@ -6910,6 +7244,41 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function renderEscalation(report) {
+    const city = getReportCity(report);
+    const isMumbai = city === 'mumbai';
+    const corp = getCityCorpChannels(city);
+    const bmcPanel = $('#escBmcPanel');
+    const corpPanel = $('#escCorpPanel');
+    const participateBlock = $('#escParticipateBlock');
+    if (bmcPanel) bmcPanel.classList.toggle('hidden', !isMumbai);
+    if (corpPanel) corpPanel.classList.toggle('hidden', isMumbai);
+    if (participateBlock) participateBlock.classList.toggle('hidden', !isMumbai);
+    $('#btnEscAaple')?.classList.toggle('hidden', !isMumbai);
+    const titleEl = $('#escTitleText');
+    const subtitleEl = $('#escSubtitle');
+    if (titleEl) {
+      titleEl.textContent = isMumbai
+        ? t('esc.title')
+        : t('esc.titleCorp').replace('{corp}', corp.name || getCityLabel(city));
+    }
+    if (subtitleEl) {
+      subtitleEl.textContent = isMumbai ? t('esc.subtitle') : t('esc.corpSubtitle');
+    }
+    if (!isMumbai && corpPanel) {
+      const hint = $('#escCorpHint');
+      if (hint) hint.textContent = t('esc.corpHint').replace('{corp}', corp.name || getCityLabel(city));
+      const btnLabel = $('#escCorpBtnLabel');
+      if (btnLabel) btnLabel.textContent = t('esc.corpBtn').replace('{corp}', corp.name || getCityLabel(city));
+      const helplineEl = $('#escCorpHelpline');
+      if (helplineEl) {
+        if (corp.helpline) {
+          helplineEl.textContent = `Helpline: ${corp.helpline}`;
+          helplineEl.classList.remove('hidden');
+        } else {
+          helplineEl.classList.add('hidden');
+        }
+      }
+    }
     const stage = getReportStage(report);
     $('#escClock').textContent = getClockLine(report);
     $('#escComplaintId').value = report.complaintId || '';
@@ -7053,6 +7422,14 @@ document.addEventListener('DOMContentLoaded', function () {
   function escalationOpenParticipateMumbai() {
     trackBmcEvent('bmc_channel_opened', { channel: 'participate_mumbai' }, findReportById(activeEscalationId)?.ward);
     window.open(BMC.participateUrl, '_blank');
+  }
+
+  function escalationOpenCorpPortal() {
+    const report = findReportById(activeEscalationId);
+    const city = getReportCity(report || {});
+    const corp = getCityCorpChannels(city);
+    if (corp.grievanceUrl) window.open(corp.grievanceUrl, '_blank');
+    else showToast(t('esc.corpHint').replace('{corp}', corp.name || getCityLabel(city)), 'info', 4000);
   }
 
   function handleEscLadderAction(e) {
@@ -7286,8 +7663,8 @@ document.addEventListener('DOMContentLoaded', function () {
       return;
     }
 
-    if (!isValidWard(ward)) {
-      showToast(t('toast.wardRequired'), 'error');
+    if (!isValidWard(ward, getUserCity())) {
+      showToast(t('toast.wardRequired').replace('{city}', getCityLabel(getUserCity())), 'error');
       $('#pledgeWard').focus();
       return;
     }
@@ -7310,6 +7687,7 @@ document.addEventListener('DOMContentLoaded', function () {
       id: generateId(),
       type,
       ward,
+      city: getUserCity(),
       message,
       citizen: user.displayName || 'Citizen',
       citizenId: user.id,
@@ -7326,7 +7704,7 @@ document.addEventListener('DOMContentLoaded', function () {
     savePledgeStatusSnapshot(snapshot);
 
     if (window.CivicAnalytics) {
-      CivicAnalytics.track('pledge_created', { pledgeId: String(pledge.id), type }, ward);
+      CivicAnalytics.track('pledge_created', { pledgeId: String(pledge.id), type, city: getUserCity() }, ward);
     }
 
     showToast(t('toast.pledgeSaved'), 'success', 5500);
@@ -7515,7 +7893,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function getWardReportStats() {
     const byWard = {};
-    loadReports().forEach((r) => {
+    cityScopedReports(loadReports()).forEach((r) => {
       if (!r.ward || isReportHidden(r.id)) return;
       if (!byWard[r.ward]) {
         byWard[r.ward] = { name: r.ward, pending: 0, resolved: 0, reports: 0 };
@@ -7594,7 +7972,7 @@ document.addEventListener('DOMContentLoaded', function () {
       let wards = realWards;
       const usingDemo = !liveBackend && realWards.length < 2;
       if (usingDemo) {
-        wards = DEMO_WARD_SEED.map((w) => ({ ...w }));
+        wards = DEMO_WARD_SEED.filter((w) => w.city === getUserCity()).map((w) => ({ ...w }));
       }
       wards = mergeUserWard(wards);
       wards.sort((a, b) => b.points - a.points);
@@ -7640,7 +8018,7 @@ document.addEventListener('DOMContentLoaded', function () {
       const userPoints = getTotalCivicPoints();
       citizens.push({
         name: t('leaderboard.you'),
-        ward: user.ward ? getWardShortName(user.ward) : 'Mumbai',
+        ward: user.ward ? getWardShortName(user.ward) : getCityLabel(),
         points: userPoints,
         isUser: true,
         isDemo: false,
@@ -8067,7 +8445,9 @@ document.addEventListener('DOMContentLoaded', function () {
     if (report.notes) lines.push(`${te('copy1916.landmarkLabel')}: ${report.notes}`);
     if (report.lat != null && report.lng != null) {
       lines.push(`${te('copy1916.gpsLabel')}: ${report.lat.toFixed(6)}, ${report.lng.toFixed(6)}`);
-      if (isGpsOutsideMumbai(report.lat, report.lng)) lines.push(te('copy1916.gpsWarning'));
+      if (isGpsOutsideCity(report.lat, report.lng, getReportCity(report))) {
+        lines.push(te('copy1916.gpsWarning').replace('{city}', getCityLabel(getReportCity(report))));
+      }
       lines.push(`${te('copy1916.mapsLabel')}: https://maps.google.com/?q=${report.lat},${report.lng}`);
     }
     lines.push(`${te('copy1916.dateLabel')}: ${dateStr}`);
@@ -8238,7 +8618,7 @@ document.addEventListener('DOMContentLoaded', function () {
           <li class="queue-item${overdueFlag ? ' queue-item--overdue' : ''}">
             ${thumb}
             <div class="queue-item__body">
-              <div class="queue-item__title">${escapeHtml(hazardLabel(r.hazard))} · ${escapeHtml((r.ward || 'Mumbai').split('—')[0].trim())}</div>
+              <div class="queue-item__title">${escapeHtml(hazardLabel(r.hazard))} · ${escapeHtml((r.ward || getCityLabel(getReportCity(r))).split('—')[0].trim())}</div>
               <div class="queue-item__meta">${escapeHtml(formatRelativeTime(r.timestamp))} · ${escapeHtml(getClockLine(r))}</div>
               <div class="queue-item__tags">${filedBadge}${confBadge}${overdueFlag ? '<span class="status-badge status-badge--overdue">Overdue</span>' : ''}</div>
             </div>
@@ -8351,6 +8731,7 @@ document.addEventListener('DOMContentLoaded', function () {
       userId: user.id,
       displayName: user.displayName || 'Citizen',
       ward: user.ward,
+      city: getUserCity(),
       neighbourhood,
       hours,
       skills,
@@ -8707,7 +9088,7 @@ document.addEventListener('DOMContentLoaded', function () {
         return `
           <li class="queue-item${cleared ? ' queue-item--cleared' : ''}">
             <div class="queue-item__body">
-              <div class="queue-item__title">${escapeHtml(hazardLabel(r.hazard))} · ${escapeHtml((r.ward || 'Mumbai').split('—')[0].trim())}</div>
+              <div class="queue-item__title">${escapeHtml(hazardLabel(r.hazard))} · ${escapeHtml((r.ward || getCityLabel(getReportCity(r))).split('—')[0].trim())}</div>
               <div class="queue-item__meta">${escapeHtml(formatRelativeTime(r.timestamp))}${r.notes ? ` · ${escapeHtml(r.notes)}` : ''}</div>
               ${taskNote}
             </div>

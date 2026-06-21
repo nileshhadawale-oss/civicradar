@@ -15,6 +15,41 @@ window.CIVICRADAR_CONFIG = {
   // **[YOU]** Must match your deployed HTTPS URL exactly (trailing slash OK)
   publicUrl: 'https://YOUR-GITHUB-USER.github.io/civicradar',
 
+  cities: {
+    mumbai: {
+      id: 'mumbai',
+      label: 'Mumbai',
+      center: [19.076, 72.8777],
+      bounds: { minLat: 18.88, maxLat: 19.28, minLng: 72.78, maxLng: 73.0 },
+      detectRadiusKm: 8,
+    },
+    pune: {
+      id: 'pune',
+      label: 'Pune',
+      center: [18.5204, 73.8567],
+      bounds: { minLat: 18.44, maxLat: 18.58, minLng: 73.78, maxLng: 73.95 },
+      detectRadiusKm: 6,
+      corpChannels: {
+        name: 'PMC',
+        grievanceUrl: 'https://pmc.gov.in/en/online-grievance',
+        helpline: '18001030222',
+      },
+    },
+    thane: {
+      id: 'thane',
+      label: 'Thane',
+      center: [19.2183, 72.9781],
+      bounds: { minLat: 19.15, maxLat: 19.28, minLng: 72.92, maxLng: 73.05 },
+      detectRadiusKm: 6,
+      corpChannels: {
+        name: 'TMC',
+        grievanceUrl: 'https://thanecity.gov.in/',
+        helpline: '',
+      },
+    },
+  },
+  serviceBounds: { minLat: 18.44, maxLat: 19.3, minLng: 72.78, maxLng: 73.95 },
+
   bmcChannels: {
     participateMumbaiUrl: 'https://participatemumbai.mcgm.gov.in/',
     margAppStoreUrl: 'https://apps.apple.com/app/mybmc-marg/id6759655448',

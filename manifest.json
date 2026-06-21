@@ -1,7 +1,7 @@
 {
-  "name": "CivicRadar — Mumbai Monsoon Hazards",
+  "name": "CivicRadar — Mumbai, Pune & Thane Monsoon Hazards",
   "short_name": "CivicRadar",
-  "description": "Free community app for Mumbai monsoon hazard reporting. Report stagnant water, track BMC complaints, and support local volunteers. Independent student-built tool — not an official BMC app.",
+  "description": "Free community app for monsoon hazard reporting in Mumbai, Pune, and Thane. Report stagnant water, rally neighbours, track fixes. Independent student-built tool — not an official municipal app.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

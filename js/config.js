@@ -30,6 +30,42 @@ window.CIVICRADAR_CONFIG = {
   publicUrl: 'https://nileshhadawale-oss.github.io/civicradar', // e.g. 'https://civicradar.app' or 'https://youruser.github.io/civicradar'
 
   /* ----- Official BMC channels (optional overrides) ----- */
+  /* ----- Multi-city support (Mumbai · Pune · Thane) ----- */
+  cities: {
+    mumbai: {
+      id: 'mumbai',
+      label: 'Mumbai',
+      center: [19.076, 72.8777],
+      bounds: { minLat: 18.88, maxLat: 19.28, minLng: 72.78, maxLng: 73.0 },
+      detectRadiusKm: 8,
+    },
+    pune: {
+      id: 'pune',
+      label: 'Pune',
+      center: [18.5204, 73.8567],
+      bounds: { minLat: 18.44, maxLat: 18.58, minLng: 73.78, maxLng: 73.95 },
+      detectRadiusKm: 6,
+      corpChannels: {
+        name: 'PMC',
+        grievanceUrl: 'https://pmc.gov.in/en/online-grievance',
+        helpline: '18001030222',
+      },
+    },
+    thane: {
+      id: 'thane',
+      label: 'Thane',
+      center: [19.2183, 72.9781],
+      bounds: { minLat: 19.15, maxLat: 19.28, minLng: 72.92, maxLng: 73.05 },
+      detectRadiusKm: 6,
+      corpChannels: {
+        name: 'TMC',
+        grievanceUrl: 'https://thanecity.gov.in/',
+        helpline: '',
+      },
+    },
+  },
+  serviceBounds: { minLat: 18.44, maxLat: 19.3, minLng: 72.78, maxLng: 73.95 },
+
   bmcChannels: {
     // Civic engagement portal — volunteering, CSR, project proposals (not complaint filing).
     participateMumbaiUrl: 'https://participatemumbai.mcgm.gov.in/',
@@ -59,7 +95,7 @@ window.CIVICRADAR_CONFIG = {
     email: 'hadawalenihira@gmail.com',                               // e.g. 'nihira@yourdomain.com'
     operatorName: 'Nilesh Hadawale',         // [AGENT/DONE] pre-filled
     // **[YOU]** Nilesh's email — legal/hosting contact until founder turns 18
-    operatorEmail: 'nilesh.hadawale@gmail.com,                     // e.g. 'nilesh@yourdomain.com'
+    operatorEmail: 'nilesh.hadawale@gmail.com',
     operatorRelation: 'Parent / legal operator until founder turns 18',
     tagline: 'Community hazard map for Mumbai monsoon — built from New Jersey with family on the ground.',
     story: 'CivicRadar was built by Nihira Hadawale, a high school student in New Jersey with family in Mumbai, to help neighbours see and report stagnant-water hazards each monsoon. Every year I hear from relatives about dengue in their wards — from far away, I wanted to help in a way that lasts. CivicRadar is a free community app: ward map pins, Me too corroboration, and volunteer cleanup logging. Official BMC filing is an optional next step when you want the government clock — not a BMC product, just tools I wish my family\'s neighbourhoods had years ago.',
