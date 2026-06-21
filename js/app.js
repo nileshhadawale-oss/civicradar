@@ -171,6 +171,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
   let user;
   let deferredInstallPrompt = null;
+  let pwaNudgeVisible = false;
+  let pendingPwaNudge = false;
 
   // Project config — founder story & monetization (see js/config.js)
   const CFG = window.CIVICRADAR_CONFIG || {};
@@ -434,6 +436,7 @@ document.addEventListener('DOMContentLoaded', function () {
       'about.pitchCopied': 'Pitch copied — paste in your RWA / school group!',
       'pwa.nudge': 'Monsoon-ready: Add CivicRadar to Home Screen for one-tap reporting.',
       'pwa.nudgeAction': 'Add to Home Screen',
+      'pwa.nudgeDismiss': 'Not now',
       'community.challengeShare': 'Challenge a friend — share ward map',
       'community.winsTitle': 'Wins this monsoon',
       'community.winsEmpty': 'Fixed spots appear here — report, rally neighbours, celebrate wins.',
@@ -1090,6 +1093,7 @@ document.addEventListener('DOMContentLoaded', function () {
       'about.pitchCopied': 'पिच कॉपी — RWA / स्कूल ग्रुप में पेस्ट करें!',
       'pwa.nudge': 'मानसून-तैयार: होम स्क्रीन पर CivicRadar जोड़ें।',
       'pwa.nudgeAction': 'होम स्क्रीन पर जोड़ें',
+      'pwa.nudgeDismiss': 'अभी नहीं',
       'community.challengeShare': 'दोस्त को चुनौती — वार्ड नक्शा साझा करें',
       'community.winsTitle': 'इस मानसून की जीत',
       'community.winsEmpty': 'हल की गई जगहें यहाँ दिखेंगी — रिपोर्ट करें, पड़ोसियों को बुलाएँ, जीत मनाएँ।',
@@ -1682,6 +1686,7 @@ document.addEventListener('DOMContentLoaded', function () {
       'about.pitchCopied': 'पिच कॉपी — RWA ग्रुपमध्ये पेस्ट करा!',
       'pwa.nudge': 'पावसाळा-तयार: होम स्क्रीनवर CivicRadar जोडा.',
       'pwa.nudgeAction': 'होम स्क्रीनवर जोडा',
+      'pwa.nudgeDismiss': 'आत्ता नाही',
       'community.challengeShare': 'मित्राला आव्हान — वॉर्ड नकाशा शेअर करा',
       'community.winsTitle': 'या पावसाळ्यातील विजय',
       'community.winsEmpty': 'सोडवलेले स्पॉट येथे दिसतील — तक्रार करा, शेजाऱ्यांना बोलवा, विजय साजरा करा.',
@@ -2270,6 +2275,7 @@ document.addEventListener('DOMContentLoaded', function () {
       'about.pitchCopied': 'પિચ કૉપી — RWA ગ્રુપમાં પેસ્ટ કરો!',
       'pwa.nudge': 'ચોમાસા-તૈયાર: હોમ સ્ક્રીન પર CivicRadar ઉમેરો.',
       'pwa.nudgeAction': 'હોમ સ્ક્રીન પર ઉમેરો',
+      'pwa.nudgeDismiss': 'હમણાં નહીં',
       'community.challengeShare': 'મિત્રને પડકાર — વોર્ડ નકશો શેર કરો',
       'community.winsTitle': 'આ ચોમાસાની જીત',
       'community.winsEmpty': 'ઉકેલાયેલા સ્પોટ અહીં દેખાશે — રિપોર્ટ કરો, પડોશીઓને બોલાવો, જીત ઉજવો.',
@@ -5526,7 +5532,10 @@ document.addEventListener('DOMContentLoaded', function () {
   };
   window.closeReportModal = function () { closeModal('report'); };
   window.openSuccessModal = function () { openModal('success'); };
-  window.closeSuccessModal = function () { closeModal('success'); };
+  window.closeSuccessModal = function () {
+    closeModal('success');
+    flushPendingPwaNudge();
+  };
   window.openCommunityModal = function () {
     closeModal('profile');
     renderLeaderboard('wards');
@@ -5626,6 +5635,52 @@ document.addEventListener('DOMContentLoaded', function () {
   };
 
   /* ---------- PWA install (Add to Home Screen) ---------- */
+  function hidePwaInstallNudge() {
+    const el = $('#pwaInstallNudge');
+    if (!el) return;
+    el.classList.add('hidden');
+    document.body.classList.remove('pwa-nudge-visible');
+    pwaNudgeVisible = false;
+  }
+
+  function showPwaInstallNudge() {
+    if (pwaNudgeVisible) return;
+    const el = $('#pwaInstallNudge');
+    if (!el) return;
+    el.classList.remove('hidden');
+    document.body.classList.add('pwa-nudge-visible');
+    pwaNudgeVisible = true;
+    if (window.CivicAnalytics) CivicAnalytics.track('pwa_nudge_shown', {});
+  }
+
+  function dismissPwaNudge() {
+    hidePwaInstallNudge();
+    try { localStorage.setItem(PWA_NUDGE_KEY, '1'); } catch {}
+    if (window.CivicAnalytics) CivicAnalytics.track('pwa_nudge_dismissed', {});
+  }
+
+  function canShowPwaNudge() {
+    try {
+      if (localStorage.getItem(PWA_NUDGE_KEY)) return false;
+    } catch { /* ignore */ }
+    return !isStandalonePwa();
+  }
+
+  async function triggerPwaInstall() {
+    if (deferredInstallPrompt) {
+      deferredInstallPrompt.prompt();
+      try {
+        const choice = await deferredInstallPrompt.userChoice;
+        if (choice?.outcome === 'accepted') hidePwaInstallNudge();
+      } catch { /* ignore */ }
+      deferredInstallPrompt = null;
+      const btn = $('#btnInstall');
+      if (btn) btn.classList.add('hidden');
+      return;
+    }
+    showToast(t('toast.installHint'), 'info', 5000);
+  }
+
   function setupInstallPrompt() {
     const btn = $('#btnInstall');
     window.addEventListener('beforeinstallprompt', (e) => {
@@ -5637,21 +5692,18 @@ document.addEventListener('DOMContentLoaded', function () {
     window.addEventListener('appinstalled', () => {
       deferredInstallPrompt = null;
       if (btn) btn.classList.add('hidden');
+      hidePwaInstallNudge();
       try { localStorage.setItem(PWA_NUDGE_KEY, '1'); } catch {}
       showToast(t('toast.installed'), 'success');
     });
     if (btn) {
-      btn.addEventListener('click', async () => {
-        if (!deferredInstallPrompt) {
-          showToast(t('toast.installHint'), 'info', 4500);
-          return;
-        }
-        deferredInstallPrompt.prompt();
-        try { await deferredInstallPrompt.userChoice; } catch {}
-        deferredInstallPrompt = null;
-        btn.classList.add('hidden');
-      });
+      btn.addEventListener('click', () => triggerPwaInstall());
     }
+    const nudgeInstall = $('#btnPwaNudgeInstall');
+    const nudgeDismiss = $('#btnPwaNudgeDismiss');
+    if (nudgeInstall) nudgeInstall.addEventListener('click', () => triggerPwaInstall());
+    if (nudgeDismiss) nudgeDismiss.addEventListener('click', () => dismissPwaNudge());
+    if (!canShowPwaNudge()) hidePwaInstallNudge();
   }
 
   function isStandalonePwa() {
@@ -5670,23 +5722,21 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function maybeShowPwaNudge(trigger) {
-    if (localStorage.getItem(PWA_NUDGE_KEY)) return;
-    if (isStandalonePwa()) return;
+    if (!canShowPwaNudge()) return;
     const visits = parseInt(localStorage.getItem(VISIT_COUNT_KEY) || '0', 10);
-    const reportCount = getUserReports().length;
     const shouldShow = trigger === 'report' || (trigger === 'visit' && visits >= 2);
     if (!shouldShow) return;
-    if (trigger === 'visit' && reportCount === 0 && visits < 2) return;
+    if (trigger === 'report' && overlays.success?.classList.contains('open')) {
+      pendingPwaNudge = true;
+      return;
+    }
+    showPwaInstallNudge();
+  }
 
-    showToast(t('pwa.nudge'), 'info', 8000, {
-      label: t('pwa.nudgeAction'),
-      onClick: () => {
-        const btn = $('#btnInstall');
-        if (deferredInstallPrompt) btn && btn.click();
-        else showToast(t('toast.installHint'), 'info', 5000);
-        try { localStorage.setItem(PWA_NUDGE_KEY, '1'); } catch {}
-      },
-    });
+  function flushPendingPwaNudge() {
+    if (!pendingPwaNudge) return;
+    pendingPwaNudge = false;
+    maybeShowPwaNudge('report');
   }
 
   function deferNonCritical(fn) {
@@ -6217,6 +6267,7 @@ document.addEventListener('DOMContentLoaded', function () {
       if (!lastReportId) return;
       closeModal('success');
       resetReportForm();
+      flushPendingPwaNudge();
       openEscalationModal(lastReportId);
     });
     $('#btnSuccessClose').addEventListener('click', () => {
@@ -6226,6 +6277,7 @@ document.addEventListener('DOMContentLoaded', function () {
       closeModal('success');
       resetReportForm();
       setNavTab('map');
+      flushPendingPwaNudge();
       if (notShared && reportId) {
         setTimeout(() => {
           showToast(t('success.shareNudge'), 'info', 5500, {

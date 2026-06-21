@@ -980,6 +980,69 @@ body.persona-lead .map-empty-cta {
   transform: translateX(-50%) scale(0.96);
 }
 
+body.pwa-nudge-visible #btnCamera {
+  bottom: calc(var(--nav-height) + 52px + env(safe-area-inset-bottom, 0px));
+}
+
+.pwa-nudge {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--nav-height) + env(safe-area-inset-bottom, 0px));
+  z-index: 1500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: rgba(30, 58, 138, 0.94);
+  color: #fff;
+  font-size: 0.8125rem;
+  line-height: 1.35;
+  box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.12);
+  pointer-events: auto;
+}
+
+.pwa-nudge.hidden {
+  display: none;
+}
+
+.pwa-nudge__text {
+  flex: 1;
+  margin: 0;
+  min-width: 0;
+}
+
+.pwa-nudge__actions {
+  display: flex;
+  flex-shrink: 0;
+  gap: 6px;
+}
+
+.pwa-nudge__btn {
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  background: transparent;
+  color: #fff;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.pwa-nudge__btn--primary {
+  background: rgba(255, 255, 255, 0.22);
+  border-color: rgba(255, 255, 255, 0.85);
+}
+
+.pwa-nudge__btn--ghost {
+  opacity: 0.9;
+}
+
+.pwa-nudge__btn:active {
+  transform: scale(0.97);
+}
+
 /* ============================================
    Modals — slide up from bottom
    ============================================ */

@@ -118,6 +118,15 @@
     </div>
   </div>
 
+  <!-- PWA install nudge (shown once after first report or 2nd visit) -->
+  <div id="pwaInstallNudge" class="pwa-nudge hidden" role="region" aria-labelledby="pwaNudgeText">
+    <p class="pwa-nudge__text" id="pwaNudgeText" data-i18n="pwa.nudge">Monsoon-ready: Add CivicRadar to Home Screen for one-tap reporting.</p>
+    <div class="pwa-nudge__actions">
+      <button type="button" class="pwa-nudge__btn pwa-nudge__btn--primary" id="btnPwaNudgeInstall" data-i18n="pwa.nudgeAction">Add to Home Screen</button>
+      <button type="button" class="pwa-nudge__btn pwa-nudge__btn--ghost" id="btnPwaNudgeDismiss" data-i18n="pwa.nudgeDismiss">Not now</button>
+    </div>
+  </div>
+
   <!-- Bottom Navigation -->
   <nav id="bottomNav">
     <button type="button" class="nav-tab active" data-tab="map">

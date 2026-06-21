@@ -440,7 +440,12 @@ async def run_citizen_tests(s: Suite, browser):
     s.record('C18', 'Citizen', 'App origin for deep links', (await page.evaluate('() => location.origin')).startswith('http'))
 
     await page.click('#btnSuccessClose')
-    await page.wait_for_timeout(300)
+    await page.wait_for_timeout(500)
+    pwa_nudge = await page.evaluate("""() => {
+      const el = document.getElementById('pwaInstallNudge');
+      return !!(el && !el.classList.contains('hidden'));
+    }""")
+    s.record('C19b', 'Citizen', 'PWA nudge after first report', pwa_nudge)
     markers = await page.evaluate('() => document.querySelectorAll(".leaflet-interactive").length')
     s.record('C19', 'Citizen', 'Map shows markers after report', markers > 0, f'markers={markers}')
 
