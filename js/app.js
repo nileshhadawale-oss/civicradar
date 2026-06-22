@@ -38,6 +38,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const FIRST_SHARE_KEY = 'civicradar_first_share_done';
   const SUCCESS_STORIES_SEEN_KEY = 'civicradar_success_stories_seen';
   const VISIT_COUNT_KEY = 'civicradar_visit_count';
+  const FIRST_REPORT_DONE_KEY = 'civicradar_first_report_done';
   const PWA_NUDGE_KEY = 'civicradar_pwa_nudge_dismissed';
   const POINTS_PER_REPORT = 50;
   const POINTS_WEEK_BONUS = 25;
@@ -4515,13 +4516,26 @@ document.addEventListener('DOMContentLoaded', function () {
     updatePersonaUI();
   }
 
+  function canShowMapEmptyShare() {
+    if (getUserReports().length > 0) return true;
+    try {
+      if (localStorage.getItem(FIRST_REPORT_DONE_KEY)) return true;
+      const visits = parseInt(localStorage.getItem(VISIT_COUNT_KEY) || '0', 10);
+      return visits >= 2;
+    } catch {
+      return false;
+    }
+  }
+
   function updateMapEmptyCta() {
     const el = $('#mapEmptyCta');
     const textEl = $('#mapEmptyText');
+    const shareBtn = $('#btnMapEmptyShare');
     if (!el) return;
     const citizen = getActivePersona() === 'citizen';
     const show = citizen && user.ward && getUserReports().length === 0 && cityScopedReports(loadReports()).length === 0;
     el.classList.toggle('hidden', !show);
+    if (shareBtn) shareBtn.classList.toggle('hidden', !show || !canShowMapEmptyShare());
     if (textEl && show && user.ward) {
       const wardLabel = getWardShortName(user.ward);
       const rival = getWardRivalSnippet();
@@ -5759,8 +5773,8 @@ document.addEventListener('DOMContentLoaded', function () {
   setupInstallPrompt();
   warnIfShareUrlNotProduction();
   trackShareRefLanding();
+  trackVisitCount();
   updateMapEmptyCta();
-  const visitCount = trackVisitCount();
   deferNonCritical(() => {
     renderLeaderboard('wards');
     renderLeaderboard('citizens');
@@ -6737,6 +6751,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         lastReportId = report.id;
+        try { localStorage.setItem(FIRST_REPORT_DONE_KEY, '1'); } catch {}
         Backend.insertReport(report);
         if (window.CivicAnalytics) {
           CivicAnalytics.track('report_submitted', {

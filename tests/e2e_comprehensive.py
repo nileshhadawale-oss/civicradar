@@ -773,6 +773,9 @@ async def run_edge_tests(s: Suite, browser):
     s.record('E15', 'Edge', 'Map empty CTA visible', await page.evaluate(
         '() => { if (typeof updateMapEmptyCta === "function") updateMapEmptyCta(); return !document.getElementById("mapEmptyCta").classList.contains("hidden"); }'
     ))
+    s.record('E15b', 'Edge', 'Map empty share hidden first visit', await page.evaluate(
+        '() => { if (typeof updateMapEmptyCta === "function") updateMapEmptyCta(); return document.getElementById("btnMapEmptyShare").classList.contains("hidden"); }'
+    ))
 
     await ctx.close()
     ctx = await new_ctx(browser, storage={
