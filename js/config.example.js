@@ -6,14 +6,74 @@
  *
  * Never commit real Supabase keys or personal emails to a public repo.
  * See LAUNCH-WALKTHROUGH.md for step-by-step setup.
+ *
+ * ─────────────────────────────────────────────────────────────────────────
+ * ENVIRONMENT DETECTION (see RELEASE.md)
+ * Backend/URL values resolve automatically by hostname so the same code runs
+ * unchanged on local dev, the Cloudflare staging preview, and GitHub Pages prod:
+ *   • dev      → localhost / 127.0.0.1            → local-only (no remote backend)
+ *   • staging  → *.pages.dev / *civicradar-staging → staging Supabase
+ *   • prod     → your production host             → production Supabase
+ * SAFETY: any unknown host falls back to PROD values. All values below are
+ * PLACEHOLDERS — fill them in your private config.js, never commit real keys.
+ * ─────────────────────────────────────────────────────────────────────────
  */
-window.CIVICRADAR_CONFIG = {
-  // **[YOU]** Supabase → Project Settings → API
-  supabaseUrl: 'https://YOUR-PROJECT-REF.supabase.co',
-  supabaseAnonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.EXAMPLE_ANON_KEY_NOT_REAL',
+(function () {
+  // Per-environment backend + public URL (all placeholders in this example).
+  var ENVIRONMENTS = {
+    // PRODUCTION — also the safe fallback for any unrecognized host.
+    prod: {
+      supabaseUrl: 'https://YOUR-PROJECT-REF.supabase.co',
+      supabaseAnonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.EXAMPLE_ANON_KEY_NOT_REAL',
+      publicUrl: 'https://YOUR-GITHUB-USER.github.io/civicradar',
+    },
+    // STAGING — separate Supabase project + Cloudflare Pages domain.
+    staging: {
+      supabaseUrl: 'https://YOUR-STAGING-PROJECT.supabase.co',
+      supabaseAnonKey: 'YOUR_STAGING_ANON_KEY',
+      publicUrl: 'https://civicradar-staging.pages.dev',
+    },
+    // DEV (localhost) — pure local mode (no remote backend, origin-relative links).
+    dev: {
+      supabaseUrl: '',
+      supabaseAnonKey: '',
+      publicUrl: '',
+    },
+  };
+
+  function detectEnvironment(hostname) {
+    var h = (hostname || '').toLowerCase();
+    if (h === 'localhost' || h === '127.0.0.1' || h === '0.0.0.0' || h === '[::1]' || h === '') {
+      return 'dev';
+    }
+    // **[YOU]** Replace with your production host (e.g. 'youruser.github.io').
+    if (h === 'YOUR-GITHUB-USER.github.io') {
+      return 'prod';
+    }
+    if (h.indexOf('.pages.dev') !== -1 || h.indexOf('civicradar-staging') !== -1) {
+      return 'staging';
+    }
+    // SAFE DEFAULT: any unknown host → prod values.
+    return 'prod';
+  }
+
+  var hostname = (typeof location !== 'undefined' && location && location.hostname) ? location.hostname : '';
+  var environment = detectEnvironment(hostname);
+  var resolved = ENVIRONMENTS[environment] || ENVIRONMENTS.prod;
+
+  if (environment !== 'prod' && typeof console !== 'undefined' && console.info) {
+    console.info('CivicRadar env:', environment);
+  }
+
+  window.CIVICRADAR_CONFIG = {
+  // Resolved environment name ('dev' | 'staging' | 'prod').
+  environment: environment,
+  // **[YOU]** Resolved per-environment (see ENVIRONMENTS above) — Supabase → Project Settings → API
+  supabaseUrl: resolved.supabaseUrl,
+  supabaseAnonKey: resolved.supabaseAnonKey,
 
   // **[YOU]** Must match your deployed HTTPS URL exactly (trailing slash OK)
-  publicUrl: 'https://YOUR-GITHUB-USER.github.io/civicradar',
+  publicUrl: resolved.publicUrl,
 
   cities: {
     mumbai: {
@@ -160,4 +220,5 @@ window.CIVICRADAR_CONFIG = {
     requireOnlineNsfw: false,
     nsfwThresholds: { Porn: 0.55, Hentai: 0.55, Sexy: 0.88 },
   },
-};
+  };
+})();

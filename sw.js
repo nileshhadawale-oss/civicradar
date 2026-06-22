@@ -1,28 +1,46 @@
-const CACHE = 'civicradar-v62';
+const CACHE = 'civicradar-v70';
 // Runtime config — never precache; always fetch fresh (see network-first below).
 const NETWORK_FIRST = ['/js/config.js'];
+// Relative paths resolve against the SW scope, so precache works both at the
+// site root (local/dev/tests) and on a GitHub Pages project subpath (/civicradar/).
 const ASSETS = [
-  '/',
-  '/index.html',
-  '/privacy.html',
-  '/terms.html',
-  '/css/styles.css',
-  '/css/legal.css',
-  '/js/analytics.js',
-  '/js/image-moderation.js',
-  '/js/wards/mumbai.js',
-  '/js/wards/pune.js',
-  '/js/wards/thane.js',
-  '/js/ward-detect.js',
-  '/js/app.js',
-  '/js/demo-tour.js',
-  '/manifest.json',
-  '/robots.txt',
-  '/assets/og-civicradar.svg',
+  './',
+  'index.html',
+  'privacy.html',
+  'terms.html',
+  'css/styles.css',
+  'css/legal.css',
+  'js/analytics.js',
+  'js/image-moderation.js',
+  'js/wards/mumbai.js',
+  'js/wards/pune.js',
+  'js/wards/thane.js',
+  'js/ward-detect.js',
+  'js/app.js',
+  'js/demo-tour.js',
+  'js/demo-tour-v2.js',
+  'manifest.json',
+  'robots.txt',
+  'assets/og-civicradar.svg',
+  'assets/icon-192.png',
+  'assets/icon-512.png',
+  'assets/icon-maskable-512.png',
+  'assets/apple-touch-icon.png',
+  'assets/favicon-32.png',
 ];
 
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)));
+  // Cache best-effort: a single failed asset must not abort the whole install
+  // (addAll rejects atomically), which would leave the app with no offline shell.
+  e.waitUntil(
+    caches.open(CACHE).then((c) =>
+      Promise.all(
+        ASSETS.map((url) =>
+          c.add(new Request(url, { cache: 'reload' })).catch(() => {})
+        )
+      )
+    )
+  );
   self.skipWaiting();
 });
 
@@ -40,6 +58,9 @@ function isNetworkFirst(url) {
 }
 
 self.addEventListener('fetch', (e) => {
+  // Only handle GET (never cache POST/PUT to Supabase, analytics, etc.).
+  if (e.request.method !== 'GET') return;
+
   const url = new URL(e.request.url);
   if (isNetworkFirst(url)) {
     e.respondWith(
@@ -56,6 +77,17 @@ self.addEventListener('fetch', (e) => {
     return;
   }
   e.respondWith(
-    caches.match(e.request).then((cached) => cached || fetch(e.request))
+    caches.match(e.request).then((cached) => {
+      if (cached) return cached;
+      return fetch(e.request).catch(() => {
+        // Offline + uncached: fall back to the app shell for navigations
+        // so deep links / refreshes still open instead of a browser error.
+        // Relative match resolves against scope (root or /civicradar/ subpath).
+        if (e.request.mode === 'navigate') {
+          return caches.match('index.html').then((shell) => shell || caches.match('./'));
+        }
+        return Response.error();
+      });
+    })
   );
 });

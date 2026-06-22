@@ -1,15 +1,19 @@
 # CivicRadar Test Results
 
-**Run:** 2026-06-22 06:30:34
+**Run:** 2026-06-22 12:31:45
 **Server:** http://localhost:8095/
 **Script:** `tests/e2e_comprehensive.py`
-**Total:** 234 | **Pass:** 234 | **Fail:** 0
+**Total:** 254 | **Pass:** 254 | **Fail:** 0
 
 ## Fixes applied this run
 
-- `js/app.js`: moved `REF_WELCOME_KEY` + `SEASON_HOOK_DISMISS_KEY` to top-level constants (TDZ fix for ?ref= welcome banner)
-- `sw.js`: cache bump → v62
-- `tests/e2e_comprehensive.py`: expanded to 230+ scenarios (multi-city, demo, referral, analytics, modals, volunteer, negatives, legal pages)
+- `assets/*` + `tools/gen_icons.py`: regenerated the "Pin + Ripple" PNG app-icon set from the REAL approved artwork (`assets/icon-source-pin-ripple.png`). gen_icons.py now crops the source card, removes the white page background (flood-fill) for clean full-bleed transparent corners, and composites the maskable on sampled indigo; icon filenames unchanged so manifest/index/SW references stay valid
+- `supabase/schema.sql`: added an additive, re-runnable `feedback` table (message/category/contact/app_version/env/device/ward/city/user_id) with RLS mirroring analytics — anon/auth INSERT allowed, no public SELECT (service-role/dashboard reads only). FOUNDER MUST RE-RUN schema.sql once
+- `index.html` + `js/app.js` + `css/styles.css`: in-app feedback form (Supabase-backed, offline-safe). Entry points in Profile + About; accessible modal (focus trap, aria-live error, 44px targets, native-radio segmented control); inserts to Supabase when connected, else stores locally and flushes on reconnect (never loses text); all strings localized in en/hi/mr/gu
+- `css/styles.css`: launch visual polish (v69) — extended design tokens (cyan accent, elevation/radii scale, brand gradients), confident button states with springy tap feedback, refined modal/toast/card depth, premium map chrome, segmented control + inline form-error + brand input focus rings + skeleton-loader utility — all motion gated by prefers-reduced-motion
+- `js/config.js`: consolidated all contact/legal emails onto a single role inbox `civicradarnh@gmail.com` (legal.grievanceEmail, founder.email, founder.operatorEmail) — removed all personal Gmail addresses from deployable/source files (privacy.html / terms.html links are config-driven and now resolve to the role inbox)
+- `sw.js`: cache bump → v70 (single role contact email; config.js is a cached asset so clients pick up the new contact address)
+- `tests/e2e_comprehensive.py`: SW06 expected cache version → v70
 
 ## Summary by category
 
@@ -24,22 +28,25 @@
 - **Demo:** 8 pass / 0 fail
 - **Edge:** 17 pass / 0 fail
 - **Escalation:** 6 pass / 0 fail
+- **Feedback:** 7 pass / 0 fail
+- **ImageSafety:** 8 pass / 0 fail
 - **Legal:** 6 pass / 0 fail
 - **Load:** 5 pass / 0 fail
 - **Map:** 5 pass / 0 fail
 - **MultiCity:** 10 pass / 0 fail
 - **NGO:** 10 pass / 0 fail
 - **Negative:** 8 pass / 0 fail
-- **PWA:** 7 pass / 0 fail
+- **PWA:** 8 pass / 0 fail
 - **Partner:** 1 pass / 0 fail
 - **Persona:** 1 pass / 0 fail
 - **Pledge:** 1 pass / 0 fail
 - **Profile:** 4 pass / 0 fail
 - **Referral:** 4 pass / 0 fail
 - **Report:** 13 pass / 0 fail
+- **Share:** 1 pass / 0 fail
 - **Storage:** 2 pass / 0 fail
 - **Sync:** 1 pass / 0 fail
-- **UI:** 22 pass / 0 fail
+- **UI:** 25 pass / 0 fail
 - **Viral:** 4 pass / 0 fail
 - **Volunteer:** 7 pass / 0 fail
 - **Ward:** 8 pass / 0 fail
@@ -137,8 +144,8 @@ _None_
 | E15b | Edge | Map empty share hidden first visit | PASS |  |
 | E16 | Edge | Invalid ward cleared on load | PASS |  |
 | L01 | Load | 15 parallel report contexts | PASS | 15/15 |
-| L02 | Load | 200 reports refresh under 3s | PASS | 0.02s |
-| L03 | Load | 50x loadReports parse under 500ms | PASS | 6ms |
+| L02 | Load | 200 reports refresh under 3s | PASS | 0.03s |
+| L03 | Load | 50x loadReports parse under 500ms | PASS | 4ms |
 | L04 | Load | Rapid corroboration increments | PASS | n=5 |
 | L05 | Load | Analytics batch enqueue | PASS |  |
 | M01 | Map | Leaflet map container | PASS |  |
@@ -230,6 +237,10 @@ _None_
 | U11 | UI | Community nav opens modal | PASS |  |
 | U12 | UI | Profile nav opens modal | PASS |  |
 | U13 | UI | Map nav closes modals | PASS |  |
+| U21 | UI | Community close btn returns to Map | PASS |  |
+| U22 | UI | Profile close btn returns to Map | PASS |  |
+| U23 | UI | Community backdrop tap returns to Map | PASS |  |
+| SH01 | Share | EN share single-language (no Marathi hook) | PASS |  |
 | U14 | UI | Location banner element | PASS |  |
 | U15 | UI | Header context element | PASS |  |
 | U16 | UI | Persona bar present | PASS |  |
@@ -285,6 +296,7 @@ _None_
 | SW03 | PWA | Manifest href valid | PASS |  |
 | SW04 | PWA | Theme color meta | PASS |  |
 | SW05 | PWA | App icons linked | PASS |  |
+| SW06 | PWA | SW precache uses scope-relative paths (subpath-safe) | PASS |  |
 | LG01 | Legal | Privacy page loads | PASS |  |
 | LG02 | Legal | Privacy mentions DPDP | PASS |  |
 | LG03 | Legal | Terms page loads | PASS |  |
@@ -294,3 +306,18 @@ _None_
 | CL02 | Celebration | WhatsApp share btn present | PASS |  |
 | CL03 | Celebration | File BMC btn present | PASS |  |
 | CL04 | Celebration | Success close btn present | PASS |  |
+| IS01 | ImageSafety | Submit blocked without relevance confirm | PASS |  |
+| IS02 | ImageSafety | Confirm prompt toast shown | PASS |  |
+| IS03 | ImageSafety | Confirm checkbox clears inline error | PASS |  |
+| IS04 | ImageSafety | Submit succeeds after relevance confirm | PASS |  |
+| IS05 | ImageSafety | Affirmation resets on modal reopen | PASS |  |
+| IS05b | ImageSafety | Confirm group hidden with no photo | PASS |  |
+| IS06 | ImageSafety | Admin proof accepted when scan passes | PASS |  |
+| IS07 | ImageSafety | Admin proof blocked when scan fails (blank) | PASS |  |
+| FB01 | Feedback | Feedback entry points present (Profile + About) | PASS |  |
+| FB02 | Feedback | Feedback modal opens from menu | PASS |  |
+| FB03 | Feedback | Empty message blocked with inline error | PASS |  |
+| FB04 | Feedback | Category (Bug/Idea/Other) selectable | PASS |  |
+| FB05 | Feedback | Local submit stores feedback + closes modal | PASS |  |
+| FB06 | Feedback | Submit shows success/saved toast | PASS |  |
+| FB07 | Feedback | Feedback strings render (i18n, no key leak) | PASS |  |

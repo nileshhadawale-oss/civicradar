@@ -224,6 +224,11 @@ async def inject_photo(page):
             }
           }
           canvas.classList.add('visible');
+          const confirm = document.getElementById('confirmRelevant');
+          if (confirm) {
+            document.getElementById('photoConfirmGroup')?.classList.remove('hidden');
+            confirm.checked = true;
+          }
         }"""
     )
 
@@ -255,6 +260,11 @@ async def submit_report_via_api(page, lat=19.0760, lng=72.8777, notes='test haza
             }
           }
           canvas.classList.add('visible');
+          const confirm = document.getElementById('confirmRelevant');
+          if (confirm) {
+            document.getElementById('photoConfirmGroup')?.classList.remove('hidden');
+            confirm.checked = true;
+          }
           document.getElementById('reportNotes').value = notes;
           navigator.geolocation.getCurrentPosition = (ok) => ok({ coords: { latitude: lat, longitude: lng, accuracy: 5 } });
           document.getElementById('btnSubmitReport').click();
@@ -1249,6 +1259,37 @@ async def run_extended_scenarios(s: Suite, browser):
     await close_all_modals(page)
     await js_click(page, '#bottomNav .nav-tab[data-tab="map"]')
     s.record('U13', 'UI', 'Map nav closes modals', not await is_open(page, 'profileOverlay'))
+    # Nav Phase 1: Community/Profile close buttons + backdrop tap return to Map tab.
+    map_tab_active = '() => document.querySelector("#bottomNav .nav-tab[data-tab=map]")?.classList.contains("active")'
+    await page.evaluate('() => window.openCommunityModal()')
+    await page.evaluate('() => document.querySelector("#communityModal [data-close=community]")?.click()')
+    s.record('U21', 'UI', 'Community close btn returns to Map',
+             (not await is_open(page, 'communityOverlay')) and bool(await page.evaluate(map_tab_active)))
+    await page.evaluate('() => window.openProfileModal()')
+    await page.evaluate('() => document.querySelector("#profileModal [data-close=profile]")?.click()')
+    s.record('U22', 'UI', 'Profile close btn returns to Map',
+             (not await is_open(page, 'profileOverlay')) and bool(await page.evaluate(map_tab_active)))
+    await page.evaluate('() => window.openCommunityModal()')
+    await page.evaluate('() => document.getElementById("communityOverlay").click()')
+    s.record('U23', 'UI', 'Community backdrop tap returns to Map',
+             (not await is_open(page, 'communityOverlay')) and bool(await page.evaluate(map_tab_active)))
+    await close_all_modals(page)
+    # Change 2: English share text must be single-language (no Marathi hook line).
+    shared_text = await page.evaluate("""() => {
+      let text = '';
+      const orig = window.open;
+      window.open = (url) => {
+        const m = (url || '').match(/text=(.*)$/);
+        text = m ? decodeURIComponent(m[1]) : '';
+        return null;
+      };
+      try { document.getElementById('btnShareWhatsApp')?.click(); } catch (e) {}
+      window.open = orig;
+      return text;
+    }""")
+    has_devanagari = any('\u0900' <= ch <= '\u097f' for ch in (shared_text or ''))
+    s.record('SH01', 'Share', 'EN share single-language (no Marathi hook)',
+             bool(shared_text) and not has_devanagari)
     s.record('U14', 'UI', 'Location banner element', await page.evaluate('() => !!document.getElementById("locationBanner")'))
     s.record('U15', 'UI', 'Header context element', bool(await page.text_content('#headerContext')))
     s.record('U16', 'UI', 'Persona bar present', await page.is_visible('#personaBar'))
@@ -1550,6 +1591,16 @@ async def run_extended_scenarios(s: Suite, browser):
     s.record('SW05', 'PWA', 'App icons linked', await page.evaluate(
         '() => document.querySelectorAll("link[rel=\\"apple-touch-icon\\"], link[rel=\\"icon\\"]").length >= 1'
     ))
+    # SW06: precache paths must be scope-relative so offline works on the
+    # GitHub Pages /civicradar/ subpath (root-absolute paths would 404 there).
+    sw_src = await page.evaluate('() => fetch("sw.js").then(r => r.text())')
+    sw_ok = (
+        "civicradar-v70" in sw_src
+        and "'/index.html'" not in sw_src
+        and "'/js/app.js'" not in sw_src
+        and "'index.html'" in sw_src
+    )
+    s.record('SW06', 'PWA', 'SW precache uses scope-relative paths (subpath-safe)', sw_ok)
     await ctx.close()
 
     # --- Legal pages (LG) ---
@@ -1602,6 +1653,120 @@ async def run_extended_scenarios(s: Suite, browser):
     s.record('CL02', 'Celebration', 'WhatsApp share btn present', await page.is_visible('#btnShareWhatsApp'))
     s.record('CL03', 'Celebration', 'File BMC btn present', await page.is_visible('#btnSuccessFile'))
     s.record('CL04', 'Celebration', 'Success close btn present', await page.is_visible('#btnSuccessClose'))
+    await ctx.close()
+
+
+async def run_image_safety_scenarios(s: Suite, browser):
+    # --- Relevance confirmation gate (IS) ---
+    ctx = await new_ctx(browser, lat=19.0764, lng=72.8781, storage={
+        'civicradar_user': default_user(id='is01'),
+        'civicradar_coach_seen': '1',
+    })
+    page = await ctx.new_page()
+    await goto_app(page)
+
+    # Negative: photo present, confirmation NOT given -> submit blocked.
+    await page.evaluate('() => window.openReportModal(false)')
+    await page.wait_for_timeout(150)
+    await inject_photo(page)
+    await page.evaluate('() => { document.getElementById("confirmRelevant").checked = false; }')
+    await js_click(page, '#btnSubmitReport')
+    await page.wait_for_timeout(500)
+    blocked = not await is_open(page, 'successOverlay')
+    err_visible = await page.evaluate(
+        '() => { const e = document.getElementById("confirmRelevantError"); return !!(e && !e.classList.contains("hidden")); }'
+    )
+    t = await toast_text(page)
+    s.record('IS01', 'ImageSafety', 'Submit blocked without relevance confirm', blocked and err_visible)
+    s.record('IS02', 'ImageSafety', 'Confirm prompt toast shown', 'confirm' in t.lower() or 'hazard' in t.lower() or 'retake' in t.lower())
+
+    # Positive: tick the confirmation -> error clears and submit succeeds.
+    await page.evaluate(
+        """() => {
+          const c = document.getElementById('confirmRelevant');
+          c.checked = true;
+          c.dispatchEvent(new Event('change', { bubbles: true }));
+        }"""
+    )
+    err_cleared = await page.evaluate(
+        '() => document.getElementById("confirmRelevantError").classList.contains("hidden")'
+    )
+    s.record('IS03', 'ImageSafety', 'Confirm checkbox clears inline error', err_cleared)
+    await js_click(page, '#btnSubmitReport')
+    await page.wait_for_timeout(1800)
+    s.record('IS04', 'ImageSafety', 'Submit succeeds after relevance confirm', await is_open(page, 'successOverlay'))
+
+    # Reset on retake/reopen: the affirmation (checkbox) must be cleared again so
+    # the user re-confirms. Reopening with no photo also keeps the group hidden.
+    await close_all_modals(page)
+    await page.evaluate('() => window.openReportModal(false)')
+    await page.wait_for_timeout(150)
+    reopen_unchecked = await page.evaluate(
+        '() => document.getElementById("confirmRelevant") && !document.getElementById("confirmRelevant").checked'
+    )
+    s.record('IS05', 'ImageSafety', 'Affirmation resets on modal reopen', reopen_unchecked)
+    # With no photo (canvas not visible), reopening keeps the confirm group hidden.
+    await close_all_modals(page)
+    fresh_hidden = await page.evaluate(
+        """() => {
+          document.getElementById('imageCanvas').classList.remove('visible');
+          window.openReportModal(false);
+          const g = document.getElementById('photoConfirmGroup');
+          const c = document.getElementById('confirmRelevant');
+          return g && g.classList.contains('hidden') && c && !c.checked;
+        }"""
+    )
+    s.record('IS05b', 'ImageSafety', 'Confirm group hidden with no photo', fresh_hidden)
+    await ctx.close()
+
+    # --- Admin proof photo is safety-scanned (IS06/IS07) ---
+    ctx = await new_ctx(browser, storage={'civicradar_user': default_user(id='is06')})
+    page = await ctx.new_page()
+    await goto_app(page)
+    # Enable pixel moderation but skip NSFW (no network model fetch in CI).
+    await page.evaluate(
+        '() => { window.CIVICRADAR_CONFIG.moderation = { enabled: true, nsfwEnabled: false }; }'
+    )
+
+    async def feed_admin_proof(blank: bool) -> bool:
+        return await page.evaluate(
+            """async (blank) => {
+              const c = document.createElement('canvas');
+              c.width = 240; c.height = 180;
+              const ctx = c.getContext('2d');
+              if (blank) {
+                ctx.fillStyle = '#808080';
+                ctx.fillRect(0, 0, c.width, c.height);
+              } else {
+                for (let y = 0; y < c.height; y += 4) {
+                  for (let x = 0; x < c.width; x += 4) {
+                    const r = 60 + ((x * 7 + y * 3) % 80);
+                    const g = 90 + ((x + y * 5) % 70);
+                    const b = 30 + ((x * y) % 50);
+                    ctx.fillStyle = `rgb(${r},${g},${b})`;
+                    ctx.fillRect(x, y, 4, 4);
+                  }
+                }
+              }
+              const blob = await (await fetch(c.toDataURL('image/jpeg', 0.9))).blob();
+              const file = new File([blob], 'proof.jpg', { type: 'image/jpeg' });
+              const input = document.getElementById('adminProofInput');
+              const preview = document.getElementById('adminProofPreview');
+              preview.hidden = true;
+              const dt = new DataTransfer();
+              dt.items.add(file);
+              input.files = dt.files;
+              input.dispatchEvent(new Event('change', { bubbles: true }));
+              await new Promise(r => setTimeout(r, 900));
+              return preview.hidden === false;
+            }""",
+            blank,
+        )
+
+    accepted = await feed_admin_proof(False)
+    s.record('IS06', 'ImageSafety', 'Admin proof accepted when scan passes', accepted)
+    rejected = not await feed_admin_proof(True)
+    s.record('IS07', 'ImageSafety', 'Admin proof blocked when scan fails (blank)', rejected)
     await ctx.close()
 
 
@@ -1664,6 +1829,87 @@ def write_report(s: Suite, path: Path, fixes=None):
     return passed, failed, total
 
 
+async def run_feedback_scenarios(s: Suite, browser):
+    # In-app feedback form (Supabase-backed; local-mode fallback under test).
+    ctx = await new_ctx(browser, storage={
+        'civicradar_user': default_user(id='fb01'),
+        'civicradar_coach_seen': '1',
+    })
+    page = await ctx.new_page()
+    await goto_app(page)
+
+    # FB01: entry points exist (Profile footer + About modal).
+    has_profile_entry = await page.evaluate('() => !!document.getElementById("btnProfileFeedback")')
+    has_about_entry = await page.evaluate('() => !!document.getElementById("btnAboutFeedback")')
+    s.record('FB01', 'Feedback', 'Feedback entry points present (Profile + About)',
+             has_profile_entry and has_about_entry)
+
+    # FB02: tapping the Profile entry opens the feedback modal.
+    await js_click(page, '#btnProfileFeedback')
+    await page.wait_for_timeout(300)
+    s.record('FB02', 'Feedback', 'Feedback modal opens from menu', await is_open(page, 'feedbackOverlay'))
+
+    # FB03: submitting with an empty message is blocked + inline error shown; modal stays open.
+    await page.evaluate('() => { document.getElementById("feedbackMessage").value = ""; }')
+    await js_click(page, '#btnFeedbackSubmit')
+    await page.wait_for_timeout(300)
+    err_visible = await page.evaluate(
+        '() => { const e = document.getElementById("feedbackError"); return !!(e && !e.classList.contains("hidden")); }'
+    )
+    still_open = await is_open(page, 'feedbackOverlay')
+    s.record('FB03', 'Feedback', 'Empty message blocked with inline error', err_visible and still_open)
+
+    # FB04: category selection (segmented control) is operable.
+    await page.evaluate(
+        """() => {
+          const bug = document.querySelector('#feedbackForm input[name="feedbackCategory"][value="bug"]');
+          bug.checked = true;
+          bug.dispatchEvent(new Event('change', { bubbles: true }));
+        }"""
+    )
+    cat_ok = await page.evaluate(
+        '() => document.querySelector(\'#feedbackForm input[name="feedbackCategory"]:checked\')?.value === "bug"'
+    )
+    s.record('FB04', 'Feedback', 'Category (Bug/Idea/Other) selectable', cat_ok)
+
+    # FB05: successful submit in local mode → stored locally (never lost), modal closes, toast shown.
+    await page.evaluate(
+        """() => {
+          if (window.Backend) window.Backend.enabled = false;
+          document.getElementById('feedbackMessage').value = 'E2E: drain near the park is blocked';
+        }"""
+    )
+    await js_click(page, '#btnFeedbackSubmit')
+    await page.wait_for_timeout(600)
+    closed = not await is_open(page, 'feedbackOverlay')
+    stored = await page.evaluate(
+        """() => {
+          const list = JSON.parse(localStorage.getItem('civicradar_feedback_pending') || '[]');
+          return list.length >= 1 && list[list.length - 1].category === 'bug'
+            && typeof list[list.length - 1].message === 'string' && list[list.length - 1].message.length > 0;
+        }"""
+    )
+    tt = await toast_text(page)
+    s.record('FB05', 'Feedback', 'Local submit stores feedback + closes modal', closed and stored)
+    s.record('FB06', 'Feedback', 'Submit shows success/saved toast',
+             ('sync' in tt.lower() or 'sent' in tt.lower() or 'saved' in tt.lower() or 'thank' in tt.lower()))
+
+    # FB07: i18n renders (no raw key leakage) — reopen and read the rendered title/submit.
+    await js_click(page, '#btnProfileFeedback')
+    await page.wait_for_timeout(250)
+    rendered_ok = await page.evaluate(
+        """() => {
+          const title = document.querySelector('#feedbackTitle [data-i18n="feedback.title"]');
+          const submit = document.querySelector('#btnFeedbackSubmit [data-i18n="feedback.submit"]');
+          const t1 = (title && title.textContent || '').trim();
+          const t2 = (submit && submit.textContent || '').trim();
+          return t1.length > 0 && t1 !== 'feedback.title' && t2.length > 0 && t2 !== 'feedback.submit';
+        }"""
+    )
+    s.record('FB07', 'Feedback', 'Feedback strings render (i18n, no key leak)', rendered_ok)
+    await ctx.close()
+
+
 async def main():
     ensure_server()
     await install_playwright()
@@ -1682,6 +1928,8 @@ async def main():
             ('Misc', run_remaining_scenarios),
             ('Extra', run_extra_scenarios),
             ('Extended', run_extended_scenarios),
+            ('ImageSafety', run_image_safety_scenarios),
+            ('Feedback', run_feedback_scenarios),
         ]:
             print(f'-- {label} tests --', flush=True)
             await safe_run(fn, s, browser, label)
@@ -1689,9 +1937,13 @@ async def main():
 
     out = ROOT / 'tests' / 'TEST-RESULTS.md'
     fixes = [
-        '`js/app.js`: moved `REF_WELCOME_KEY` + `SEASON_HOOK_DISMISS_KEY` to top-level constants (TDZ fix for ?ref= welcome banner)',
-        '`sw.js`: cache bump → v62',
-        '`tests/e2e_comprehensive.py`: expanded to 230+ scenarios (multi-city, demo, referral, analytics, modals, volunteer, negatives, legal pages)',
+        '`assets/*` + `tools/gen_icons.py`: regenerated the "Pin + Ripple" PNG app-icon set from the REAL approved artwork (`assets/icon-source-pin-ripple.png`). gen_icons.py now crops the source card, removes the white page background (flood-fill) for clean full-bleed transparent corners, and composites the maskable on sampled indigo; icon filenames unchanged so manifest/index/SW references stay valid',
+        '`supabase/schema.sql`: added an additive, re-runnable `feedback` table (message/category/contact/app_version/env/device/ward/city/user_id) with RLS mirroring analytics — anon/auth INSERT allowed, no public SELECT (service-role/dashboard reads only). FOUNDER MUST RE-RUN schema.sql once',
+        '`index.html` + `js/app.js` + `css/styles.css`: in-app feedback form (Supabase-backed, offline-safe). Entry points in Profile + About; accessible modal (focus trap, aria-live error, 44px targets, native-radio segmented control); inserts to Supabase when connected, else stores locally and flushes on reconnect (never loses text); all strings localized in en/hi/mr/gu',
+        '`css/styles.css`: launch visual polish (v69) — extended design tokens (cyan accent, elevation/radii scale, brand gradients), confident button states with springy tap feedback, refined modal/toast/card depth, premium map chrome, segmented control + inline form-error + brand input focus rings + skeleton-loader utility — all motion gated by prefers-reduced-motion',
+        '`js/config.js`: consolidated all contact/legal emails onto a single role inbox `civicradarnh@gmail.com` (legal.grievanceEmail, founder.email, founder.operatorEmail) — removed all personal Gmail addresses from deployable/source files (privacy.html / terms.html links are config-driven and now resolve to the role inbox)',
+        '`sw.js`: cache bump → v70 (single role contact email; config.js is a cached asset so clients pick up the new contact address)',
+        '`tests/e2e_comprehensive.py`: SW06 expected cache version → v70',
     ]
     passed, failed, total = write_report(s, out, fixes=fixes)
     print(f'\n=== Done: {passed}/{total} passed, {failed} failed ===', flush=True)

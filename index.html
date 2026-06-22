@@ -4,7 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#6366f1">
+  <meta name="color-scheme" content="light">
   <meta name="description" content="CivicRadar — free monsoon hazard map for Mumbai, Pune &amp; Thane. Pin stagnant water in your ward, say Me too, beat other wards. WhatsApp-ready · 4 languages · no login.">
+  <!-- iOS / Android home-screen install metadata -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="CivicRadar">
   <!-- Open Graph defaults (static). Crawlers do not run JS — per-report ward/thumbnail OG needs SSR or an edge function at scale. -->
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="CivicRadar">
@@ -18,7 +24,8 @@
   <meta name="twitter:description" content="Pin hazards in your ward, rally neighbours, track fixes — #MonsoonGuardian #CivicRadar">
   <meta name="twitter:image" content="assets/og-civicradar.svg">
   <link rel="manifest" href="manifest.json">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📡</text></svg>">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -281,6 +288,13 @@
           <canvas id="imageCanvas" width="640" height="480"></canvas>
         </div>
       </div>
+      <div class="form-group photo-confirm hidden" id="photoConfirmGroup">
+        <label class="photo-confirm__label" for="confirmRelevant">
+          <input type="checkbox" id="confirmRelevant" aria-describedby="confirmRelevantError">
+          <span data-i18n="report.confirmRelevant.label">Yes, this photo shows the actual hazard — not faces, documents, or unrelated objects.</span>
+        </label>
+        <p class="photo-confirm__error hidden" id="confirmRelevantError" role="alert" aria-live="assertive" data-i18n="report.confirmRelevant.error">Please confirm the photo shows the hazard, or retake it.</p>
+      </div>
       <div class="form-group">
         <label for="reportNotes" data-i18n="report.notes">Notes (optional)</label>
         <textarea id="reportNotes" rows="2" maxlength="500" placeholder="Describe the hazard…" data-i18n-ph="report.notesPh"></textarea>
@@ -371,6 +385,7 @@
   <div class="modal-overlay" id="communityOverlay" aria-hidden="true">
     <div class="modal modal--tall" id="communityModal" role="dialog" aria-labelledby="communityTitle">
       <div class="modal__handle"></div>
+      <button type="button" class="modal__close" data-close="community" aria-label="Close">&times;</button>
       <h2 id="communityTitle" data-i18n="community.title">Community</h2>
       <p class="modal__subtitle" id="communitySubtitle" data-i18n="community.subtitle">Fix it together in your ward — volunteer, pledge supplies, or file with your corporation separately.</p>
 
@@ -536,6 +551,7 @@
   <div class="modal-overlay" id="profileOverlay" aria-hidden="true">
     <div class="modal modal--tall" id="profileModal" role="dialog" aria-labelledby="profileTitle">
       <div class="modal__handle"></div>
+      <button type="button" class="modal__close" data-close="profile" aria-label="Close">&times;</button>
       <h2 id="profileTitle" data-i18n="profile.title">Your Profile</h2>
       <p class="persona-tag persona-tag--citizen" id="profilePersonaTag" data-i18n="profile.persona">Citizen</p>
 
@@ -578,6 +594,9 @@
         </button>
         <button type="button" class="btn btn--ghost btn--full" id="btnAbout">
           <i class="ph ph-info"></i> <span data-i18n="profile.about">About CivicRadar</span>
+        </button>
+        <button type="button" class="btn btn--ghost btn--full" id="btnProfileFeedback">
+          <i class="ph ph-chat-teardrop-text"></i> <span data-i18n="feedback.menu">Send feedback</span>
         </button>
         <div class="profile-legal">
           <a href="privacy.html" target="_blank" rel="noopener noreferrer" data-i18n="legal.privacy">Privacy Policy</a>
@@ -1008,6 +1027,9 @@
       <button type="button" class="btn btn--outline btn--full" id="btnContactFounder">
         <i class="ph ph-envelope"></i> <span data-i18n="about.contact">Contact us</span>
       </button>
+      <button type="button" class="btn btn--outline btn--full" id="btnAboutFeedback">
+        <i class="ph ph-chat-teardrop-text"></i> <span data-i18n="feedback.menu">Send feedback</span>
+      </button>
       <div class="about-legal">
         <a href="privacy.html" target="_blank" rel="noopener noreferrer" data-i18n="legal.privacy">Privacy Policy</a>
         <span aria-hidden="true">·</span>
@@ -1073,6 +1095,58 @@
     </div>
   </div>
 
+  <!-- Send Feedback (in-app, Supabase-backed) -->
+  <div class="modal-overlay" id="feedbackOverlay" aria-hidden="true">
+    <div class="modal modal--sm" id="feedbackModal" role="dialog" aria-labelledby="feedbackTitle">
+      <div class="modal__handle"></div>
+      <button type="button" class="modal__close" data-close="feedback" aria-label="Close">&times;</button>
+      <h2 id="feedbackTitle"><i class="ph ph-chat-teardrop-text"></i> <span data-i18n="feedback.title">Send feedback</span></h2>
+      <p class="modal__subtitle" data-i18n="feedback.subtitle">Found a bug or have an idea? Tell us — it goes straight to the team.</p>
+
+      <form id="feedbackForm" novalidate>
+        <div class="form-group">
+          <label class="form-label" id="feedbackCategoryLabel" data-i18n="feedback.categoryLabel">What kind of feedback?</label>
+          <div class="segmented" role="radiogroup" aria-labelledby="feedbackCategoryLabel">
+            <label class="segmented__option">
+              <input type="radio" name="feedbackCategory" value="idea" checked>
+              <span><i class="ph ph-lightbulb"></i> <span data-i18n="feedback.catIdea">Idea</span></span>
+            </label>
+            <label class="segmented__option">
+              <input type="radio" name="feedbackCategory" value="bug">
+              <span><i class="ph ph-bug"></i> <span data-i18n="feedback.catBug">Bug</span></span>
+            </label>
+            <label class="segmented__option">
+              <input type="radio" name="feedbackCategory" value="other">
+              <span><i class="ph ph-dots-three"></i> <span data-i18n="feedback.catOther">Other</span></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="feedbackMessage" data-i18n="feedback.messageLabel">Your feedback</label>
+          <textarea id="feedbackMessage" rows="4" maxlength="1000" required
+            data-i18n-ph="feedback.messagePh"
+            placeholder="What happened, or what would make CivicRadar better?"
+            aria-describedby="feedbackError"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="feedbackContact" data-i18n="feedback.contactLabel">Contact (optional — only if you want a reply)</label>
+          <input type="text" id="feedbackContact" maxlength="120"
+            data-i18n-ph="feedback.contactPh" placeholder="Email or phone"
+            autocomplete="off" inputmode="email">
+          <p class="field-hint" data-i18n="feedback.privacy">We never share your contact. Used only to reply to this feedback.</p>
+        </div>
+
+        <p class="form-error hidden" id="feedbackError" role="alert" aria-live="assertive"></p>
+
+        <button type="submit" class="btn btn--primary btn--full" id="btnFeedbackSubmit">
+          <span class="btn__label" data-i18n="feedback.submit">Send feedback</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
   <!-- Coming Soon (category teaser / demand capture) -->
   <div class="modal-overlay" id="soonOverlay" aria-hidden="true">
     <div class="modal modal--sm" id="soonModal" role="dialog" aria-labelledby="soonTitle">
@@ -1115,6 +1189,14 @@
         var p = document.createElement('script');
         p.src = 'js/persona-demo.js';
         document.body.appendChild(p);
+      } else if (demo === 'demo5v2') {
+        var d = document.createElement('script');
+        d.src = 'js/demo-tour-v2.js';
+        document.body.appendChild(d);
+      } else if (demo === 'monsoonguardian') {
+        var m = document.createElement('script');
+        m.src = 'js/demo-monsoonguardian-flow.js';
+        document.body.appendChild(m);
       }
     })();
   </script>

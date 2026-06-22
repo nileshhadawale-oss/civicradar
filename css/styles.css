@@ -882,7 +882,9 @@ body.persona-lead .map-empty-cta {
   bottom: 0;
   left: 0;
   right: 0;
-  z-index: 1000;
+  /* Above the Community/Profile overlays (2000) so the tab bar stays visible and
+     tappable there; other overlays sit above the nav (2200) and still cover it. */
+  z-index: 2100;
   height: var(--nav-height);
   display: flex;
   background: rgba(255, 255, 255, 0.92);
@@ -1055,7 +1057,9 @@ body.pwa-nudge-visible #btnCamera {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  z-index: 2000;
+  /* Default modals sit above the bottom nav (z 2100) so they fully cover it,
+     preserving the ToS/onboarding gate and avoiding tap interception. */
+  z-index: 2200;
   background: var(--overlay);
   display: flex;
   align-items: flex-end;
@@ -1068,6 +1072,20 @@ body.pwa-nudge-visible #btnCamera {
 .modal-overlay.open {
   opacity: 1;
   visibility: visible;
+}
+
+/* Community & Profile are full-screen tabs: keep them BELOW the bottom nav so the
+   tab bar shows through and users can always switch tabs / return to Map. The
+   sheet is capped and lifted so its content never hides behind the nav. */
+#communityOverlay,
+#profileOverlay {
+  z-index: 2000;
+  padding-bottom: calc(var(--nav-height) + env(safe-area-inset-bottom, 0px));
+}
+
+#communityModal,
+#profileModal {
+  max-height: calc(100dvh - var(--nav-height) - env(safe-area-inset-bottom, 0px));
 }
 
 .modal {
@@ -1434,6 +1452,45 @@ body.pwa-nudge-visible #btnCamera {
 #btnTakePhoto.is-scanning {
   opacity: 0.65;
   pointer-events: none;
+}
+
+.photo-confirm.hidden {
+  display: none;
+}
+
+.photo-confirm__label {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: var(--text);
+}
+
+.photo-confirm__label input[type='checkbox'] {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  margin: 1px 0 0;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+.photo-confirm__label input[type='checkbox']:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.photo-confirm__error {
+  margin: 8px 0 0;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--danger, #d92d20);
+}
+
+.photo-confirm__error.hidden {
+  display: none;
 }
 
 .camera-area {
@@ -3609,4 +3666,237 @@ html[lang="gu"] .persona-bar {
 
 .hidden {
   display: none !important;
+}
+
+/* ============================================
+   Accessibility: keyboard focus visibility
+   Many icon-only controls only had :hover/:active —
+   keyboard users got no visible focus. Scope to
+   :focus-visible so pointer taps stay clean.
+   ============================================ */
+.header__btn:focus-visible,
+.map-recenter:focus-visible,
+.location-banner__btn:focus-visible,
+.nav-tab:focus-visible,
+#btnCamera:focus-visible,
+.segment-control__btn:focus-visible,
+.modal__close:focus-visible,
+.partner-link:focus-visible,
+.ward-manual-link:focus-visible,
+.hours-picker__btn:focus-visible,
+.esc-channel:focus-visible,
+.role-badge:focus-visible,
+.btn:focus-visible,
+a:focus-visible {
+  outline: 3px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+/* Honour OS "reduce motion" preference globally — keep a hair of
+   duration so transitionend/animationend handlers still fire. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ============================================================
+   Launch polish (v69) — tasteful, additive premium pass.
+   Anchored to the indigo (#6366f1) + cyan (Pin + Ripple) brand.
+   All motion is gated by the global reduce-motion guard above.
+   ============================================================ */
+:root {
+  /* Cyan accent sampled from the icon ripples. */
+  --accent: #22d3ee;
+  --accent-soft: #67e8f9;
+  --primary-50: #eef2ff;
+  --primary-100: #e0e7ff;
+  --primary-glow: rgba(99, 102, 241, 0.28);
+
+  /* Elevation scale — soft, layered, low-contrast premium shadows. */
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.08);
+  --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.08), 0 2px 4px rgba(15, 23, 42, 0.06);
+  --shadow-lg: 0 12px 32px rgba(15, 23, 42, 0.14), 0 4px 10px rgba(15, 23, 42, 0.08);
+  --shadow-pop: 0 18px 48px rgba(79, 70, 229, 0.22);
+
+  /* Radii scale. */
+  --radius-sm: 8px;
+  --radius-xl: 24px;
+  --radius-pill: 999px;
+
+  /* Brand gradients. */
+  --grad-brand: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  --grad-brand-cyan: linear-gradient(135deg, #6366f1 0%, #22d3ee 140%);
+
+  /* Easing. */
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ---- Buttons: confident states, springy feedback ---- */
+.btn {
+  transition: background 0.2s ease, box-shadow 0.2s ease,
+    transform 0.12s var(--ease-spring), opacity 0.2s ease;
+  letter-spacing: 0.005em;
+}
+.btn--primary {
+  background: var(--grad-brand);
+  box-shadow: 0 6px 18px -6px var(--primary-glow);
+}
+.btn--primary:hover:not(:disabled):not(.is-loading) {
+  background: var(--grad-brand);
+  filter: brightness(1.04);
+  box-shadow: 0 10px 24px -6px var(--primary-glow);
+  transform: translateY(-1px);
+}
+.btn--primary:active:not(:disabled) {
+  transform: translateY(0) scale(0.985);
+  box-shadow: 0 4px 12px -6px var(--primary-glow);
+}
+.btn--outline:hover:not(:disabled) {
+  background: var(--primary-50);
+}
+.btn--secondary:hover:not(:disabled),
+.btn--whatsapp:hover:not(:disabled),
+.btn--dark:hover:not(:disabled) {
+  filter: brightness(1.05);
+}
+.btn--ghost:hover:not(:disabled) {
+  background: rgba(99, 102, 241, 0.07);
+  color: var(--text-dark);
+}
+
+/* ---- Surfaces & depth: refined modals, toasts, cards ---- */
+.modal {
+  box-shadow: var(--shadow-lg);
+}
+.toast {
+  box-shadow: var(--shadow-lg);
+}
+.profile-card,
+.founder-card,
+.success-story-card,
+.report-card {
+  box-shadow: var(--shadow-sm);
+}
+
+/* ---- Map chrome: cohesive premium controls ---- */
+#btnCamera,
+.fab {
+  box-shadow: var(--shadow-pop);
+}
+.map-recenter {
+  box-shadow: var(--shadow-md);
+}
+
+/* ---- Feedback modal: native-radio segmented control ---- */
+.segmented {
+  display: flex;
+  gap: 4px;
+  background: var(--bg-main);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 4px;
+}
+.segmented__option {
+  flex: 1;
+  margin: 0;
+  position: relative;
+}
+.segmented__option input {
+  position: absolute;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  cursor: pointer;
+}
+.segmented__option > span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: calc(var(--touch-min) - 8px);
+  padding: 8px 6px;
+  border-radius: calc(var(--radius) - 4px);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+.segmented__option input:checked + span {
+  background: var(--surface);
+  color: var(--primary);
+  box-shadow: var(--shadow-sm);
+}
+.segmented__option input:focus-visible + span {
+  outline: 3px solid var(--primary);
+  outline-offset: 2px;
+}
+.segmented__option > span i {
+  font-size: 1rem;
+}
+
+/* ---- Inline form error (aria-live region) ---- */
+.form-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: -4px 0 14px;
+  padding: 8px 12px;
+  background: rgba(239, 68, 68, 0.08);
+  border-radius: var(--radius-sm);
+  color: var(--danger);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+.form-error.hidden {
+  display: none;
+}
+.form-error::before {
+  content: '\26A0';
+  line-height: 1.35;
+}
+
+/* ---- Inputs: clearer brand focus ring ---- */
+.form-group input:not([type="checkbox"]):not([type="radio"]):focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  box-shadow: 0 0 0 3px var(--primary-100);
+}
+
+/* ---- Skeleton loader utility (for async states) ---- */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--border);
+  border-radius: var(--radius-sm);
+}
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg,
+    transparent, rgba(255, 255, 255, 0.6), transparent);
+  animation: skeleton-shimmer 1.3s infinite;
+}
+@keyframes skeleton-shimmer {
+  100% { transform: translateX(100%); }
+}
+
+/* ---- Empty states: on-brand, a touch more inviting ---- */
+.empty-state {
+  line-height: 1.5;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton::after { animation: none; }
+  .btn--primary:hover:not(:disabled):not(.is-loading) { transform: none; }
 }

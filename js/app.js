@@ -7,6 +7,8 @@ document.addEventListener('DOMContentLoaded', function () {
   'use strict';
 
   /* ---------- Constants ---------- */
+  // Build tag attached to feedback rows. Kept in step with the SW cache version.
+  const CIVIC_APP_VERSION = 'v69';
   const REPORTS_KEY = 'mosquiTrackReports';
   const USER_KEY = 'civicradar_user';
   const PLEDGES_KEY = 'mosquiTrackPledges';
@@ -171,6 +173,7 @@ document.addEventListener('DOMContentLoaded', function () {
     soon: $('#soonOverlay'),
     about: $('#aboutOverlay'),
     inquiry: $('#inquiryOverlay'),
+    feedback: $('#feedbackOverlay'),
   };
 
   let user;
@@ -391,7 +394,9 @@ document.addEventListener('DOMContentLoaded', function () {
       'report.capture': 'Take photo',
       'report.notes': 'Notes (optional)', 'report.notesPh': 'Add a note — lane, building, landmark…',
       'report.submit': 'Submit report',
-      'moderation.guidelines': 'Clear onsite photo of the hazard only. No selfies, IDs, or unrelated images — location data is stripped for privacy.',
+      'report.confirmRelevant.label': 'Yes, this photo shows the actual hazard — not faces, documents, or unrelated objects.',
+      'report.confirmRelevant.error': 'Please confirm the photo shows the hazard, or retake it.',
+      'moderation.guidelines': 'Photograph the actual stagnant water — not faces, documents, or unrelated objects. Location data is stripped for privacy.',
       'moderation.scanning': 'Checking photo…',
       'moderation.blocked.fileType': 'Only JPEG, PNG, or WebP hazard photos are allowed.',
       'moderation.blocked.fileSize': 'Photo is too large. Use a smaller image (max 8 MB).',
@@ -413,16 +418,16 @@ document.addEventListener('DOMContentLoaded', function () {
       'success.shareWhatsapp': 'Share on WhatsApp',
       'share.nativeShare': 'Share',
       'success.shareNudge': 'Neighbours may not know yet — share on WhatsApp so the ward map gets more eyes.',
-      'success.shareMsg': '🦟 {hazard} in {ward} — dengue risk! Pinned on CivicRadar ward map.\nTap Me too and report hazards in your lane:\n{link}\n\n{marathi}\n{hashtags}',
-      'share.marathiHook': 'पावसाळ्यात साचलेलं पाणी? वॉर्ड नकाशा पहा →',
-      'share.appMsg': '🗺️ {city} monsoon map — pin stagnant water, tap Me too, beat rival wards!\n{link}\n\n{marathi}\n{hashtags}',
-      'share.meTooMsg': '👋 Me too — I see {hazard} in {ward} too. {n} neighbour(s) backed on CivicRadar:\n{link}\n\n{marathi}\n{hashtags}',
+      'success.shareMsg': '🦟 {hazard} in {ward} — dengue risk! Pinned on CivicRadar ward map.\nTap Me too and report hazards in your lane:\n{link}\n{hashtags}',
+      'share.appMsg': '🗺️ {city} monsoon map — pin stagnant water, tap Me too, beat rival wards!\n{link}\n{hashtags}',
+      'share.defaultArea': 'my area',
+      'share.meTooMsg': '👋 Me too — I see {hazard} in {ward} too. {n} neighbour(s) backed on CivicRadar:\n{link}\n{hashtags}',
       'share.meTooBtn': 'Share on WhatsApp',
-      'share.wardMapMsg': '⚡ {ward}: {pending} open dengue-risk spots — beat us on CivicRadar!\n{link}\n\n{marathi}\n{hashtags}',
-      'share.cleanupMsg': '🧹 Volunteers cleared {hazard} in {ward}! Before → after on the ward map:\n{link}\n\n{marathi}\n{hashtags}',
-      'share.instagramCaption': '{hazard} spot cleared in {ward} 🎉 Before → After on CivicRadar. Monsoon win.\n{link}\n\n{marathi}\n{hashtags}',
-      'share.instagramCleanupCaption': 'Volunteers cleared {hazard} in {ward} 🧹 Before → After on CivicRadar.\n{link}\n\n{marathi}\n{hashtags}',
-      'share.milestoneMsg': '🏆 {ward} just hit {n} fixes this monsoon on CivicRadar! Can your ward beat us?\n{link}\n\n{marathi}\n{hashtags}',
+      'share.wardMapMsg': '⚡ {ward}: {pending} open dengue-risk spots — beat us on CivicRadar!\n{link}\n{hashtags}',
+      'share.cleanupMsg': '🧹 Volunteers cleared {hazard} in {ward}! Before → after on the ward map:\n{link}\n{hashtags}',
+      'share.instagramCaption': '{hazard} spot cleared in {ward} 🎉 Before → After on CivicRadar. Monsoon win.\n{link}\n{hashtags}',
+      'share.instagramCleanupCaption': 'Volunteers cleared {hazard} in {ward} 🧹 Before → After on CivicRadar.\n{link}\n{hashtags}',
+      'share.milestoneMsg': '🏆 {ward} just hit {n} fixes this monsoon on CivicRadar! Can your ward beat us?\n{link}\n{hashtags}',
       'share.firstBonus': 'First share — +10 Civic Points! 🎉',
       'shareWin.title': 'Share the win!',
       'shareWin.subtitle': 'Before → after proof on your ward map — neighbours love seeing fixes.',
@@ -678,7 +683,7 @@ document.addEventListener('DOMContentLoaded', function () {
       'confirm.resolved': 'A hazard you backed in {ward} was fixed!',
       'confirm.resolvedMany': '{n} hazards you backed were just fixed!',
       'confirm.shareBtn': 'Share',
-      'confirm.shareMsg': '✅ Hazard I flagged in {ward} is FIXED on CivicRadar! Community pressure works:\n{link}\n\n{marathi}\n{hashtags}',
+      'confirm.shareMsg': '✅ Hazard I flagged in {ward} is FIXED on CivicRadar! Community pressure works:\n{link}\n{hashtags}',
       'fix.looksFixed': 'Looks fixed now',
       'fix.done': 'You said looks fixed',
       'fix.thanks': 'Thanks — when enough neighbours agree, we mark it fixed.',
@@ -752,7 +757,7 @@ document.addEventListener('DOMContentLoaded', function () {
       'copy1916.refId': 'Reference (optional): CivicRadar ID {id}',
       'profile.proofBefore': 'Before',
       'profile.proofAfter': 'After',
-      'confirm.shareResolvedMsg': '✅ FIXED in {ward}! Before → after proof on CivicRadar:\n{link}\n\n{marathi}\n{hashtags}',
+      'confirm.shareResolvedMsg': '✅ FIXED in {ward}! Before → after proof on CivicRadar:\n{link}\n{hashtags}',
       'esc.title': 'File with BMC (optional)',
       'esc.subtitle': 'CivicRadar shows hazards on the community map. Filing with BMC is your choice — it starts the official clock. This is not a BMC channel.',
       'esc.fileTitle': 'File the complaint (free)',
@@ -1039,7 +1044,24 @@ document.addEventListener('DOMContentLoaded', function () {
       'social.wardWeekEmpty': 'Be the first in {ward} to report this week — neighbours follow leaders.',
       'recap.title': 'Your ward this week',
       'recap.share': 'Share weekly recap',
-      'share.weeklyRecap': '📊 {ward} this monsoon week: {reports} new report(s), {resolved} fixed, {backed} backed by neighbours. Join us on CivicRadar 👇\n{link}\n\n{marathi}\n{hashtags}',
+      'share.weeklyRecap': '📊 {ward} this monsoon week: {reports} new report(s), {resolved} fixed, {backed} backed by neighbours. Join us on CivicRadar 👇\n{link}\n{hashtags}',
+      'feedback.menu': 'Send feedback',
+      'feedback.title': 'Send feedback',
+      'feedback.subtitle': 'Found a bug or have an idea? Tell us — it goes straight to the team.',
+      'feedback.categoryLabel': 'What kind of feedback?',
+      'feedback.catIdea': 'Idea',
+      'feedback.catBug': 'Bug',
+      'feedback.catOther': 'Other',
+      'feedback.messageLabel': 'Your feedback',
+      'feedback.messagePh': 'What happened, or what would make CivicRadar better?',
+      'feedback.contactLabel': 'Contact (optional — only if you want a reply)',
+      'feedback.contactPh': 'Email or phone',
+      'feedback.privacy': 'We never share your contact. Used only to reply to this feedback.',
+      'feedback.submit': 'Send feedback',
+      'feedback.errorEmpty': 'Please write a short message first.',
+      'feedback.error': 'Could not send — your text is safe. Please try again.',
+      'feedback.success': 'Thanks! Your feedback was sent.',
+      'feedback.successLocal': 'Saved — we will sync it when you are back online.',
     },
     hi: {
       'lang.name': 'हिन्दी', 'lang.native': 'हिन्दी',
@@ -1078,7 +1100,9 @@ document.addEventListener('DOMContentLoaded', function () {
       'report.capture': 'फ़ोटो लें',
       'report.notes': 'टिप्पणी (वैकल्पिक)', 'report.notesPh': 'खतरे का वर्णन करें…',
       'report.submit': 'रिपोर्ट भेजें',
-      'moderation.guidelines': 'केवल खतरे की स्पष्ट ऑन-साइट फ़ोटो अपलोड करें। सेल्फ़ी, ID, दस्तावेज़ या असंबंधित चित्र नहीं — स्थान मेटाडेटा गोपनीयता के लिए हटाया जाता है।',
+      'report.confirmRelevant.label': 'हाँ, यह फ़ोटो वास्तविक खतरा दिखाती है — चेहरे, दस्तावेज़ या असंबंधित वस्तुएँ नहीं।',
+      'report.confirmRelevant.error': 'कृपया पुष्टि करें कि फ़ोटो खतरा दिखाती है, या फिर से फ़ोटो लें।',
+      'moderation.guidelines': 'वास्तविक रुके हुए पानी की फ़ोटो लें — चेहरे, दस्तावेज़ या असंबंधित वस्तुएँ नहीं। स्थान डेटा गोपनीयता के लिए हटाया जाता है।',
       'moderation.scanning': 'फ़ोटो सुरक्षा जाँच हो रही है…',
       'moderation.blocked.fileType': 'केवल JPEG, PNG या WebP hazard फ़ोटो स्वीकार हैं।',
       'moderation.blocked.fileSize': 'फ़ोटो बहुत बड़ी है। छोटी छवि का उपयोग करें (अधिकतम 8 MB)।',
@@ -1100,16 +1124,16 @@ document.addEventListener('DOMContentLoaded', function () {
       'success.shareWhatsapp': 'WhatsApp पर साझा करें',
       'share.nativeShare': 'साझा करें',
       'success.shareNudge': 'पड़ोसियों को अभी पता नहीं — WhatsApp पर शेयर करें, वार्ड नक्शे पर और नज़रें मदद करती हैं।',
-      'success.shareMsg': '🦟 {ward} में {hazard} — डेंगू का खतरा! CivicRadar वार्ड नक्शे पर पिन।\nMe too करें और अपनी गली रिपोर्ट करें:\n{link}\n\n{marathi}\n{hashtags}',
-      'share.marathiHook': 'पावसाळ्यात साचलेलं पाणी? वॉर्ड नकाशा पहा →',
-      'share.appMsg': '🗺️ {city} मानसून नक्शा — रुका पानी पिन, Me too बोलें, प्रतिद्वंद्वी वार्ड को हराएँ!\n{link}\n\n{marathi}\n{hashtags}',
-      'share.meTooMsg': '👋 मुझे भी — {ward} में {hazard}। {n} पड़ोसी CivicRadar पर:\n{link}\n\n{marathi}\n{hashtags}',
+      'success.shareMsg': '🦟 {ward} में {hazard} — डेंगू का खतरा! CivicRadar वार्ड नक्शे पर पिन।\nMe too करें और अपनी गली रिपोर्ट करें:\n{link}\n{hashtags}',
+      'share.appMsg': '🗺️ {city} मानसून नक्शा — रुका पानी पिन, Me too बोलें, प्रतिद्वंद्वी वार्ड को हराएँ!\n{link}\n{hashtags}',
+      'share.defaultArea': 'मेरे इलाके',
+      'share.meTooMsg': '👋 मुझे भी — {ward} में {hazard}। {n} पड़ोसी CivicRadar पर:\n{link}\n{hashtags}',
       'share.meTooBtn': 'WhatsApp पर साझा करें',
-      'share.wardMapMsg': '⚡ {ward}: {pending} खुले डेंगू-जोखिम स्पॉट — CivicRadar पर हमें हराओ!\n{link}\n\n{marathi}\n{hashtags}',
-      'share.cleanupMsg': '🧹 {ward} में स्वयंसेवकों ने {hazard} साफ किया! पहले → बाद:\n{link}\n\n{marathi}\n{hashtags}',
-      'share.instagramCaption': '{ward} में {hazard} साफ 🎉 CivicRadar पर पहले → बाद। मानसून जीत।\n{link}\n\n{marathi}\n{hashtags}',
-      'share.instagramCleanupCaption': '{ward} में स्वयंसेवकों ने {hazard} साफ किया 🧹 CivicRadar पर पहले → बाद।\n{link}\n\n{marathi}\n{hashtags}',
-      'share.milestoneMsg': '🏆 {ward} ने {n} हल पूरे किए! आपका वार्ड?\n{link}\n\n{marathi}\n{hashtags}',
+      'share.wardMapMsg': '⚡ {ward}: {pending} खुले डेंगू-जोखिम स्पॉट — CivicRadar पर हमें हराओ!\n{link}\n{hashtags}',
+      'share.cleanupMsg': '🧹 {ward} में स्वयंसेवकों ने {hazard} साफ किया! पहले → बाद:\n{link}\n{hashtags}',
+      'share.instagramCaption': '{ward} में {hazard} साफ 🎉 CivicRadar पर पहले → बाद। मानसून जीत।\n{link}\n{hashtags}',
+      'share.instagramCleanupCaption': '{ward} में स्वयंसेवकों ने {hazard} साफ किया 🧹 CivicRadar पर पहले → बाद।\n{link}\n{hashtags}',
+      'share.milestoneMsg': '🏆 {ward} ने {n} हल पूरे किए! आपका वार्ड?\n{link}\n{hashtags}',
       'share.firstBonus': 'पहला शेयर — +10 Civic Points! 🎉',
       'shareWin.title': 'जीत साझा करें!',
       'shareWin.subtitle': 'पहले → बाद प्रमाण — पड़ोसियों को दिखाएँ।',
@@ -1273,7 +1297,7 @@ document.addEventListener('DOMContentLoaded', function () {
       'confirm.resolved': '{ward} में जिस खतरे का आपने समर्थन किया वह ठीक हो गया!',
       'confirm.resolvedMany': 'आपने जिन {n} खतरों का समर्थन किया वे अभी ठीक हो गए!',
       'confirm.shareBtn': 'साझा करें',
-      'confirm.shareMsg': '✅ {ward} में जिस खतरे को उठाया वह CivicRadar पर ठीक! सामूहिक दबाव काम करता है:\n{link}\n\n{marathi}\n{hashtags}',
+      'confirm.shareMsg': '✅ {ward} में जिस खतरे को उठाया वह CivicRadar पर ठीक! सामूहिक दबाव काम करता है:\n{link}\n{hashtags}',
       'fix.looksFixed': 'अब ठीक लगता है',
       'fix.done': 'आपने ठीक कहा',
       'fix.thanks': 'धन्यवाद — पर्याप्त पड़ोसी सहमत होने पर हम इसे ठीक चिह्नित करेंगे।',
@@ -1325,7 +1349,7 @@ document.addEventListener('DOMContentLoaded', function () {
       'admin.copy1916': '1916 के लिए कॉपी',
       'admin.copy1916Copied': 'कॉपी हो गया — 1916 में चिपकाएँ',
       'profile.proofBefore': 'पहले', 'profile.proofAfter': 'बाद',
-      'confirm.shareResolvedMsg': '✅ {ward} में ठीक! CivicRadar पर पहले → बाद प्रमाण:\n{link}\n\n{marathi}\n{hashtags}',
+      'confirm.shareResolvedMsg': '✅ {ward} में ठीक! CivicRadar पर पहले → बाद प्रमाण:\n{link}\n{hashtags}',
       'esc.title': 'आधिकारिक शिकायत सहायक', 'esc.subtitle': 'CivicRadar खतरे सामुदायिक मानचित्र पर दिखाता है। BMC में दर्ज करना वैकल्पिक है लेकिन आधिकारिक घड़ी शुरू करता है — यह आधिकारिक BMC चैनल नहीं है।',
       'esc.fileTitle': 'शिकायत दर्ज करें (निःशुल्क)', 'esc.fileHint': 'रुका पानी आपके वार्ड के कीट नियंत्रण अधिकारी तक जाता है। कोई भी चैनल:',
       'esc.recommended': 'अनुशंसित: MyBMC WhatsApp — अधिकांश Mumbai वार्डों के लिए सबसे तेज़।',
@@ -1669,7 +1693,24 @@ document.addEventListener('DOMContentLoaded', function () {
       'social.wardWeekEmpty': 'इस सप्ताह {ward} में सबसे पहले रिपोर्ट करें — पड़ोसी नेताओं का अनुसरण करते हैं।',
       'recap.title': 'इस सप्ताह आपका वार्ड',
       'recap.share': 'साप्ताहिक सारांश शेयर करें',
-      'share.weeklyRecap': '📊 इस मानसून सप्ताह {ward}: {reports} नई रिपोर्ट, {resolved} ठीक, {backed} पड़ोसियों ने समर्थन किया। CivicRadar पर जुड़ें 👇\n{link}\n\n{marathi}\n{hashtags}',
+      'share.weeklyRecap': '📊 इस मानसून सप्ताह {ward}: {reports} नई रिपोर्ट, {resolved} ठीक, {backed} पड़ोसियों ने समर्थन किया। CivicRadar पर जुड़ें 👇\n{link}\n{hashtags}',
+      'feedback.menu': 'सुझाव भेजें',
+      'feedback.title': 'सुझाव भेजें',
+      'feedback.subtitle': 'कोई गड़बड़ी मिली या कोई सुझाव है? हमें बताएं — यह सीधे टीम तक पहुंचता है।',
+      'feedback.categoryLabel': 'किस तरह का सुझाव?',
+      'feedback.catIdea': 'सुझाव',
+      'feedback.catBug': 'गड़बड़ी',
+      'feedback.catOther': 'अन्य',
+      'feedback.messageLabel': 'आपका सुझाव',
+      'feedback.messagePh': 'क्या हुआ, या CivicRadar को बेहतर कैसे बनाया जाए?',
+      'feedback.contactLabel': 'संपर्क (वैकल्पिक — केवल यदि आप जवाब चाहते हैं)',
+      'feedback.contactPh': 'ईमेल या फ़ोन',
+      'feedback.privacy': 'हम आपका संपर्क कभी साझा नहीं करते। केवल इस सुझाव का जवाब देने के लिए उपयोग होता है।',
+      'feedback.submit': 'सुझाव भेजें',
+      'feedback.errorEmpty': 'कृपया पहले एक छोटा संदेश लिखें।',
+      'feedback.error': 'भेजा नहीं जा सका — आपका टेक्स्ट सुरक्षित है। कृपया फिर से प्रयास करें।',
+      'feedback.success': 'धन्यवाद! आपका सुझाव भेज दिया गया।',
+      'feedback.successLocal': 'सहेजा गया — ऑनलाइन होने पर हम इसे सिंक कर देंगे।',
     },
     mr: {
       'lang.name': 'मराठी', 'lang.native': 'मराठी',
@@ -1708,7 +1749,9 @@ document.addEventListener('DOMContentLoaded', function () {
       'report.capture': 'फोटो काढा',
       'report.notes': 'टीप (ऐच्छिक)', 'report.notesPh': 'धोक्याचे वर्णन करा…',
       'report.submit': 'तक्रार पाठवा',
-      'moderation.guidelines': 'फक्त धोक्याचे स्पष्ट ऑन-साइट फोटो अपलोड करा. सेल्फी, ID, कागदपत्रे किंवा असंबंधित चित्र नाहीत — स्थान मेटाडेटा गोपनीयतेसाठी काढले जाते.',
+      'report.confirmRelevant.label': 'होय, हा फोटो खरा धोका दाखवतो — चेहरे, कागदपत्रे किंवा असंबंधित वस्तू नाहीत.',
+      'report.confirmRelevant.error': 'कृपया फोटो धोका दाखवतो याची पुष्टी करा, किंवा पुन्हा फोटो काढा.',
+      'moderation.guidelines': 'प्रत्यक्ष साचलेल्या पाण्याचा फोटो काढा — चेहरे, कागदपत्रे किंवा असंबंधित वस्तू नाहीत. स्थान डेटा गोपनीयतेसाठी काढला जातो.',
       'moderation.scanning': 'फोटो सुरक्षा तपासणी…',
       'moderation.blocked.fileType': 'फक्त JPEG, PNG किंवा WebP hazard फोटो स्वीकारले जातात.',
       'moderation.blocked.fileSize': 'फोटो खूप मोठा आहे. लहान प्रतिमा वापरा (कमाल 8 MB).',
@@ -1730,16 +1773,16 @@ document.addEventListener('DOMContentLoaded', function () {
       'success.shareWhatsapp': 'WhatsApp वर शेअर करा',
       'share.nativeShare': 'शेअर करा',
       'success.shareNudge': 'शेजाऱ्यांना अजून कळले नाही — WhatsApp वर शेअर करा, वॉर्ड नकाशावर अधिक नजर मदत करते.',
-      'success.shareMsg': '🦟 {ward} मध्ये {hazard} — डेंगू धोका! CivicRadar वॉर्ड नकाशावर पिन.\nMe too करा आणि तुमची लेन रिपोर्ट करा:\n{link}\n\n{marathi}\n{hashtags}',
-      'share.marathiHook': 'पावसाळ्यात साचलेलं पाणी? वॉर्ड नकाशा पहा →',
-      'share.appMsg': '🗺️ {city} पावसाळा नकाशा — साचलेले पाणी पिन, Me too, प्रतिस्पर्धी वॉर्डला हरवा!\n{link}\n\n{marathi}\n{hashtags}',
-      'share.meTooMsg': '👋 मला पण — {ward} मध्ये {hazard}. {n} शेजारी CivicRadar वर:\n{link}\n\n{marathi}\n{hashtags}',
+      'success.shareMsg': '🦟 {ward} मध्ये {hazard} — डेंगू धोका! CivicRadar वॉर्ड नकाशावर पिन.\nMe too करा आणि तुमची लेन रिपोर्ट करा:\n{link}\n{hashtags}',
+      'share.appMsg': '🗺️ {city} पावसाळा नकाशा — साचलेले पाणी पिन, Me too, प्रतिस्पर्धी वॉर्डला हरवा!\n{link}\n{hashtags}',
+      'share.defaultArea': 'माझ्या भागात',
+      'share.meTooMsg': '👋 मला पण — {ward} मध्ये {hazard}. {n} शेजारी CivicRadar वर:\n{link}\n{hashtags}',
       'share.meTooBtn': 'WhatsApp वर शेअर करा',
-      'share.wardMapMsg': '⚡ {ward}: {pending} उघडे डेंगू-धोका स्पॉट — CivicRadar वर आम्हाला हरवा!\n{link}\n\n{marathi}\n{hashtags}',
-      'share.cleanupMsg': '🧹 {ward} मध्ये स्वयंसेवकांनी {hazard} साफ केले! आधी → नंतर:\n{link}\n\n{marathi}\n{hashtags}',
-      'share.instagramCaption': '{ward} मध्ये {hazard} साफ 🎉 CivicRadar वर आधी → नंतर. पावसाळ्याची विजय.\n{link}\n\n{marathi}\n{hashtags}',
-      'share.instagramCleanupCaption': '{ward} मध्ये स्वयंसेवकांनी {hazard} साफ केले 🧹 CivicRadar वर आधी → नंतर.\n{link}\n\n{marathi}\n{hashtags}',
-      'share.milestoneMsg': '🏆 {ward} ने {n} सोडवले! तुमचा वॉर्ड?\n{link}\n\n{marathi}\n{hashtags}',
+      'share.wardMapMsg': '⚡ {ward}: {pending} उघडे डेंगू-धोका स्पॉट — CivicRadar वर आम्हाला हरवा!\n{link}\n{hashtags}',
+      'share.cleanupMsg': '🧹 {ward} मध्ये स्वयंसेवकांनी {hazard} साफ केले! आधी → नंतर:\n{link}\n{hashtags}',
+      'share.instagramCaption': '{ward} मध्ये {hazard} साफ 🎉 CivicRadar वर आधी → नंतर. पावसाळ्याची विजय.\n{link}\n{hashtags}',
+      'share.instagramCleanupCaption': '{ward} मध्ये स्वयंसेवकांनी {hazard} साफ केले 🧹 CivicRadar वर आधी → नंतर.\n{link}\n{hashtags}',
+      'share.milestoneMsg': '🏆 {ward} ने {n} सोडवले! तुमचा वॉर्ड?\n{link}\n{hashtags}',
       'share.firstBonus': 'पहिले शेअर — +10 Civic Points! 🎉',
       'shareWin.title': 'विजय शेअर करा!',
       'shareWin.subtitle': 'आधी → नंतर पुरावा — शेजाऱ्यांना दाखवा.',
@@ -1898,7 +1941,7 @@ document.addEventListener('DOMContentLoaded', function () {
       'confirm.resolved': '{ward} मधील ज्या धोक्याला तुम्ही पाठिंबा दिला तो सोडवला गेला!',
       'confirm.resolvedMany': 'तुम्ही पाठिंबा दिलेले {n} धोके आत्ताच सोडवले गेले!',
       'confirm.shareBtn': 'शेअर करा',
-      'confirm.shareMsg': '✅ {ward} मधील धोका CivicRadar वर सोडवला! सामूहिक दबाव काम करतो:\n{link}\n\n{marathi}\n{hashtags}',
+      'confirm.shareMsg': '✅ {ward} मधील धोका CivicRadar वर सोडवला! सामूहिक दबाव काम करतो:\n{link}\n{hashtags}',
       'fix.looksFixed': 'आता ठीक दिसते',
       'fix.done': 'तुम्ही ठीक म्हणालात',
       'fix.thanks': 'धन्यवाद — पुरेसे शेजारी सहमत झाले की आम्ही ठीक चिन्हांकित करू.',
@@ -1949,7 +1992,7 @@ document.addEventListener('DOMContentLoaded', function () {
       'copy1916.marathiAction.stagnant-water': 'कृपया Pest Control Officer ला anti-larval treatment आणि fogging साठी पाठवा.',
       'copy1916.marathiLandmark': 'जवळचे landmark / टिपा: {notes}',
       'profile.proofBefore': 'आधी', 'profile.proofAfter': 'नंतर',
-      'confirm.shareResolvedMsg': '✅ {ward} मध्ये सोडवले! CivicRadar वर आधी → नंतर:\n{link}\n\n{marathi}\n{hashtags}',
+      'confirm.shareResolvedMsg': '✅ {ward} मध्ये सोडवले! CivicRadar वर आधी → नंतर:\n{link}\n{hashtags}',
       'esc.title': 'अधिकृत तक्रार सहाय्यक', 'esc.subtitle': 'CivicRadar धोके सामुदायिक नकाशावर दाखवते. BMC मध्ये नोंदवणे पर्यायी आहे पण अधिकृत घड्याळ सुरू करते — हे अधिकृत BMC चॅनेल नाही.',
       'esc.fileTitle': 'तक्रार नोंदवा (मोफत)', 'esc.fileHint': 'साचलेले पाणी वॉर्ड PCO कडे जाते. कोणताही चॅनेल:',
       'esc.recommended': 'शिफारस: MyBMC WhatsApp — बहुतेक Mumbai वॉर्डांसाठी सर्वात जलद.',
@@ -2296,7 +2339,24 @@ document.addEventListener('DOMContentLoaded', function () {
       'social.wardWeekEmpty': 'या आठवड्यात {ward} मध्ये पहिली नोंद करा — शेजारी नेत्यांचे अनुसरण करतात.',
       'recap.title': 'या आठवड्यात तुमचा वॉर्ड',
       'recap.share': 'साप्ताहिक आढावा शेअर करा',
-      'share.weeklyRecap': '📊 या पावसाळी आठवड्यात {ward}: {reports} नवीन तक्रारी, {resolved} दुरुस्त, {backed} शेजाऱ्यांचा पाठिंबा. CivicRadar वर सामील व्हा 👇\n{link}\n\n{marathi}\n{hashtags}',
+      'share.weeklyRecap': '📊 या पावसाळी आठवड्यात {ward}: {reports} नवीन तक्रारी, {resolved} दुरुस्त, {backed} शेजाऱ्यांचा पाठिंबा. CivicRadar वर सामील व्हा 👇\n{link}\n{hashtags}',
+      'feedback.menu': 'अभिप्राय पाठवा',
+      'feedback.title': 'अभिप्राय पाठवा',
+      'feedback.subtitle': 'एखादी अडचण आढळली किंवा कल्पना आहे? आम्हाला सांगा — ते थेट टीमकडे जाते.',
+      'feedback.categoryLabel': 'कोणत्या प्रकारचा अभिप्राय?',
+      'feedback.catIdea': 'कल्पना',
+      'feedback.catBug': 'अडचण',
+      'feedback.catOther': 'इतर',
+      'feedback.messageLabel': 'तुमचा अभिप्राय',
+      'feedback.messagePh': 'काय झाले, किंवा CivicRadar अधिक चांगले कसे करता येईल?',
+      'feedback.contactLabel': 'संपर्क (पर्यायी — फक्त तुम्हाला उत्तर हवे असल्यास)',
+      'feedback.contactPh': 'ईमेल किंवा फोन',
+      'feedback.privacy': 'आम्ही तुमचा संपर्क कधीही शेअर करत नाही. फक्त या अभिप्रायाला उत्तर देण्यासाठी वापरला जातो.',
+      'feedback.submit': 'अभिप्राय पाठवा',
+      'feedback.errorEmpty': 'कृपया प्रथम एक छोटा संदेश लिहा.',
+      'feedback.error': 'पाठवता आले नाही — तुमचा मजकूर सुरक्षित आहे. कृपया पुन्हा प्रयत्न करा.',
+      'feedback.success': 'धन्यवाद! तुमचा अभिप्राय पाठवला गेला.',
+      'feedback.successLocal': 'जतन केले — ऑनलाइन झाल्यावर आम्ही ते सिंक करू.',
     },    gu: {
       'lang.name': 'Gujarati', 'lang.native': 'ગુજરાતી',
       'nav.map': 'નકશો', 'nav.community': 'સમુદાય', 'nav.profile': 'પ્રોફાઇલ',
@@ -2334,7 +2394,9 @@ document.addEventListener('DOMContentLoaded', function () {
       'report.capture': 'ફોટો લો',
       'report.notes': 'નોંધ (વૈકલ્પિક)', 'report.notesPh': 'જોખમનું વર્ણન કરો…',
       'report.submit': 'ફરિયાદ મોકલો',
-      'moderation.guidelines': 'ફક્ત ખતરાનો સ્પષ્ટ ઑન-સાઇટ ફોટો અપલોડ કરો. સેલ્ફી, ID, દસ્તાવેજો અથવા અનિયુક્ત ચિત્રો નહીં — સ્થાન મેટાડેટા ગોપનીયતા માટે દૂર કરવામાં આવે છે.',
+      'report.confirmRelevant.label': 'હા, આ ફોટો ખરો ખતરો બતાવે છે — ચહેરા, દસ્તાવેજો કે અસંબંધિત વસ્તુઓ નહીં.',
+      'report.confirmRelevant.error': 'કૃપા કરી ખાતરી કરો કે ફોટો ખતરો બતાવે છે, અથવા ફરી ફોટો લો.',
+      'moderation.guidelines': 'ખરેખર ભરાયેલા પાણીનો ફોટો લો — ચહેરા, દસ્તાવેજો કે અસંબંધિત વસ્તુઓ નહીં. સ્થાન ડેટા ગોપનીયતા માટે દૂર કરવામાં આવે છે.',
       'moderation.scanning': 'ફોટો સલામતી તપાસ…',
       'moderation.blocked.fileType': 'ફક્ત JPEG, PNG અથવા WebP hazard ફોટો સ્વીકાર્ય છે.',
       'moderation.blocked.fileSize': 'ફોટો ખૂબ મોટો છે. નાની છબી વાપરો (મહત્તમ 8 MB).',
@@ -2356,16 +2418,16 @@ document.addEventListener('DOMContentLoaded', function () {
       'success.shareWhatsapp': 'WhatsApp પર શેર કરો',
       'share.nativeShare': 'શેર કરો',
       'success.shareNudge': 'પડોશીઓને હજુ ખબર નથી — WhatsApp પર શેર કરો, વોર્ડ નકશા પર વધુ નજર મદદ કરે.',
-      'success.shareMsg': '🦟 {ward} માં {hazard} — ડેંગુ જોખમ! CivicRadar વોર્ડ નકશા પર પિન.\nMe too કરો અને તમારી ગલી રિપોર્ટ કરો:\n{link}\n\n{marathi}\n{hashtags}',
-      'share.marathiHook': 'पावसाळ्यात साचलेलं पाणी? वॉर्ड नकाशा पहा →',
-      'share.appMsg': '🗺️ {city} ચોમાસું નકશો — ભરાયેલું પાણી પિન, Me too, પ્રતિસ્પર્ધી વોર્ડને હરાવો!\n{link}\n\n{marathi}\n{hashtags}',
-      'share.meTooMsg': '👋 મને પણ — {ward} માં {hazard}. {n} પડોશી CivicRadar પર:\n{link}\n\n{marathi}\n{hashtags}',
+      'success.shareMsg': '🦟 {ward} માં {hazard} — ડેંગુ જોખમ! CivicRadar વોર્ડ નકશા પર પિન.\nMe too કરો અને તમારી ગલી રિપોર્ટ કરો:\n{link}\n{hashtags}',
+      'share.appMsg': '🗺️ {city} ચોમાસું નકશો — ભરાયેલું પાણી પિન, Me too, પ્રતિસ્પર્ધી વોર્ડને હરાવો!\n{link}\n{hashtags}',
+      'share.defaultArea': 'મારા વિસ્તારમાં',
+      'share.meTooMsg': '👋 મને પણ — {ward} માં {hazard}. {n} પડોશી CivicRadar પર:\n{link}\n{hashtags}',
       'share.meTooBtn': 'WhatsApp પર શેર કરો',
-      'share.wardMapMsg': '⚡ {ward}: {pending} ખુલ્લા ડેંગુ-જોખમ સ્પોટ — CivicRadar પર અમને હરાવો!\n{link}\n\n{marathi}\n{hashtags}',
-      'share.cleanupMsg': '🧹 {ward} માં સ્વયંસેવકોએ {hazard} સાફ કર્યું! પહેલાં → પછી:\n{link}\n\n{marathi}\n{hashtags}',
-      'share.instagramCaption': '{ward} માં {hazard} સાફ 🎉 CivicRadar પર પહેલાં → પછી. ચોમાસાની જીત.\n{link}\n\n{marathi}\n{hashtags}',
-      'share.instagramCleanupCaption': '{ward} માં સ્વયંસેવકોએ {hazard} સાફ કર્યું 🧹 CivicRadar પર પહેલાં → પછી.\n{link}\n\n{marathi}\n{hashtags}',
-      'share.milestoneMsg': '🏆 {ward} એ {n} ઉકેલ! તમારો વોર્ડ?\n{link}\n\n{marathi}\n{hashtags}',
+      'share.wardMapMsg': '⚡ {ward}: {pending} ખુલ્લા ડેંગુ-જોખમ સ્પોટ — CivicRadar પર અમને હરાવો!\n{link}\n{hashtags}',
+      'share.cleanupMsg': '🧹 {ward} માં સ્વયંસેવકોએ {hazard} સાફ કર્યું! પહેલાં → પછી:\n{link}\n{hashtags}',
+      'share.instagramCaption': '{ward} માં {hazard} સાફ 🎉 CivicRadar પર પહેલાં → પછી. ચોમાસાની જીત.\n{link}\n{hashtags}',
+      'share.instagramCleanupCaption': '{ward} માં સ્વયંસેવકોએ {hazard} સાફ કર્યું 🧹 CivicRadar પર પહેલાં → પછી.\n{link}\n{hashtags}',
+      'share.milestoneMsg': '🏆 {ward} એ {n} ઉકેલ! તમારો વોર્ડ?\n{link}\n{hashtags}',
       'share.firstBonus': 'પહેલું શેર — +10 Civic Points! 🎉',
       'shareWin.title': 'જીત શેર કરો!',
       'shareWin.subtitle': 'પહેલાં → પછી પુરાવો — પડોશીઓને બતાવો.',
@@ -2524,7 +2586,7 @@ document.addEventListener('DOMContentLoaded', function () {
       'confirm.resolved': '{ward} માં તમે ટેકો આપેલ જોખમ ઠીક થઈ ગયું!',
       'confirm.resolvedMany': 'તમે ટેકો આપેલ {n} જોખમો હમણાં જ ઠીક થયાં!',
       'confirm.shareBtn': 'શેર કરો',
-      'confirm.shareMsg': '✅ {ward} માં જોખમ CivicRadar પર ઠીક! સામૂહિક દબાણ કામ કરે છે:\n{link}\n\n{marathi}\n{hashtags}',
+      'confirm.shareMsg': '✅ {ward} માં જોખમ CivicRadar પર ઠીક! સામૂહિક દબાણ કામ કરે છે:\n{link}\n{hashtags}',
       'fix.looksFixed': 'હવે ઠીક લાગે છે',
       'fix.done': 'તમે ઠીક કહ્યું',
       'fix.thanks': 'આભાર — પૂરતા પડોશીઓ સહમત થાય ત્યારે ઠીક ચિહ્નિત કરીશું.',
@@ -2573,7 +2635,7 @@ document.addEventListener('DOMContentLoaded', function () {
       'admin.copy1916': '1916 માટે કૉપી',
       'admin.copy1916Copied': 'કૉપી થયું — 1916 માં પેસ્ટ કરો',
       'profile.proofBefore': 'પહેલાં', 'profile.proofAfter': 'પછી',
-      'confirm.shareResolvedMsg': '✅ {ward} માં ઠીક! CivicRadar પર પહેલાં → પછી:\n{link}\n\n{marathi}\n{hashtags}',
+      'confirm.shareResolvedMsg': '✅ {ward} માં ઠીક! CivicRadar પર પહેલાં → પછી:\n{link}\n{hashtags}',
       'esc.title': 'અધિકૃત ફરિયાદ સહાયક', 'esc.subtitle': 'CivicRadar જોખમો સામુદાયિક નકશા પર બતાવે છે. BMC માં નોંધાવવું વૈકલ્પિક છે પણ અધિકૃત ઘડિયાળ શરૂ કરે — આ અધિકૃત BMC ચેનલ નથી.',
       'esc.fileTitle': 'ફરિયાદ નોંધાવો (મફત)', 'esc.fileHint': 'ભરાયેલું પાણી વોર્ડ PCO પાસે જાય છે. કોઈ પણ ચેનલ:',
       'esc.recommended': 'ભલામણ: MyBMC WhatsApp — મોટાભાગના Mumbai વોર્ડ માટે સૌથી ઝડપી.',
@@ -2920,7 +2982,24 @@ document.addEventListener('DOMContentLoaded', function () {
       'social.wardWeekEmpty': 'આ અઠવાડિયે {ward} માં પહેલા નોંધો — પડોશીઓ આગેવાનોને અનુસરે છે.',
       'recap.title': 'આ અઠવાડિયે તમારો વોર્ડ',
       'recap.share': 'સાપ્તાહિક સારાંશ શેર કરો',
-      'share.weeklyRecap': '📊 આ ચોમાસા અઠવાડિયે {ward}: {reports} નવી ફરિયાદ, {resolved} ઠીક, {backed} પડોશીઓનું સમર્થન. CivicRadar પર જોડાઓ 👇\n{link}\n\n{marathi}\n{hashtags}',
+      'share.weeklyRecap': '📊 આ ચોમાસા અઠવાડિયે {ward}: {reports} નવી ફરિયાદ, {resolved} ઠીક, {backed} પડોશીઓનું સમર્થન. CivicRadar પર જોડાઓ 👇\n{link}\n{hashtags}',
+      'feedback.menu': 'પ્રતિસાદ મોકલો',
+      'feedback.title': 'પ્રતિસાદ મોકલો',
+      'feedback.subtitle': 'કોઈ ભૂલ મળી કે કોઈ વિચાર છે? અમને જણાવો — તે સીધું ટીમ સુધી પહોંચે છે.',
+      'feedback.categoryLabel': 'કયા પ્રકારનો પ્રતિસાદ?',
+      'feedback.catIdea': 'વિચાર',
+      'feedback.catBug': 'ભૂલ',
+      'feedback.catOther': 'અન્ય',
+      'feedback.messageLabel': 'તમારો પ્રતિસાદ',
+      'feedback.messagePh': 'શું થયું, અથવા CivicRadar ને કેવી રીતે વધુ સારું બનાવી શકાય?',
+      'feedback.contactLabel': 'સંપર્ક (વૈકલ્પિક — ફક્ત જો તમે જવાબ ઇચ્છતા હો)',
+      'feedback.contactPh': 'ઈમેલ અથવા ફોન',
+      'feedback.privacy': 'અમે તમારો સંપર્ક ક્યારેય શેર કરતા નથી. ફક્ત આ પ્રતિસાદનો જવાબ આપવા માટે વપરાય છે.',
+      'feedback.submit': 'પ્રતિસાદ મોકલો',
+      'feedback.errorEmpty': 'કૃપા કરીને પહેલા એક ટૂંકો સંદેશ લખો.',
+      'feedback.error': 'મોકલી શકાયું નહીં — તમારો ટેક્સ્ટ સુરક્ષિત છે. કૃપા કરીને ફરી પ્રયાસ કરો.',
+      'feedback.success': 'આભાર! તમારો પ્રતિસાદ મોકલાઈ ગયો.',
+      'feedback.successLocal': 'સાચવ્યું — ઓનલાઈન થશો ત્યારે અમે તેને સિંક કરીશું.',
     },  };
   const LANG_ORDER = ['en', 'hi', 'mr', 'gu'];
   let currentLang = localStorage.getItem(LANG_KEY) || 'en';
@@ -3398,6 +3477,7 @@ document.addEventListener('DOMContentLoaded', function () {
         this.enabled = true;
         await this.pullAll();
         await this.pushLocalOwned();
+        this.flushPendingFeedback();
         this.subscribe();
         updateAuthMode();
         updateSyncStatus();
@@ -3673,6 +3753,32 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         showToast(t('toast.syncLocal'), 'info', 3500);
       }
+    },
+
+    async insertFeedback(row) {
+      if (!this.enabled) return { error: { message: 'offline' } };
+      const { error } = await this.client.from('feedback').insert(row);
+      if (error && window.CivicAnalytics) {
+        CivicAnalytics.trackError(error.message, { context: 'insertFeedback' });
+      }
+      return { error: error || null };
+    },
+
+    // Best-effort: push any feedback saved while offline once the backend is up.
+    async flushPendingFeedback() {
+      if (!this.enabled) return;
+      const list = getPendingFeedback();
+      if (!list.length) return;
+      const remaining = [];
+      for (const row of list) {
+        try {
+          const { error } = await this.client.from('feedback').insert(row);
+          if (error) remaining.push(row);
+        } catch {
+          remaining.push(row);
+        }
+      }
+      savePendingFeedback(remaining);
     },
 
     async updateReportStatus(id, status) {
@@ -4151,6 +4257,101 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function copyImpactSummary() {
     copyTextSafe(buildImpactSummaryText(), 'about.copied');
+  }
+
+  /* ---------- In-app feedback (Supabase-backed, offline-safe) ---------- */
+  const FEEDBACK_PENDING_KEY = 'civicradar_feedback_pending';
+
+  function getPendingFeedback() {
+    try { return JSON.parse(localStorage.getItem(FEEDBACK_PENDING_KEY) || '[]'); }
+    catch { return []; }
+  }
+
+  function savePendingFeedback(list) {
+    try { localStorage.setItem(FEEDBACK_PENDING_KEY, JSON.stringify(list.slice(-50))); }
+    catch { /* storage full / unavailable — non-fatal */ }
+  }
+
+  // Assemble a feedback row. Only standard, non-personal context is attached
+  // automatically (anon uid, env, ward/city, coarse UA) — no names.
+  function buildFeedbackRow(message, category, contact) {
+    const cfg = window.CIVICRADAR_CONFIG || {};
+    const row = {
+      message: message,
+      category: category,
+      contact: contact || null,
+      app_version: CIVIC_APP_VERSION,
+      env: cfg.environment || null,
+      device: (typeof navigator !== 'undefined' && navigator.userAgent
+        ? String(navigator.userAgent).slice(0, 300) : null),
+      ward: (user && user.ward) || null,
+      city: (user && user.city) || null,
+      user_id: (Backend.enabled && user && user.id) ? user.id : null,
+    };
+    return row;
+  }
+
+  function resetFeedbackForm() {
+    const form = $('#feedbackForm');
+    if (form) form.reset();
+    const err = $('#feedbackError');
+    if (err) { err.classList.add('hidden'); err.textContent = ''; }
+    const btn = $('#btnFeedbackSubmit');
+    if (btn) { btn.classList.remove('is-loading'); btn.disabled = false; }
+  }
+
+  window.openFeedbackModal = function () {
+    resetFeedbackForm();
+    openModal('feedback');
+  };
+
+  async function submitFeedback() {
+    const msgEl = $('#feedbackMessage');
+    const errEl = $('#feedbackError');
+    const btn = $('#btnFeedbackSubmit');
+    if (!msgEl || !btn) return;
+
+    const message = (msgEl.value || '').trim();
+    if (errEl) { errEl.classList.add('hidden'); errEl.textContent = ''; }
+
+    if (!message) {
+      if (errEl) { errEl.textContent = t('feedback.errorEmpty'); errEl.classList.remove('hidden'); }
+      msgEl.focus();
+      return;
+    }
+
+    const checked = $('#feedbackForm input[name="feedbackCategory"]:checked');
+    const category = (checked && checked.value) || 'other';
+    const contactEl = $('#feedbackContact');
+    const contact = contactEl ? (contactEl.value || '').trim() : '';
+    const row = buildFeedbackRow(message, category, contact);
+
+    btn.classList.add('is-loading');
+    btn.disabled = true;
+    try {
+      if (Backend.enabled) {
+        const { error } = await Backend.insertFeedback(row);
+        if (error) throw new Error(error.message || 'insert_failed');
+        showToast(t('feedback.success'), 'success', 3500);
+      } else {
+        // Local / offline mode: persist so we never lose the text; sync on reconnect.
+        const list = getPendingFeedback();
+        list.push(row);
+        savePendingFeedback(list);
+        showToast(t('feedback.successLocal'), 'info', 4000);
+      }
+      if (window.CivicAnalytics) CivicAnalytics.track('feedback_submitted', { category }, row.ward);
+      resetFeedbackForm();
+      closeModal('feedback');
+    } catch (e) {
+      // Keep the modal open and the user's text intact; surface a clear error.
+      if (errEl) { errEl.textContent = t('feedback.error'); errEl.classList.remove('hidden'); }
+      showToast(t('feedback.error'), 'error', 4000);
+      console.warn('Feedback submit failed:', (e && e.message) || e);
+    } finally {
+      btn.classList.remove('is-loading');
+      btn.disabled = false;
+    }
   }
 
   function renderAboutModal() {
@@ -5665,6 +5866,17 @@ document.addEventListener('DOMContentLoaded', function () {
     Object.keys(overlays).forEach(closeModal);
   }
 
+  // Push a history entry when opening the full-screen Community/Profile tabs so
+  // Android's hardware back button closes them instead of leaving the app.
+  // One entry is enough; the popstate handler closes whichever tab is open.
+  function pushNavModalHistory() {
+    try {
+      if (!(history.state && history.state.civicNavModal)) {
+        history.pushState({ civicNavModal: true }, '');
+      }
+    } catch { /* history unavailable — Escape/close button still work */ }
+  }
+
   /* ---------- Window Modal Bindings ---------- */
   window.openTosModal = function () { openModal('tos'); };
   window.closeTosModal = function () { closeModal('tos'); };
@@ -5684,6 +5896,8 @@ document.addEventListener('DOMContentLoaded', function () {
     renderHazardPicker();
     resetSubmitReportButton();
     const canvas = $('#imageCanvas');
+    if (canvas.classList.contains('visible')) showPhotoConfirm();
+    else resetPhotoConfirm();
     updateReportFlowSteps(canvas.classList.contains('visible') ? 'details' : 'photo');
     openModal('report');
     if (openCamera) {
@@ -5702,6 +5916,7 @@ document.addEventListener('DOMContentLoaded', function () {
     flushPendingPwaNudge();
   };
   window.openCommunityModal = function () {
+    pushNavModalHistory();
     closeModal('profile');
     renderLeaderboard('wards');
     updateCommunitySubtitle();
@@ -5726,6 +5941,7 @@ document.addEventListener('DOMContentLoaded', function () {
   };
   window.closePledgeModal = function () { closeModal('pledge'); };
   window.openProfileModal = function () {
+    pushNavModalHistory();
     closeModal('community');
     updateProfileUI();
     setNavTab('profile');
@@ -6331,6 +6547,22 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     $('#btnAbout').addEventListener('click', window.openAboutModal);
     $('#btnAboutClose').addEventListener('click', () => closeModal('about'));
+    const btnProfileFeedback = $('#btnProfileFeedback');
+    if (btnProfileFeedback) btnProfileFeedback.addEventListener('click', () => window.openFeedbackModal());
+    const btnAboutFeedback = $('#btnAboutFeedback');
+    if (btnAboutFeedback) {
+      btnAboutFeedback.addEventListener('click', () => {
+        closeModal('about');
+        window.openFeedbackModal();
+      });
+    }
+    const feedbackForm = $('#feedbackForm');
+    if (feedbackForm) {
+      feedbackForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        submitFeedback();
+      });
+    }
     $('#btnDeleteData').addEventListener('click', () => { deleteMyData(); });
     const btnWithdrawAnalytics = $('#btnWithdrawAnalytics');
     if (btnWithdrawAnalytics) btnWithdrawAnalytics.addEventListener('click', withdrawAnalyticsConsent);
@@ -6414,8 +6646,24 @@ document.addEventListener('DOMContentLoaded', function () {
 
     $$('.modal__close').forEach((btn) => {
       btn.addEventListener('click', () => {
-        if (btn.dataset.close === 'escalation') tryCloseEscalation();
-        else closeModal(btn.dataset.close);
+        const name = btn.dataset.close;
+        if (name === 'escalation') tryCloseEscalation();
+        else closeModal(name);
+        // Community/Profile are full-screen tabs: closing returns to the Map tab
+        // so the bottom-nav highlight stays correct.
+        if (name === 'community' || name === 'profile') setNavTab('map');
+      });
+    });
+
+    // Backdrop tap on the Community/Profile overlays dismisses and returns to Map.
+    ['community', 'profile'].forEach((name) => {
+      const overlay = overlays[name];
+      if (!overlay) return;
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) {
+          closeModal(name);
+          setNavTab('map');
+        }
       });
     });
 
@@ -6447,6 +6695,12 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     $('#btnTakePhoto').addEventListener('click', () => $('#photoInput').click());
     $('#photoInput').addEventListener('change', handlePhotoCapture);
+    $('#confirmRelevant').addEventListener('change', (e) => {
+      if (e.target.checked) {
+        const error = $('#confirmRelevantError');
+        if (error) error.classList.add('hidden');
+      }
+    });
     $('#reportNotes').addEventListener('input', () => {
       if ($('#imageCanvas').classList.contains('visible')) {
         updateReportFlowSteps('submit');
@@ -6633,6 +6887,20 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     });
 
+    // Android hardware back / browser back: close the Community/Profile tab and
+    // return to the Map tab instead of navigating away from the app.
+    window.addEventListener('popstate', () => {
+      let closedAny = false;
+      ['community', 'profile'].forEach((name) => {
+        const overlay = overlays[name];
+        if (overlay && overlay.classList.contains('open')) {
+          closeModal(name);
+          closedAny = true;
+        }
+      });
+      if (closedAny) setNavTab('map');
+    });
+
     let adminTapCount = 0;
     let leadTapCount = 0;
     $('#profileWard').addEventListener('click', () => {
@@ -6730,6 +6998,26 @@ document.addEventListener('DOMContentLoaded', function () {
     if (status) status.classList.toggle('hidden', !active);
   }
 
+  // Soft relevance confirmation: a one-tap affirmation that the photo shows the
+  // hazard. Not an automated classifier and never a hard block — just a nudge.
+  function resetPhotoConfirm() {
+    const checkbox = $('#confirmRelevant');
+    const group = $('#photoConfirmGroup');
+    const error = $('#confirmRelevantError');
+    if (checkbox) checkbox.checked = false;
+    if (error) error.classList.add('hidden');
+    if (group) group.classList.add('hidden');
+  }
+
+  function showPhotoConfirm() {
+    const checkbox = $('#confirmRelevant');
+    const group = $('#photoConfirmGroup');
+    const error = $('#confirmRelevantError');
+    if (checkbox) checkbox.checked = false;
+    if (error) error.classList.add('hidden');
+    if (group) group.classList.remove('hidden');
+  }
+
   function rejectPhoto(scanResult) {
     const canvas = $('#imageCanvas');
     if (window.ImageModeration) {
@@ -6738,6 +7026,7 @@ document.addEventListener('DOMContentLoaded', function () {
       resetReportForm();
     }
     lastReportDataUrl = null;
+    resetPhotoConfirm();
     updateReportFlowSteps('photo');
     const msg = scanResult.i18nKey ? t(scanResult.i18nKey) : (scanResult.message || t('moderation.blocked.irrelevant'));
     showToast(msg, 'error', 5500);
@@ -6784,6 +7073,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         canvas.classList.add('visible');
         lastReportDataUrl = canvas.toDataURL('image/jpeg', JPEG_QUALITY);
+        showPhotoConfirm();
         updateReportFlowSteps('details');
       };
       img.onerror = () => {
@@ -6827,6 +7117,16 @@ document.addEventListener('DOMContentLoaded', function () {
     if (window.CivicAnalytics) CivicAnalytics.perfStart('report_submit_duration');
     if (!canvas.classList.contains('visible')) {
       showToast(t('toast.photoRequired'), 'error');
+      return;
+    }
+
+    const confirmRelevant = $('#confirmRelevant');
+    if (confirmRelevant && !confirmRelevant.checked) {
+      const error = $('#confirmRelevantError');
+      if (error) error.classList.remove('hidden');
+      showToast(t('report.confirmRelevant.error'), 'error');
+      updateReportFlowSteps('details');
+      try { confirmRelevant.focus(); } catch { /* ignore */ }
       return;
     }
 
@@ -7052,6 +7352,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     lastReportDataUrl = null;
+    resetPhotoConfirm();
     resetSubmitReportButton();
     updateReportFlowSteps('photo');
   }
@@ -7142,7 +7443,7 @@ document.addEventListener('DOMContentLoaded', function () {
       .replace(/\{n\}/g, vars.n != null ? String(vars.n) : '')
       .replace(/\{pending\}/g, vars.pending != null ? String(vars.pending) : '')
       .replace(/\{city\}/g, vars.city || getCityLabel())
-      .replace(/\{marathi\}/g, t('share.marathiHook'))
+      .replace(/\{marathi\}/g, '')
       .replace(/\{hashtags\}/g, buildHashtagLine(vars.wardFull || user.ward));
     return out;
   }
@@ -7214,7 +7515,7 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function buildShareBackedMessage(wardName) {
-    const ward = wardName || (user.ward ? getWardShortName(user.ward) : 'my area');
+    const ward = wardName || (user.ward ? getWardShortName(user.ward) : t('share.defaultArea'));
     return fillShareTemplate(t('confirm.shareMsg'), {
       ward,
       link: shareAppLink('fixed'),
@@ -9113,13 +9414,37 @@ document.addEventListener('DOMContentLoaded', function () {
     if (window.ImageModeration) {
       const fileCheck = ImageModeration.validateFile(file, getModCfg());
       if (!fileCheck.ok) {
-        rejectPhoto(fileCheck);
+        const msg = fileCheck.i18nKey ? t(fileCheck.i18nKey) : (fileCheck.message || t('moderation.blocked.irrelevant'));
+        showToast(msg, 'error', 5500);
         e.target.value = '';
         return;
       }
     }
     try {
       adminProofDataUrl = await compressImageFromFile(file);
+      // Proof-of-fix photos get the same safety scan (NSFW/blank/document) as
+      // citizen reports. Offline behaviour matches the citizen flow: NSFW is
+      // skipped unless requireOnlineNsfw is set in config.
+      if (window.ImageModeration && getModCfg().enabled) {
+        const scanCanvasEl = document.createElement('canvas');
+        const scanImg = new Image();
+        await new Promise((resolve, reject) => {
+          scanImg.onload = resolve;
+          scanImg.onerror = reject;
+          scanImg.src = adminProofDataUrl;
+        });
+        scanCanvasEl.width = scanImg.width;
+        scanCanvasEl.height = scanImg.height;
+        scanCanvasEl.getContext('2d').drawImage(scanImg, 0, 0);
+        const scan = await ImageModeration.scanCanvas(scanCanvasEl, getModCfg());
+        if (!scan.ok) {
+          adminProofDataUrl = null;
+          const msg = scan.i18nKey ? t(scan.i18nKey) : (scan.message || t('moderation.blocked.irrelevant'));
+          showToast(msg, 'error', 5500);
+          e.target.value = '';
+          return;
+        }
+      }
       const preview = $('#adminProofPreview');
       const btn = $('#btnAdminProofCapture');
       if (preview) {

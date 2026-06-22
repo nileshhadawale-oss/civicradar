@@ -1,0 +1,44 @@
+# Changelog
+
+All notable changes to CivicRadar are documented here.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project aims to follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+Release process and environment details live in [`RELEASE.md`](./RELEASE.md).
+
+## [Unreleased]
+
+### Added
+- Multi-city support for **Mumbai, Pune, and Thane** — per-city map centers,
+  bounds, ward detection, and corporation channels (BMC / PMC CARE / TMC).
+- Environment-aware configuration in `js/config.js` (and `js/config.example.js`):
+  hostname-based `dev` / `staging` / `prod` detection that resolves
+  `supabaseUrl`, `supabaseAnonKey`, and `publicUrl` per environment, with a safe
+  fallback to production for unknown hosts.
+- Release scaffolding: `RELEASE.md` runbook, PR-triggered E2E gate workflow
+  (`.github/workflows/pr-checks.yml`), and an optional secret-guarded Cloudflare
+  Pages preview workflow (`.github/workflows/preview-cloudflare.yml`).
+- Admin proof-photo scan when resolving reports (resolution requires a proof
+  photo).
+- Soft photo-relevance confirmation prompt on report submission.
+- Image-safety test scenarios in the E2E suite.
+
+### Changed
+- Anonymized founder identity across the public UI — no personal names shown
+  ("The CivicRadar team"); contact via project email only.
+- Migrated to a name-free public URL on the **civicradarNH** GitHub org
+  (`https://civicradarnh.github.io/civicradar`).
+- PWA icons moved from vector to raster for broader install/launch compatibility.
+- Navigation Phase 1 improvements.
+- E2E coverage expanded from **234 to 243** passing checks.
+
+### Fixed
+- Referral welcome banner behavior (shows on `?ref=`, hides after dismiss, stays
+  hidden in demo tour).
+- Single-language WhatsApp share — shared messages no longer duplicate content
+  across multiple languages.
+- Accessibility fixes.
+- Offline / service-worker reliability fixes.
+
+[Unreleased]: https://github.com/civicradarnh/civicradar/commits/main

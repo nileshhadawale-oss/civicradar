@@ -1,0 +1,75 @@
+# OPTIONAL — Cloudflare Pages staging/preview deploy via GitHub Actions.
+#
+# The RECOMMENDED, zero-secret path is to connect the repo directly in the
+# Cloudflare Pages dashboard (see RELEASE.md → "Cloudflare Pages preview").
+# That gives automatic per-branch and per-PR preview URLs with no secrets here.
+#
+# This workflow is a SAFE alternative if you prefer driving previews from CI.
+# It is GUARDED so it never turns CI red when secrets are missing:
+#   • The `gate` job checks for CLOUDFLARE_API_TOKEN and skips everything if
+#     it (or CLOUDFLARE_ACCOUNT_ID) is absent — the run succeeds as a no-op.
+#
+# TO ENABLE:
+#   1. Create a Cloudflare Pages project named `civicradar-staging`
+#      (Workers & Pages → Create → Pages → use direct upload or connect Git).
+#   2. Add repo secrets (Settings → Secrets and variables → Actions):
+#        - CLOUDFLARE_API_TOKEN   (Pages: Edit permission)
+#        - CLOUDFLARE_ACCOUNT_ID
+#   3. Adjust `projectName` below if you used a different project name.
+name: Cloudflare Pages Preview
+
+on:
+  push:
+    branches: [staging]
+  pull_request:
+    branches: [main, master, staging]
+  workflow_dispatch:
+
+concurrency:
+  group: cf-preview-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  deployments: write
+  pull-requests: write
+
+jobs:
+  # Guard: secrets cannot be read directly in job-level `if:`, so map the token
+  # to an env var and expose a boolean output. Always succeeds.
+  gate:
+    runs-on: ubuntu-latest
+    outputs:
+      enabled: ${{ steps.check.outputs.enabled }}
+    steps:
+      - name: Check for Cloudflare secrets
+        id: check
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ -n "$CF_TOKEN" ] && [ -n "$CF_ACCOUNT" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+            echo "Cloudflare secrets present — preview deploy will run."
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "Cloudflare secrets absent — skipping preview deploy (not a failure)."
+          fi
+
+  deploy-preview:
+    needs: gate
+    if: needs.gate.outputs.enabled == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Static site: no build step. Deploy the repo root directly.
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/pages-action@v1
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          projectName: civicradar-staging
+          directory: .
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}

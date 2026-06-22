@@ -2,8 +2,8 @@
   "name": "CivicRadar — Mumbai, Pune & Thane Monsoon Hazards",
   "short_name": "CivicRadar",
   "description": "Free community app for monsoon hazard reporting in Mumbai, Pune, and Thane. Report stagnant water, rally neighbours, track fixes. Independent student-built tool — not an official municipal app.",
-  "start_url": "/",
-  "scope": "/",
+  "start_url": "/civicradar/",
+  "scope": "/civicradar/",
   "display": "standalone",
   "background_color": "#f8fafc",
   "theme_color": "#6366f1",
@@ -13,16 +13,22 @@
   "dir": "ltr",
   "icons": [
     {
-      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect fill='%236366f1' width='512' height='512' rx='96'/><text x='256' y='320' font-size='200' text-anchor='middle' fill='white'>📡</text></svg>",
+      "src": "assets/icon-192.png",
       "sizes": "192x192",
-      "type": "image/svg+xml",
+      "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect fill='%236366f1' width='512' height='512' rx='96'/><text x='256' y='320' font-size='200' text-anchor='middle' fill='white'>📡</text></svg>",
+      "src": "assets/icon-512.png",
       "sizes": "512x512",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }

@@ -1,0 +1,46 @@
+# PR gate: run the E2E suite on every pull request so merges are protected.
+# This workflow NEVER deploys — it only reports pass/fail so branch protection
+# can require it before merging into main, master, or staging.
+# Production deploy lives separately in deploy-pages.yml (do not merge the two).
+name: PR Checks
+
+on:
+  pull_request:
+    branches: [main, master, staging]
+
+# Cancel superseded runs on the same PR to save CI minutes.
+concurrency:
+  group: pr-checks-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Playwright
+        run: |
+          pip install playwright
+          playwright install chromium --with-deps
+
+      # Server + E2E must share one step: background jobs do not survive step
+      # boundaries on GHA. Mirrors the test job in deploy-pages.yml.
+      - name: Run E2E suite
+        run: |
+          python -m http.server 8095 --bind 127.0.0.1 &
+          for i in $(seq 1 30); do
+            curl -sf http://127.0.0.1:8095/ && break
+            sleep 1
+          done
+          curl -sf http://127.0.0.1:8095/ || (echo "Server failed to start" && exit 1)
+          python tests/e2e_comprehensive.py

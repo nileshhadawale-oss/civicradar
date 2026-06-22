@@ -647,3 +647,42 @@ language sql stable security definer set search_path = public as $$
   from public.analytics_events
   where created_at >= now() - (greatest(1, least(coalesce(p_days, 7), 90)) || ' days')::interval;
 $$;
+
+-- =====================================================================
+-- In-app feedback (bug reports / ideas) — migration v69
+-- Public can submit (anon or signed-in); only the service role / dashboard
+-- can read. Mirrors the analytics_events security pattern (anon insert, no
+-- public select). No founder name/email is exposed — feedback flows to the DB.
+-- Additive and safe to re-run.
+-- =====================================================================
+
+create table if not exists public.feedback (
+  id          uuid primary key default gen_random_uuid(),
+  created_at  timestamptz not null default now(),
+  message     text not null,
+  category    text not null default 'other' check (category in ('bug', 'idea', 'other')),
+  contact     text,                       -- optional: only if the user wants a reply
+  app_version text,                       -- SW cache / build version
+  env         text,                       -- 'dev' | 'staging' | 'prod'
+  device      text,                       -- coarse device/useragent string
+  ward        text,                       -- optional ward context
+  city        text,                       -- optional city context
+  user_id     uuid                        -- anon auth uid if signed in (nullable)
+);
+
+create index if not exists feedback_created_idx on public.feedback (created_at desc);
+create index if not exists feedback_category_idx on public.feedback (category);
+
+alter table public.feedback enable row level security;
+
+-- Anyone (anon or authenticated) may submit feedback.
+drop policy if exists "feedback_insert_anon" on public.feedback;
+create policy "feedback_insert_anon"
+  on public.feedback for insert
+  with check (true);
+
+-- No public reads/updates/deletes — only the service role (dashboard) sees feedback.
+drop policy if exists "feedback_select_none" on public.feedback;
+create policy "feedback_select_none"
+  on public.feedback for select
+  using (false);

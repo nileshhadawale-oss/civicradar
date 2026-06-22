@@ -21,13 +21,85 @@
  *   2. Project Settings → API → copy the "Project URL" and the "anon public" key
  *   3. Paste them below and reload the app
  *   4. Run the SQL in supabase/schema.sql once (SQL Editor → New query → Run)
+ *
+ * ─────────────────────────────────────────────────────────────────────────
+ * ENVIRONMENT DETECTION (see RELEASE.md)
+ * Backend/URL values resolve automatically by hostname so the same code runs
+ * unchanged on local dev, the Cloudflare staging preview, and GitHub Pages prod:
+ *   • dev      → localhost / 127.0.0.1            → local-only (no remote backend)
+ *   • staging  → *.pages.dev / *civicradar-staging → staging Supabase (PLACEHOLDERS below)
+ *   • prod     → civicradarnh.github.io           → production Supabase (real values)
+ * SAFETY: any unknown host falls back to PROD values, so a misdetected host
+ * can never silently break the live site. Fill the staging PLACEHOLDERS only
+ * after you create the staging Supabase project (RELEASE.md → Setup checklist).
+ * ─────────────────────────────────────────────────────────────────────────
  */
-window.CIVICRADAR_CONFIG = {
-  // **[YOU]** Supabase → Project Settings → API (see LAUNCH-WALKTHROUGH.md Phase A)
-  supabaseUrl: 'https://shrjkexfokootrzrpjsi.supabase.co',      // e.g. 'https://abcdefgh.supabase.co'
-  supabaseAnonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNocmprZXhmb2tvb3RyenJwanNpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIwNTk1MTAsImV4cCI6MjA5NzYzNTUxMH0.EPdFoKveaLwl8DQ5HFRs8zYxfUXh8y1oDUQbrjhpgdA',  // e.g. 'eyJhbGciOi...' (anon public key — safe in browser; RLS protects data)
-  // **[YOU]** REQUIRED before viral launch — WhatsApp shares & ?report= deep links use this (not localhost)
-  publicUrl: 'https://nileshhadawale-oss.github.io/civicradar', // e.g. 'https://civicradar.app' or 'https://youruser.github.io/civicradar'
+(function () {
+  // Per-environment backend + public URL. Everything else (cities, legal,
+  // founder, etc.) is shared across environments and lives in the object below.
+  var ENVIRONMENTS = {
+    // PRODUCTION — real values, do not change without a release. This is also
+    // the safe fallback for any unrecognized host.
+    prod: {
+      supabaseUrl: 'https://shrjkexfokootrzrpjsi.supabase.co',
+      supabaseAnonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNocmprZXhmb2tvb3RyenJwanNpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIwNTk1MTAsImV4cCI6MjA5NzYzNTUxMH0.EPdFoKveaLwl8DQ5HFRs8zYxfUXh8y1oDUQbrjhpgdA',
+      publicUrl: 'https://civicradarnh.github.io/civicradar',
+    },
+    // STAGING — **[YOU]** PLACEHOLDERS. After creating a *separate* staging
+    // Supabase project (never the prod ref), paste its Project URL + anon key
+    // here and set publicUrl to your Cloudflare Pages staging domain.
+    // See RELEASE.md → "Setup checklist to activate this process".
+    staging: {
+      supabaseUrl: 'https://YOUR-STAGING-PROJECT.supabase.co',     // **[YOU]** staging Supabase Project URL
+      supabaseAnonKey: 'YOUR_STAGING_ANON_KEY',                    // **[YOU]** staging anon public key (safe in browser; RLS protects data)
+      publicUrl: 'https://civicradar-staging.pages.dev',           // **[YOU]** Cloudflare Pages staging URL
+    },
+    // DEV (localhost) — pure local mode: empty backend so local testing never
+    // reads or writes a shared database, and empty publicUrl so share links
+    // fall back to the current origin. To exercise sync locally, temporarily
+    // copy the `staging` values here.
+    dev: {
+      supabaseUrl: '',
+      supabaseAnonKey: '',
+      publicUrl: '',
+    },
+  };
+
+  function detectEnvironment(hostname) {
+    var h = (hostname || '').toLowerCase();
+    // Local development hosts.
+    if (h === 'localhost' || h === '127.0.0.1' || h === '0.0.0.0' || h === '[::1]' || h === '') {
+      return 'dev';
+    }
+    // Production host (explicit) — keep ahead of generic checks.
+    if (h === 'civicradarnh.github.io') {
+      return 'prod';
+    }
+    // Staging: Cloudflare Pages previews (per-branch / per-PR) + named staging host.
+    if (h.indexOf('.pages.dev') !== -1 || h.indexOf('civicradar-staging') !== -1) {
+      return 'staging';
+    }
+    // SAFE DEFAULT: any unknown host (custom domain, mirror, etc.) → prod values.
+    return 'prod';
+  }
+
+  var hostname = (typeof location !== 'undefined' && location && location.hostname) ? location.hostname : '';
+  var environment = detectEnvironment(hostname);
+  var resolved = ENVIRONMENTS[environment] || ENVIRONMENTS.prod;
+
+  // Non-intrusive hint outside production only.
+  if (environment !== 'prod' && typeof console !== 'undefined' && console.info) {
+    console.info('CivicRadar env:', environment);
+  }
+
+  window.CIVICRADAR_CONFIG = {
+  // Resolved environment name ('dev' | 'staging' | 'prod') — for analytics/debugging.
+  environment: environment,
+  // **[YOU]** Resolved per-environment (see ENVIRONMENTS above) — Supabase → Project Settings → API
+  supabaseUrl: resolved.supabaseUrl,      // e.g. 'https://abcdefgh.supabase.co'
+  supabaseAnonKey: resolved.supabaseAnonKey,  // e.g. 'eyJhbGciOi...' (anon public key — safe in browser; RLS protects data)
+  // **[YOU]** Resolved per-environment — WhatsApp shares & ?report= deep links use this (not localhost)
+  publicUrl: resolved.publicUrl, // e.g. 'https://civicradar.app' or 'https://youruser.github.io/civicradar'
 
   /* ----- Official BMC channels (optional overrides) ----- */
   /* ----- Multi-city support (Mumbai · Pune · Thane) ----- */
@@ -103,7 +175,7 @@ window.CIVICRADAR_CONFIG = {
     privacyUrl: 'privacy.html',
     termsUrl: 'terms.html',
     // **[YOU]** DPDP grievance officer — e.g. 'privacy@yourdomain.com' (defaults to founder.operatorEmail if empty)
-    grievanceEmail: '',
+    grievanceEmail: 'civicradarnh@gmail.com',
     // Review with qualified Indian counsel before public launch.
   },
 
@@ -114,10 +186,10 @@ window.CIVICRADAR_CONFIG = {
     school: '',
     location: '',
     // **[YOU]** Public support / partner contact — shown in About modal
-    email: 'hadawalenihira@gmail.com',                               // e.g. 'hello@yourdomain.com'
+    email: 'civicradarnh@gmail.com',                               // e.g. 'hello@yourdomain.com'
     operatorName: '',  // leave empty — no personal names in public UI
     // **[YOU]** Legal/hosting contact (privacy.html / terms.html fallback)
-    operatorEmail: 'nilesh.hadawale@gmail.com',
+    operatorEmail: 'civicradarnh@gmail.com',
     operatorRelation: '',
     tagline: 'Community hazard map for Mumbai, Pune & Thane monsoon civic reporting.',
     story: 'CivicRadar helps neighbours in Mumbai, Pune, and Thane see and report stagnant-water hazards each monsoon. It is a free community app: ward map pins, Me too corroboration, and volunteer cleanup logging. Official corporation filing (BMC, PMC, or TMC) is an optional next step when you want the government clock — not a government product.',
@@ -219,4 +291,5 @@ window.CIVICRADAR_CONFIG = {
     requireOnlineNsfw: false,      // true = block uploads when safety scan cannot run
     nsfwThresholds: { Porn: 0.55, Hentai: 0.55, Sexy: 0.88 },
   },
-};
+  };
+})();
