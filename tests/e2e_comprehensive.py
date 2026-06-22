@@ -1595,7 +1595,7 @@ async def run_extended_scenarios(s: Suite, browser):
     # GitHub Pages /civicradar/ subpath (root-absolute paths would 404 there).
     sw_src = await page.evaluate('() => fetch("sw.js").then(r => r.text())')
     sw_ok = (
-        "civicradar-v70" in sw_src
+        "civicradar-v71" in sw_src
         and "'/index.html'" not in sw_src
         and "'/js/app.js'" not in sw_src
         and "'index.html'" in sw_src
@@ -1942,8 +1942,10 @@ async def main():
         '`index.html` + `js/app.js` + `css/styles.css`: in-app feedback form (Supabase-backed, offline-safe). Entry points in Profile + About; accessible modal (focus trap, aria-live error, 44px targets, native-radio segmented control); inserts to Supabase when connected, else stores locally and flushes on reconnect (never loses text); all strings localized in en/hi/mr/gu',
         '`css/styles.css`: launch visual polish (v69) — extended design tokens (cyan accent, elevation/radii scale, brand gradients), confident button states with springy tap feedback, refined modal/toast/card depth, premium map chrome, segmented control + inline form-error + brand input focus rings + skeleton-loader utility — all motion gated by prefers-reduced-motion',
         '`js/config.js`: consolidated all contact/legal emails onto a single role inbox `civicradarnh@gmail.com` (legal.grievanceEmail, founder.email, founder.operatorEmail) — removed all personal Gmail addresses from deployable/source files (privacy.html / terms.html links are config-driven and now resolve to the role inbox)',
-        '`sw.js`: cache bump → v70 (single role contact email; config.js is a cached asset so clients pick up the new contact address)',
-        '`tests/e2e_comprehensive.py`: SW06 expected cache version → v70',
+        '`css/styles.css`: launch polish (v71) — consistency pass extending the v69 surface system to screens it missed: branded Leaflet map chrome (brand/devanagari typography, modal-matched popups, cohesive zoom controls with focus rings + larger close target), premium podium emphasis on the leaderboard (ranks 1–3), resting elevation on queue + hazard cards, and a warmer on-brand empty-state icon. Additive only; motion gated by prefers-reduced-motion',
+        '`index.html`: added a graceful `<noscript>` fallback (inline-styled, English + Hindi + Marathi) so JS-disabled or bundle-failure visitors get a friendly reload prompt instead of a blank screen',
+        '`sw.js`: cache bump → v71 (static assets changed: styles.css + index.html)',
+        '`tests/e2e_comprehensive.py`: SW06 expected cache version → v71',
     ]
     passed, failed, total = write_report(s, out, fixes=fixes)
     print(f'\n=== Done: {passed}/{total} passed, {failed} failed ===', flush=True)

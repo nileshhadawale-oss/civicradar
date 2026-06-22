@@ -47,6 +47,24 @@
 </head>
 <body>
 
+  <!-- Graceful fallback if JavaScript is disabled or the app bundle fails to load.
+       Inline-styled so it renders without styles.css. Not shown when JS runs. -->
+  <noscript>
+    <div style="position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:32px 24px;text-align:center;background:#f8fafc;color:#0f172a;font-family:system-ui,-apple-system,'Segoe UI',sans-serif;">
+      <div style="font-size:2.75rem;line-height:1;">📍</div>
+      <h1 style="margin:0;font-size:1.25rem;font-weight:700;color:#4f46e5;">CivicRadar needs JavaScript</h1>
+      <p style="margin:0;max-width:340px;font-size:0.95rem;line-height:1.5;color:#475569;">
+        Please turn on JavaScript in your browser settings, then reload this page to map monsoon hazards in your ward.
+      </p>
+      <p style="margin:0;max-width:340px;font-size:0.85rem;line-height:1.5;color:#64748b;" lang="hi">
+        कृपया अपने ब्राउज़र में JavaScript चालू करें और पेज को फिर से लोड करें।
+      </p>
+      <p style="margin:0;max-width:340px;font-size:0.85rem;line-height:1.5;color:#64748b;" lang="mr">
+        कृपया तुमच्या ब्राउझरमध्ये JavaScript सुरू करा आणि पेज पुन्हा लोड करा.
+      </p>
+    </div>
+  </noscript>
+
   <!-- Header -->
   <header class="header">
     <div class="header__brand">

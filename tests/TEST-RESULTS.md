@@ -1,6 +1,6 @@
 # CivicRadar Test Results
 
-**Run:** 2026-06-22 12:31:45
+**Run:** 2026-06-22 14:19:17
 **Server:** http://localhost:8095/
 **Script:** `tests/e2e_comprehensive.py`
 **Total:** 254 | **Pass:** 254 | **Fail:** 0
@@ -12,8 +12,10 @@
 - `index.html` + `js/app.js` + `css/styles.css`: in-app feedback form (Supabase-backed, offline-safe). Entry points in Profile + About; accessible modal (focus trap, aria-live error, 44px targets, native-radio segmented control); inserts to Supabase when connected, else stores locally and flushes on reconnect (never loses text); all strings localized in en/hi/mr/gu
 - `css/styles.css`: launch visual polish (v69) — extended design tokens (cyan accent, elevation/radii scale, brand gradients), confident button states with springy tap feedback, refined modal/toast/card depth, premium map chrome, segmented control + inline form-error + brand input focus rings + skeleton-loader utility — all motion gated by prefers-reduced-motion
 - `js/config.js`: consolidated all contact/legal emails onto a single role inbox `civicradarnh@gmail.com` (legal.grievanceEmail, founder.email, founder.operatorEmail) — removed all personal Gmail addresses from deployable/source files (privacy.html / terms.html links are config-driven and now resolve to the role inbox)
-- `sw.js`: cache bump → v70 (single role contact email; config.js is a cached asset so clients pick up the new contact address)
-- `tests/e2e_comprehensive.py`: SW06 expected cache version → v70
+- `css/styles.css`: launch polish (v71) — consistency pass extending the v69 surface system to screens it missed: branded Leaflet map chrome (brand/devanagari typography, modal-matched popups, cohesive zoom controls with focus rings + larger close target), premium podium emphasis on the leaderboard (ranks 1–3), resting elevation on queue + hazard cards, and a warmer on-brand empty-state icon. Additive only; motion gated by prefers-reduced-motion
+- `index.html`: added a graceful `<noscript>` fallback (inline-styled, English + Hindi + Marathi) so JS-disabled or bundle-failure visitors get a friendly reload prompt instead of a blank screen
+- `sw.js`: cache bump → v71 (static assets changed: styles.css + index.html)
+- `tests/e2e_comprehensive.py`: SW06 expected cache version → v71
 
 ## Summary by category
 
@@ -144,8 +146,8 @@ _None_
 | E15b | Edge | Map empty share hidden first visit | PASS |  |
 | E16 | Edge | Invalid ward cleared on load | PASS |  |
 | L01 | Load | 15 parallel report contexts | PASS | 15/15 |
-| L02 | Load | 200 reports refresh under 3s | PASS | 0.03s |
-| L03 | Load | 50x loadReports parse under 500ms | PASS | 4ms |
+| L02 | Load | 200 reports refresh under 3s | PASS | 0.01s |
+| L03 | Load | 50x loadReports parse under 500ms | PASS | 3ms |
 | L04 | Load | Rapid corroboration increments | PASS | n=5 |
 | L05 | Load | Analytics batch enqueue | PASS |  |
 | M01 | Map | Leaflet map container | PASS |  |

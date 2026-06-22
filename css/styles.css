@@ -3900,3 +3900,69 @@ a:focus-visible {
   .skeleton::after { animation: none; }
   .btn--primary:hover:not(:disabled):not(.is-loading) { transform: none; }
 }
+
+/* ============================================================
+   Launch polish (v71) — consistency pass. Extends the v69 surface
+   system to screens it didn't reach: brands the Leaflet map chrome
+   (typography, popups, zoom controls), adds podium emphasis to the
+   leaderboard, and gives queue + hazard cards resting elevation.
+   Additive only; all motion gated by the reduce-motion guard above.
+   ============================================================ */
+
+/* ---- Map typography: brand font across all Leaflet chrome ---- */
+.leaflet-container { font-family: var(--font); }
+html[lang="hi"] .leaflet-container,
+html[lang="mr"] .leaflet-container,
+html[lang="gu"] .leaflet-container { font-family: var(--font-devanagari); }
+
+/* ---- Leaflet popups: match the modal/card surface system ---- */
+.leaflet-popup-content-wrapper {
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+}
+.leaflet-popup-content { margin: 12px 14px; line-height: 1.4; }
+.leaflet-popup-tip { box-shadow: var(--shadow-md); }
+.leaflet-popup-close-button {
+  width: 30px !important;
+  height: 30px !important;
+  font-size: 22px !important;
+  color: var(--text-muted) !important;
+}
+.leaflet-popup-close-button:hover { color: var(--text-dark) !important; }
+
+/* ---- Leaflet zoom controls: cohesive radius + brand focus ring ---- */
+.leaflet-bar {
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+}
+.leaflet-bar a:focus-visible {
+  outline: 3px solid var(--primary);
+  outline-offset: -3px;
+}
+
+/* ---- Leaderboard: premium podium emphasis (ranks 1–3) ---- */
+.lb-rank.gold {
+  background: linear-gradient(135deg, #fde68a, #fbbf24);
+  color: #92400e;
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.28);
+}
+.lb-rank.silver { box-shadow: 0 0 0 2px rgba(148, 163, 184, 0.28); }
+.lb-rank.bronze { box-shadow: 0 0 0 2px rgba(194, 65, 12, 0.22); }
+
+/* ---- Cards: resting elevation so depth is consistent everywhere ---- */
+.queue-item,
+.hazard-tile {
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease,
+    transform 0.12s var(--ease-spring);
+}
+.hazard-tile--active { box-shadow: var(--shadow-md); }
+.hazard-tile:not(.hazard-tile--soon):active { transform: scale(0.97); }
+
+/* ---- Empty states: warmer, on-brand icon ---- */
+.empty-state--action i { color: var(--primary); opacity: 0.45; }
+
+@media (prefers-reduced-motion: reduce) {
+  .hazard-tile:not(.hazard-tile--soon):active { transform: none; }
+}
