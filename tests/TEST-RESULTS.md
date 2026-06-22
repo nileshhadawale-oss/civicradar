@@ -1,51 +1,49 @@
 # CivicRadar Test Results
 
-**Run:** 2026-06-21 20:50:14
+**Run:** 2026-06-22 06:30:34
 **Server:** http://localhost:8095/
 **Script:** `tests/e2e_comprehensive.py`
-**Total:** 125 | **Pass:** 125 | **Fail:** 0
+**Total:** 234 | **Pass:** 234 | **Fail:** 0
 
 ## Fixes applied this run
 
-- `js/app.js`: `loadUser()` clears invalid/corrupt ward values on load
-- `js/app.js`: `openAdminReportModal()` string-safe id match
-- `js/app.js`: `handleReportDeepLink()` toast for missing report (`toast.reportNotFound`)
-- `js/app.js`: `getModCfg()` reads moderation config live at submit time
-- `js/app.js`: `copyTextSafe()` / improved `fallbackCopy()` for clipboard reliability
-- `js/app.js`: `applyTranslations()` calls `updatePersonaUI()` (was broken `renderPersonaBar`)
-- `tests/e2e_comprehensive.py`: E09 checks analytics opt-in checkbox (separate from ToS)
-- `tests/e2e_comprehensive.py`: `ensure_local_mode()` stabilizes NGO/BMC demo login when Supabase configured
-- `js/app.js`: BMC pilot gated to Mumbai; admin queue scoped to Mumbai reports
-- `js/app.js`: NGO grantLeadAccess sets city from invite assignment
-- `tests/e2e_comprehensive.py`: C34/C34b Pune citizen BMC entry hidden
-- `sw.js`: cache bump v45 → v46
+- `js/app.js`: moved `REF_WELCOME_KEY` + `SEASON_HOOK_DISMISS_KEY` to top-level constants (TDZ fix for ?ref= welcome banner)
+- `sw.js`: cache bump → v62
+- `tests/e2e_comprehensive.py`: expanded to 230+ scenarios (multi-city, demo, referral, analytics, modals, volunteer, negatives, legal pages)
 
 ## Summary by category
 
 - **API:** 5 pass / 0 fail
-- **Admin:** 2 pass / 0 fail
+- **Admin:** 8 pass / 0 fail
+- **Analytics:** 5 pass / 0 fail
 - **BMC:** 9 pass / 0 fail
-- **Celebration:** 1 pass / 0 fail
-- **Citizen:** 41 pass / 0 fail
+- **Celebration:** 5 pass / 0 fail
+- **Citizen:** 42 pass / 0 fail
 - **Community:** 3 pass / 0 fail
 - **DeepLink:** 1 pass / 0 fail
+- **Demo:** 8 pass / 0 fail
 - **Edge:** 17 pass / 0 fail
 - **Escalation:** 6 pass / 0 fail
-- **Legal:** 2 pass / 0 fail
+- **Legal:** 6 pass / 0 fail
 - **Load:** 5 pass / 0 fail
-- **Map:** 4 pass / 0 fail
+- **Map:** 5 pass / 0 fail
+- **MultiCity:** 10 pass / 0 fail
 - **NGO:** 10 pass / 0 fail
-- **PWA:** 2 pass / 0 fail
+- **Negative:** 8 pass / 0 fail
+- **PWA:** 7 pass / 0 fail
 - **Partner:** 1 pass / 0 fail
 - **Persona:** 1 pass / 0 fail
 - **Pledge:** 1 pass / 0 fail
 - **Profile:** 4 pass / 0 fail
-- **Report:** 3 pass / 0 fail
+- **Referral:** 4 pass / 0 fail
+- **Report:** 13 pass / 0 fail
 - **Storage:** 2 pass / 0 fail
 - **Sync:** 1 pass / 0 fail
-- **UI:** 2 pass / 0 fail
-- **Volunteer:** 1 pass / 0 fail
-- **i18n:** 1 pass / 0 fail
+- **UI:** 22 pass / 0 fail
+- **Viral:** 4 pass / 0 fail
+- **Volunteer:** 7 pass / 0 fail
+- **Ward:** 8 pass / 0 fail
+- **i18n:** 6 pass / 0 fail
 
 ## Failures
 
@@ -85,6 +83,7 @@ _None_
 | C15 | Citizen | GPS denied blocks submit | PASS |  |
 | C16 | Citizen | Report submit success modal | PASS | rid=None |
 | C17 | Citizen | Success modal WhatsApp + File BMC | PASS |  |
+| C17b | Citizen | Native share button feature-detect gating | PASS |  |
 | C18 | Citizen | App origin for deep links | PASS |  |
 | C19b | Citizen | PWA nudge after first report | PASS |  |
 | C19 | Citizen | Map shows markers after report | PASS | markers=2 |
@@ -138,8 +137,8 @@ _None_
 | E15b | Edge | Map empty share hidden first visit | PASS |  |
 | E16 | Edge | Invalid ward cleared on load | PASS |  |
 | L01 | Load | 15 parallel report contexts | PASS | 15/15 |
-| L02 | Load | 200 reports refresh under 3s | PASS | 0.01s |
-| L03 | Load | 50x loadReports parse under 500ms | PASS | 4ms |
+| L02 | Load | 200 reports refresh under 3s | PASS | 0.02s |
+| L03 | Load | 50x loadReports parse under 500ms | PASS | 6ms |
 | L04 | Load | Rapid corroboration increments | PASS | n=5 |
 | L05 | Load | Analytics batch enqueue | PASS |  |
 | M01 | Map | Leaflet map container | PASS |  |
@@ -187,3 +186,111 @@ _None_
 | X24 | Escalation | Consent checkbox compact width | PASS |  |
 | X25 | Pledge | Sticky footer present | PASS |  |
 | X28 | Celebration | Success celebrate element present | PASS |  |
+| V40 | Viral | Referral welcome banner present + hidden by default | PASS |  |
+| V41 | Viral | Seasonal hook element present in community | PASS |  |
+| V42 | Viral | Ward weekly social proof line populated | PASS |  |
+| V43 | Viral | Weekly recap share shown when recent reports | PASS |  |
+| MC01 | MultiCity | Thane community subtitle uses TMC | PASS |  |
+| MC02 | MultiCity | Thane blocks BMC admin modal | PASS |  |
+| MC03 | MultiCity | Thane user city persisted | PASS |  |
+| MC04 | MultiCity | Thane partner portal hides BMC card | PASS |  |
+| MC05 | MultiCity | Pune user city persisted | PASS |  |
+| MC06 | MultiCity | Pune datalist linked on pledge | PASS |  |
+| MC07 | MultiCity | Mumbai datalist linked on pledge | PASS |  |
+| MC08 | MultiCity | City picker has 3 options | PASS |  |
+| MC09 | MultiCity | Thane GPS ward detect | PASS | TMC Ward 32 — Patlipada |
+| MC10 | MultiCity | Pune GPS ward detect | PASS | Ward 25 — Bavdhan |
+| D01 | Demo | Tour mode skips ToS | PASS |  |
+| D02 | Demo | Tour mode seeds ward | PASS |  |
+| D03 | Demo | Tour mode sets tosAccepted | PASS |  |
+| D04 | Demo | Tour mode coach dismissed | PASS |  |
+| D05 | Demo | startDemoTour exported | PASS |  |
+| D06 | Demo | Persona mode skips ToS | PASS |  |
+| D07 | Demo | Persona mode map visible | PASS |  |
+| D08 | Demo | Persona startPersonaDemo exported | PASS |  |
+| RF01 | Referral | Ref param shows welcome banner | PASS |  |
+| RF02 | Referral | Ref dismiss hides banner | PASS |  |
+| RF03 | Referral | Ref dismiss sets seen flag | PASS |  |
+| RF04 | Referral | Ref hidden in demo tour | PASS |  |
+| AN01 | Analytics | Analytics checkbox separate from ToS | PASS |  |
+| AN02 | Analytics | Analytics unchecked by default | PASS |  |
+| AN03 | Analytics | Analytics consent false when not opted in | PASS |  |
+| AN04 | Analytics | Analytics consent true when opted in | PASS |  |
+| AN05 | Analytics | CivicAnalytics module present | PASS |  |
+| U01 | UI | Language overlay opens | PASS |  |
+| U02 | UI | Language overlay closes | PASS |  |
+| U03 | UI | About modal opens | PASS |  |
+| U04 | UI | About modal closes | PASS |  |
+| U05 | UI | Volunteer modal opens | PASS |  |
+| U06 | UI | Volunteer modal closes | PASS |  |
+| U10 | UI | Map nav tab active default | PASS |  |
+| U07 | UI | Report modal closes | PASS |  |
+| U08 | UI | Community modal closes | PASS |  |
+| U09 | UI | Profile modal closes | PASS |  |
+| U11 | UI | Community nav opens modal | PASS |  |
+| U12 | UI | Profile nav opens modal | PASS |  |
+| U13 | UI | Map nav closes modals | PASS |  |
+| U14 | UI | Location banner element | PASS |  |
+| U15 | UI | Header context element | PASS |  |
+| U16 | UI | Persona bar present | PASS |  |
+| U17 | UI | Partner inquiry exported | PASS |  |
+| U18 | UI | PWA nudge dismiss button | PASS |  |
+| U19 | UI | PWA nudge dismiss hides | PASS |  |
+| U20 | UI | Flow steps in report modal | PASS |  |
+| RP01 | Report | Only one live hazard tile | PASS | live=1 |
+| RP02 | Report | Coming-soon hazard tiles exist | PASS | soon=3 |
+| RP03 | Report | Stagnant-water preselected | PASS |  |
+| RP04 | Report | Photo input accepts images | PASS |  |
+| RP05 | Report | Capture photo button present | PASS |  |
+| RP06 | Report | Close without submit saves nothing | PASS |  |
+| RP07 | Report | Report stored in localStorage | PASS |  |
+| RP08 | Report | Success overlay has celebrate el | PASS |  |
+| RP09 | Report | Near-duplicate triggers Me too | PASS |  |
+| RP10 | Report | Report notes maxlength enforced | PASS |  |
+| VOL01 | Volunteer | Blocked without neighbourhood | PASS |  |
+| VOL02 | Volunteer | Blocked without skills | PASS |  |
+| VOL03 | Volunteer | Signup saved with valid data | PASS |  |
+| VOL04 | Volunteer | Hours picker present | PASS |  |
+| VOL05 | Volunteer | Remove signup button in profile | PASS |  |
+| VOL06 | Volunteer | Blocked without ward | PASS |  |
+| NEG01 | Negative | Empty admin login rejected | PASS |  |
+| NEG02 | Negative | Empty lead login rejected | PASS |  |
+| NEG03 | Negative | Pledge empty ward rejected | PASS |  |
+| NEG04 | Negative | Empty complaint ID rejected | PASS |  |
+| NEG05 | Negative | GPS denied shows manual ward option | PASS |  |
+| NEG06 | Negative | Outside service area ward detect graceful | PASS |  |
+| NEG07 | Negative | Invalid city reset to default | PASS |  |
+| NEG08 | Negative | Coming-soon hazard not selectable | PASS |  |
+| AD01 | Admin | Queue list renders items | PASS |  |
+| AD02 | Admin | Queue filter element | PASS |  |
+| AD03 | Admin | Queue sort element | PASS |  |
+| AD04 | Admin | Admin health corroborations stat | PASS |  |
+| AD05 | Admin | Admin queue closes | PASS |  |
+| AD06 | Admin | Exit admin via persona bar | PASS |  |
+| WD01 | Ward | CivicWardDetect module exported | PASS |  |
+| WD02 | Ward | CivicWardData mumbai loaded | PASS |  |
+| WD03 | Ward | CivicWardData pune loaded | PASS |  |
+| WD04 | Ward | CivicWardData thane loaded | PASS |  |
+| WD05 | Ward | Ward lookup returns name | PASS |  |
+| WD06 | Ward | Service area check works | PASS |  |
+| WD07 | Ward | Outside service area detected | PASS |  |
+| WD08 | Ward | Three city datalists in DOM | PASS |  |
+| I01 | i18n | FAB label non-English (hi) | PASS |  |
+| I02 | i18n | FAB label non-English (mr) | PASS |  |
+| I03 | i18n | FAB label non-English (gu) | PASS |  |
+| I04 | i18n | Lang button shows EN code | PASS |  |
+| I05 | i18n | Header context translated | PASS |  |
+| SW01 | PWA | CIVICRADAR_CONFIG loaded | PASS |  |
+| SW02 | PWA | Config has cities object | PASS |  |
+| SW03 | PWA | Manifest href valid | PASS |  |
+| SW04 | PWA | Theme color meta | PASS |  |
+| SW05 | PWA | App icons linked | PASS |  |
+| LG01 | Legal | Privacy page loads | PASS |  |
+| LG02 | Legal | Privacy mentions DPDP | PASS |  |
+| LG03 | Legal | Terms page loads | PASS |  |
+| LG04 | Legal | Terms mentions not government | PASS |  |
+| HF01 | Map | Hidden report excluded from count | PASS |  |
+| CL01 | Celebration | Success modal open after report | PASS |  |
+| CL02 | Celebration | WhatsApp share btn present | PASS |  |
+| CL03 | Celebration | File BMC btn present | PASS |  |
+| CL04 | Celebration | Success close btn present | PASS |  |

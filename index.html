@@ -313,6 +313,9 @@
         <button type="button" class="btn btn--whatsapp btn--full" id="btnShareWhatsApp">
           <i class="ph ph-whatsapp-logo"></i> <span data-i18n="success.shareWhatsapp">Share on WhatsApp</span>
         </button>
+        <button type="button" class="btn btn--secondary btn--full hidden" id="btnSuccessNativeShare" data-i18n-aria="share.nativeShare" aria-label="Share">
+          <i class="ph ph-share-network"></i> <span data-i18n="share.nativeShare">Share</span>
+        </button>
       </div>
       <div class="success-optional-block">
         <p class="modal__subtitle" data-i18n="success.subtitle">Optional: file with your local corporation (free) to start the official clock.</p>
@@ -356,7 +359,7 @@
         <button type="button" class="btn btn--outline btn--full" id="btnShareWinCopyCaption">
           <i class="ph ph-copy"></i> <span data-i18n="shareWin.copyCaption">Copy caption for Instagram</span>
         </button>
-        <button type="button" class="btn btn--secondary btn--full hidden" id="btnShareWinNativeShare">
+        <button type="button" class="btn btn--secondary btn--full hidden" id="btnShareWinNativeShare" data-i18n-aria="shareWin.nativeShare" aria-label="Share image">
           <i class="ph ph-share-network"></i> <span data-i18n="shareWin.nativeShare">Share image</span>
         </button>
       </div>
@@ -952,16 +955,16 @@
     </div>
   </div>
 
-  <!-- About / Founder Story (college portfolio & press) -->
+  <!-- About CivicRadar -->
   <div class="modal-overlay" id="aboutOverlay" aria-hidden="true">
     <div class="modal modal--tall" id="aboutModal" role="dialog" aria-labelledby="aboutTitle">
       <div class="modal__handle"></div>
       <button type="button" class="modal__close" data-close="about" aria-label="Close">&times;</button>
       <h2 id="aboutTitle"><i class="ph ph-radar"></i> <span data-i18n="about.title">About CivicRadar</span></h2>
-      <p class="modal__subtitle" id="aboutSubtitle" data-i18n="about.subtitle">Community app for Mumbai, Pune &amp; Thane monsoon — built by a student with family in India. Free for citizens.</p>
+      <p class="modal__subtitle" id="aboutSubtitle" data-i18n="about.subtitle">Built for monsoon civic reporting in Mumbai, Pune &amp; Thane. Free for citizens.</p>
 
       <div class="founder-card" id="founderCard">
-        <div class="founder-card__avatar"><i class="ph ph-student"></i></div>
+        <div class="founder-card__avatar"><i class="ph ph-radar"></i></div>
         <div class="founder-card__body">
           <div class="founder-card__name" id="founderName">—</div>
           <div class="founder-card__role" id="founderRole">—</div>
@@ -1003,7 +1006,7 @@
         <i class="ph ph-copy"></i> <span data-i18n="about.copyImpact">Copy impact summary</span>
       </button>
       <button type="button" class="btn btn--outline btn--full" id="btnContactFounder">
-        <i class="ph ph-envelope"></i> <span data-i18n="about.contact">Contact founder</span>
+        <i class="ph ph-envelope"></i> <span data-i18n="about.contact">Contact us</span>
       </button>
       <div class="about-legal">
         <a href="privacy.html" target="_blank" rel="noopener noreferrer" data-i18n="legal.privacy">Privacy Policy</a>
@@ -1104,6 +1107,10 @@
         var t = document.createElement('script');
         t.src = 'js/demo-tour.js';
         document.body.appendChild(t);
+      } else if (demo === 'report') {
+        var r = document.createElement('script');
+        r.src = 'js/demo-report-flow.js';
+        document.body.appendChild(r);
       } else if (demo === 'persona') {
         var p = document.createElement('script');
         p.src = 'js/persona-demo.js';

@@ -40,6 +40,8 @@ document.addEventListener('DOMContentLoaded', function () {
   const VISIT_COUNT_KEY = 'civicradar_visit_count';
   const FIRST_REPORT_DONE_KEY = 'civicradar_first_report_done';
   const PWA_NUDGE_KEY = 'civicradar_pwa_nudge_dismissed';
+  const SEASON_HOOK_DISMISS_KEY = 'civicradar_season_hook_dismissed';
+  const REF_WELCOME_KEY = 'civicradar_ref_welcome_seen';
   const POINTS_PER_REPORT = 50;
   const POINTS_WEEK_BONUS = 25;
   const POINTS_FIRST_SHARE = 10;
@@ -409,6 +411,7 @@ document.addEventListener('DOMContentLoaded', function () {
       'success.tag': 'Tag @mybmc', 'success.alert': 'Alert neighbours', 'success.done': 'Done',
       'success.sharePrompt': 'Share on WhatsApp now — more neighbours on the ward map helps pressure for a fix.',
       'success.shareWhatsapp': 'Share on WhatsApp',
+      'share.nativeShare': 'Share',
       'success.shareNudge': 'Neighbours may not know yet — share on WhatsApp so the ward map gets more eyes.',
       'success.shareMsg': '🦟 {hazard} in {ward} — dengue risk! Pinned on CivicRadar ward map.\nTap Me too and report hazards in your lane:\n{link}\n\n{marathi}\n{hashtags}',
       'share.marathiHook': 'पावसाळ्यात साचलेलं पाणी? वॉर्ड नकाशा पहा →',
@@ -433,7 +436,7 @@ document.addEventListener('DOMContentLoaded', function () {
       'shareWin.captionCopied': 'Caption copied — paste in Instagram',
       'shareWin.done': 'Done',
       'about.shareTitle': 'Share this app',
-      'about.sharePitch': 'Free {city} monsoon map — pin stagnant water in 30 sec, say Me too, beat rival wards.\nBuilt by a NJ student with family in India. No login, 4 languages.\n{link}\nForward to your RWA / society WhatsApp group →',
+      'about.sharePitch': 'Free {city} monsoon map — pin stagnant water in 30 sec, say Me too, beat rival wards.\nBuilt for Mumbai, Pune & Thane. No login, 4 languages.\n{link}\nForward to your RWA / society WhatsApp group →',
       'about.copyPitch': 'Copy WhatsApp pitch',
       'about.pitchCopied': 'Pitch copied — paste in your RWA / school group!',
       'pwa.nudge': 'Monsoon-ready: Add CivicRadar to Home Screen for one-tap reporting.',
@@ -637,11 +640,11 @@ document.addEventListener('DOMContentLoaded', function () {
       'impact.week': 'This week: {reports} reports · {resolved} resolved · {confirms} confirmations',
       'impact.resolvedBreakdown': 'You: {self} · Community: {community} · BMC: {bmc} · Cleanup: {cleanup}',
       'about.title': 'About CivicRadar',
-      'about.subtitle': 'Community app for Mumbai, Pune & Thane monsoon — built by a student with family in India. Free for citizens.',
+      'about.subtitle': 'Built for monsoon civic reporting in Mumbai, Pune & Thane. Free for citizens.',
       'about.impactTitle': 'Community impact', 'about.builtTitle': 'What we built',
       'about.sustainTitle': 'Sustainable & free for citizens',
       'about.sustainBody': 'CivicRadar stays free for residents. Future support comes from local partners — not paywalls on public safety.',
-      'about.copyImpact': 'Copy impact summary', 'about.contact': 'Contact founder', 'about.contactOperator': 'Contact operator', 'about.close': 'Close',
+      'about.copyImpact': 'Copy impact summary', 'about.contact': 'Contact us', 'about.contactOperator': 'Contact us', 'about.close': 'Close',
       'about.sponsored': 'Sponsored',       'about.copied': 'Impact summary copied — paste into your application.',
       'about.operatorNote': 'Until {name} turns 18, {operator} operates the service — hosting, accounts, and legal contact.',
       'inquiry.title': 'Partner with CivicRadar',
@@ -1016,7 +1019,9 @@ document.addEventListener('DOMContentLoaded', function () {
       'admin.health.corroborations': 'Me too',
       'admin.health.bmcFiled': 'BMC filed',
       'admin.health.resolved': 'Fixed',
-      'about.founderDefault': 'Student founder',
+      'about.founderDefault': 'The CivicRadar team',
+      'about.teamLabel': 'The CivicRadar team',
+      'about.teamRole': 'Community monsoon hazard map',
       'config.contactMissing': '(Contact not configured)',
       'ref.welcomeTitle': 'A neighbour invited you 👋',
       'ref.welcomeBody': '{n} hazard reports already on the {city} map. See open spots in your ward — or pin one in 30 seconds.',
@@ -1093,6 +1098,7 @@ document.addEventListener('DOMContentLoaded', function () {
       'success.tag': '@mybmc को टैग करें', 'success.alert': 'पड़ोसियों को सूचित करें', 'success.done': 'हो गया',
       'success.sharePrompt': 'अभी WhatsApp पर भेजें — ज़्यादा नज़र = जल्दी ठीक। डेंगू से बचना है तो शेयर करें!',
       'success.shareWhatsapp': 'WhatsApp पर साझा करें',
+      'share.nativeShare': 'साझा करें',
       'success.shareNudge': 'पड़ोसियों को अभी पता नहीं — WhatsApp पर शेयर करें, वार्ड नक्शे पर और नज़रें मदद करती हैं।',
       'success.shareMsg': '🦟 {ward} में {hazard} — डेंगू का खतरा! CivicRadar वार्ड नक्शे पर पिन।\nMe too करें और अपनी गली रिपोर्ट करें:\n{link}\n\n{marathi}\n{hashtags}',
       'share.marathiHook': 'पावसाळ्यात साचलेलं पाणी? वॉर्ड नकाशा पहा →',
@@ -1118,7 +1124,7 @@ document.addEventListener('DOMContentLoaded', function () {
       'shareWin.done': 'हो गया',
       'shareWin.impact': '{n} पड़ोसियों ने समर्थन किया · {ward} — यह जीत स्क्रीनशॉट करें! 🏆',
       'about.shareTitle': 'ऐप साझा करें',
-      'about.sharePitch': 'मुफ़्त {city} मानसून नक्शा — 30 सेक में रिपोर्ट, Me too, प्रतिद्वंद्वी वार्ड को हराएँ।\nNJ छात्रा ने भारत में परिवार के लिए बनाया। लॉगिन नहीं, 4 भाषाएँ।\n{link}\nRWA / सोसायटी WhatsApp ग्रुप में फॉरवर्ड करें →',
+      'about.sharePitch': 'मुफ़्त {city} मानसून नक्शा — 30 सेक में रिपोर्ट, Me too, प्रतिद्वंद्वी वार्ड को हराएँ।\nमुंबई, पुणे और ठाणे के लिए बनाया गया। लॉगिन नहीं, 4 भाषाएँ।\n{link}\nRWA / सोसायटी WhatsApp ग्रुप में फॉरवर्ड करें →',
       'about.copyPitch': 'WhatsApp पिच कॉपी करें',
       'about.pitchCopied': 'पिच कॉपी — RWA / स्कूल ग्रुप में पेस्ट करें!',
       'pwa.nudge': 'मानसून-तैयार: होम स्क्रीन पर CivicRadar जोड़ें।',
@@ -1229,11 +1235,11 @@ document.addEventListener('DOMContentLoaded', function () {
       'impact.week': 'इस सप्ताह: {reports} रिपोर्ट · {resolved} हल · {confirms} पुष्टि',
       'impact.resolvedBreakdown': 'आप: {self} · समुदाय: {community} · BMC: {bmc} · सफाई: {cleanup}',
       'about.title': 'CivicRadar के बारे में',
-      'about.subtitle': 'मुंबई, पुणे और ठाणे मानसून के लिए सामुदायिक ऐप — एक छात्र द्वारा, नागरिकों के लिए निःशुल्क।',
+      'about.subtitle': 'मुंबई, पुणे और ठाणे में मानसून नागरिक रिपोर्टिंग के लिए बनाया गया। नागरिकों के लिए निःशुल्क।',
       'about.impactTitle': 'सामुदायिक प्रभाव', 'about.builtTitle': 'हमने क्या बनाया',
       'about.sustainTitle': 'टिकाऊ और नागरिकों के लिए निःशुल्क',
       'about.sustainBody': 'CivicRadar निवासियों के लिए हमेशा निःशुल्क रहेगा। भविष्य की आय नैतिक स्थानीय साझेदारी से आती है — सार्वजनिक सुरक्षा पर पेवॉल नहीं।',
-      'about.copyImpact': 'प्रभाव सारांश कॉपी करें', 'about.contact': 'संस्थापक से संपर्क', 'about.contactOperator': 'ऑपरेटर से संपर्क', 'about.close': 'बंद',
+      'about.copyImpact': 'प्रभाव सारांश कॉपी करें', 'about.contact': 'हमसे संपर्क करें', 'about.contactOperator': 'हमसे संपर्क करें', 'about.close': 'बंद',
       'about.sponsored': 'प्रायोजित', 'about.copied': 'प्रभाव सारांश कॉपी हो गया — अपने आवेदन में चिपकाएँ।',
       'about.operatorNote': '{name} के 18 साल होने तक, {operator} सेवा संचालित करते हैं — होस्टिंग, खाते और कानूनी संपर्क।',
       'inquiry.title': 'CivicRadar के साथ साझेदारी',
@@ -1620,7 +1626,9 @@ document.addEventListener('DOMContentLoaded', function () {
       'admin.health.corroborations': 'मुझे भी',
       'admin.health.bmcFiled': 'BMC दर्ज',
       'admin.health.resolved': 'ठीक',
-      'about.founderDefault': 'विद्यार्थी संस्थापक',
+      'about.founderDefault': 'CivicRadar टीम',
+      'about.teamLabel': 'CivicRadar टीम',
+      'about.teamRole': 'सामुदायिक मानसून खतरा नक्शा',
       'config.contactMissing': '(संपर्क कॉन्फ़िग नहीं)',
       'demo.badge': 'प्रोडक्ट डेमो',
       'profile.withdrawAnalytics': 'एनालिटिक्स सहमति वापस लें',
@@ -1720,6 +1728,7 @@ document.addEventListener('DOMContentLoaded', function () {
       'success.tag': '@mybmc ला टॅग करा', 'success.alert': 'शेजाऱ्यांना कळवा', 'success.done': 'झाले',
       'success.sharePrompt': 'आत्ताच WhatsApp वर पाठवा — जास्त डोळे = लवकर सोडवणे. डेंगू टाळायचा असेल तर शेअर करा!',
       'success.shareWhatsapp': 'WhatsApp वर शेअर करा',
+      'share.nativeShare': 'शेअर करा',
       'success.shareNudge': 'शेजाऱ्यांना अजून कळले नाही — WhatsApp वर शेअर करा, वॉर्ड नकाशावर अधिक नजर मदत करते.',
       'success.shareMsg': '🦟 {ward} मध्ये {hazard} — डेंगू धोका! CivicRadar वॉर्ड नकाशावर पिन.\nMe too करा आणि तुमची लेन रिपोर्ट करा:\n{link}\n\n{marathi}\n{hashtags}',
       'share.marathiHook': 'पावसाळ्यात साचलेलं पाणी? वॉर्ड नकाशा पहा →',
@@ -1745,7 +1754,7 @@ document.addEventListener('DOMContentLoaded', function () {
       'shareWin.done': 'झाले',
       'shareWin.impact': '{n} शेजाऱ्यांनी पाठिंबा · {ward} — ही विजय स्क्रीनशॉट करा! 🏆',
       'about.shareTitle': 'अ‍ॅप शेअर करा',
-      'about.sharePitch': 'मोफत {city} पावसाळा नकाशा — 30 सेकंदात तक्रार, Me too, प्रतिस्पर्धी वॉर्डला हरवा.\nNJ विद्यार्थिनीने भारतात कुटुंबासाठी बनवले. लॉगिन नाही, 4 भाषा.\n{link}\nRWA / सोसायटी WhatsApp ग्रुपला फॉरवर्ड करा →',
+      'about.sharePitch': 'मोफत {city} पावसाळा नकाशा — 30 सेकंदात तक्रार, Me too, प्रतिस्पर्धी वॉर्डला हरवा.\nमुंबई, पुणे आणि ठाणेसाठी बांधले. लॉगिन नाही, 4 भाषा.\n{link}\nRWA / सोसायटी WhatsApp ग्रुपला फॉरवर्ड करा →',
       'about.copyPitch': 'WhatsApp पिच कॉपी करा',
       'about.pitchCopied': 'पिच कॉपी — RWA ग्रुपमध्ये पेस्ट करा!',
       'pwa.nudge': 'पावसाळा-तयार: होम स्क्रीनवर CivicRadar जोडा.',
@@ -1851,11 +1860,11 @@ document.addEventListener('DOMContentLoaded', function () {
       'impact.week': 'या आठवड्यात: {reports} तक्रारी · {resolved} सोडवले · {confirms} पुष्टी',
       'impact.resolvedBreakdown': 'तुम्ही: {self} · समुदाय: {community} · BMC: {bmc} · सफाई: {cleanup}',
       'about.title': 'CivicRadar बद्दल',
-      'about.subtitle': 'मुंबई, पुणे आणि ठाणे पावसाळ्यासाठी सामुदायिक अ‍ॅप — विद्यार्थिनीने बनवले, नागरिकांसाठी मोफत.',
+      'about.subtitle': 'मुंबई, पुणे आणि ठाणे पावसाळ्यात नागरिक अहवालासाठी बांधले. नागरिकांसाठी मोफत.',
       'about.impactTitle': 'सामुदायिक प्रभाव', 'about.builtTitle': 'आम्ही काय बांधले',
       'about.sustainTitle': 'शाश्वत आणि नागरिकांसाठी मोफत',
       'about.sustainBody': 'CivicRadar रहिवाशांसाठी नेहमी मोफत राहील. भविष्यातील उत्पन्न नैतिक स्थानिक भागीदारीतून येते.',
-      'about.copyImpact': 'प्रभाव सारांश कॉपी करा', 'about.contact': 'संस्थापकाशी संपर्क', 'about.contactOperator': 'ऑपरेटरशी संपर्क', 'about.close': 'बंद करा',
+      'about.copyImpact': 'प्रभाव सारांश कॉपी करा', 'about.contact': 'आमच्याशी संपर्क', 'about.contactOperator': 'आमच्याशी संपर्क', 'about.close': 'बंद करा',
       'about.sponsored': 'प्रायोजित',       'about.copied': 'प्रभाव सारांश कॉपी झाला — अर्जात पेस्ट करा.',
       'about.operatorNote': '{name} 18 वर्षांचे होईपर्यंत, {operator} सेवा चालवतात — होस्टिंग, खाती आणि कायदेशीर संपर्क.',
       'inquiry.title': 'CivicRadar सोबत भागीदारी',
@@ -2240,7 +2249,9 @@ document.addEventListener('DOMContentLoaded', function () {
       'admin.health.corroborations': 'मला पण',
       'admin.health.bmcFiled': 'BMC नोंद',
       'admin.health.resolved': 'निराकरण',
-      'about.founderDefault': 'विद्यार्थी संस्थापक',
+      'about.founderDefault': 'CivicRadar संघ',
+      'about.teamLabel': 'CivicRadar संघ',
+      'about.teamRole': 'सामुदायिक पावसाळा धोका नकाशा',
       'config.contactMissing': '(संपर्क कॉन्फिग नाही)',
       'demo.badge': 'प्रोडक्ट डेमो',
       'profile.withdrawAnalytics': 'अ‍ॅनालिटिक्स संमती मागे घ्या',
@@ -2343,6 +2354,7 @@ document.addEventListener('DOMContentLoaded', function () {
       'success.tag': '@mybmc ને ટૅગ કરો', 'success.alert': 'પડોશીઓને જાણ કરો', 'success.done': 'થઈ ગયું',
       'success.sharePrompt': 'હમણાં WhatsApp પર મોકલો — વધુ નજર = ઝડપથી ઠીક. ડેંગુ ટાળવું હોય તો શેર કરો!',
       'success.shareWhatsapp': 'WhatsApp પર શેર કરો',
+      'share.nativeShare': 'શેર કરો',
       'success.shareNudge': 'પડોશીઓને હજુ ખબર નથી — WhatsApp પર શેર કરો, વોર્ડ નકશા પર વધુ નજર મદદ કરે.',
       'success.shareMsg': '🦟 {ward} માં {hazard} — ડેંગુ જોખમ! CivicRadar વોર્ડ નકશા પર પિન.\nMe too કરો અને તમારી ગલી રિપોર્ટ કરો:\n{link}\n\n{marathi}\n{hashtags}',
       'share.marathiHook': 'पावसाळ्यात साचलेलं पाणी? वॉर्ड नकाशा पहा →',
@@ -2368,7 +2380,7 @@ document.addEventListener('DOMContentLoaded', function () {
       'shareWin.done': 'થઈ ગયું',
       'shareWin.impact': '{n} પડોશીઓએ ટેકો · {ward} — આ જીત સ્ક્રીનશોટ કરો! 🏆',
       'about.shareTitle': 'એપ શેર કરો',
-      'about.sharePitch': 'મફત {city} ચોમાસું નકશો — 30 સેકમાં રિપોર્ટ, Me too, પ્રતિસ્પર્ધી વોર્ડને હરાવો.\nNJ વિદ્યાર્થીએ ભારતમાં પરિવાર માટે બનાવ્યું. લોગિન નહીં, 4 ભાષાઓ.\n{link}\nRWA / સોસાયટી WhatsApp ગ્રુપમાં ફોરવર્ડ કરો →',
+      'about.sharePitch': 'મફત {city} ચોમાસું નકશો — 30 સેકમાં રિપોર્ટ, Me too, પ્રતિસ્પર્ધી વોર્ડને હરાવો.\nમુંબઈ, પુણે અને ઠાણે માટે બનાવ્યું. લોગિન નહીં, 4 ભાષાઓ.\n{link}\nRWA / સોસાયટી WhatsApp ગ્રુપમાં ફોરવર્ડ કરો →',
       'about.copyPitch': 'WhatsApp પિચ કૉપી કરો',
       'about.pitchCopied': 'પિચ કૉપી — RWA ગ્રુપમાં પેસ્ટ કરો!',
       'pwa.nudge': 'ચોમાસા-તૈયાર: હોમ સ્ક્રીન પર CivicRadar ઉમેરો.',
@@ -2474,11 +2486,11 @@ document.addEventListener('DOMContentLoaded', function () {
       'impact.week': 'આ અઠવાડિયે: {reports} ફરિયાદ · {resolved} ઉકેલાયા · {confirms} પુષ્ટિ',
       'impact.resolvedBreakdown': 'તમે: {self} · સમુદાય: {community} · BMC: {bmc} · સફાઈ: {cleanup}',
       'about.title': 'CivicRadar વિશે',
-      'about.subtitle': 'મુંબઈ, પુણે અને ઠાણે ચોમાસા માટે સામુદાયિક એપ — વિદ્યાર્થી દ્વારા, નાગરિકો માટે મફત.',
+      'about.subtitle': 'મુંબઈ, પુણે અને ઠાણેમાં ચોમાસા નાગરિક રિપોર્ટિંગ માટે બનાવ્યું. નાગરિકો માટે મફત.',
       'about.impactTitle': 'સામુદાયિક પ્રભાવ', 'about.builtTitle': 'અમે શું બનાવ્યું',
       'about.sustainTitle': 'ટકાઉ અને નાગરિકો માટે મફત',
       'about.sustainBody': 'CivicRadar રહેવાસીઓ માટે હંમેશા મફત રહેશે. ભવિષ્યની આવક નૈતિક સ્થાનિક ભાગીદારીમાંથી આવે છે.',
-      'about.copyImpact': 'પ્રભાવ સારાંશ કૉપી કરો', 'about.contact': 'સંસ્થાપકનો સંપર્ક', 'about.contactOperator': 'ઑપરેટરનો સંપર્ક', 'about.close': 'બંધ',
+      'about.copyImpact': 'પ્રભાવ સારાંશ કૉપી કરો', 'about.contact': 'અમારો સંપર્ક', 'about.contactOperator': 'અમારો સંપર્ક', 'about.close': 'બંધ',
       'about.sponsored': 'પ્રાયોજિત',       'about.copied': 'પ્રભાવ સારાંશ કૉપી થયો — અરજીમાં પેસ્ટ કરો.',
       'about.operatorNote': '{name} 18 ના થાય ત્યાં સુધી, {operator} સેવા ચલાવે છે — હોસ્ટિંગ, એકાઉન્ટ અને કાનૂની સંપર્ક.',
       'inquiry.title': 'CivicRadar સાથે ભાગીદારી',
@@ -2861,7 +2873,9 @@ document.addEventListener('DOMContentLoaded', function () {
       'admin.health.corroborations': 'મને પણ',
       'admin.health.bmcFiled': 'BMC નોંધ',
       'admin.health.resolved': 'ઉકેલાયા',
-      'about.founderDefault': 'વિદ્યાર્થી સંસ્થાપક',
+      'about.founderDefault': 'CivicRadar ટીમ',
+      'about.teamLabel': 'CivicRadar ટીમ',
+      'about.teamRole': 'સામુદાયિક ચોમાસા જોખમ નકશો',
       'config.contactMissing': '(સંપર્ક કોન્ફિગ નથી)',
       'demo.badge': 'પ્રોડક્ટ ડેમો',
       'profile.withdrawAnalytics': 'એનાલિટિક્સ સંમતિ પાછી લો',
@@ -4090,9 +4104,8 @@ document.addEventListener('DOMContentLoaded', function () {
     return [
       `CivicRadar — Community Impact Summary (${date})`,
       '',
-      `Founder: ${f.name || t('about.founderDefault')}${f.school ? ` · ${f.school}` : ''}`,
-      f.operatorName ? `Operator (until founder turns 18): ${f.operatorName}` : '',
-      f.tagline || 'Community-driven civic hazard reporting for Mumbai.',
+      `Project: ${t('about.teamLabel')}`,
+      f.tagline || 'Community-driven civic hazard reporting for Mumbai, Pune, and Thane.',
       '',
       'Impact metrics:',
       `• Reports logged: ${s.totalReports}`,
@@ -4142,15 +4155,20 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function renderAboutModal() {
     renderCommunityImpactStats();
-    $('#founderName').textContent = FOUNDER.name || t('about.founderDefault');
-    $('#founderRole').textContent = FOUNDER.role || 'Founder & Developer';
-    $('#founderSchool').textContent = [FOUNDER.school, FOUNDER.location].filter(Boolean).join(' · ') || '';
+    $('#founderName').textContent = FOUNDER.name || t('about.teamLabel');
+    $('#founderRole').textContent = FOUNDER.role || FOUNDER.tagline || t('about.teamRole');
+    const schoolLoc = [FOUNDER.school, FOUNDER.location].filter(Boolean).join(' · ');
+    const schoolEl = $('#founderSchool');
+    if (schoolEl) {
+      schoolEl.textContent = schoolLoc;
+      schoolEl.hidden = !schoolLoc;
+    }
     $('#founderStory').textContent = FOUNDER.story || '';
     const opEl = $('#founderOperator');
     if (opEl) {
-      if (FOUNDER.operatorName) {
+      if (FOUNDER.operatorName && FOUNDER.name) {
         opEl.textContent = t('about.operatorNote')
-          .replace('{name}', FOUNDER.name || 'Nihira Hadawale')
+          .replace('{name}', FOUNDER.name)
           .replace('{operator}', FOUNDER.operatorName);
         opEl.hidden = false;
       } else {
@@ -4160,7 +4178,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     const aboutSub = $('#aboutSubtitle');
     if (aboutSub) {
-      aboutSub.textContent = t('about.subtitleNamed').replace('{name}', FOUNDER.name || 'Nihira Hadawale');
+      aboutSub.textContent = t('about.subtitle');
     }
 
     const hl = $('#founderHighlights');
@@ -4183,7 +4201,7 @@ document.addEventListener('DOMContentLoaded', function () {
       contactBtn.classList.toggle('hidden', !contactEmail);
       const contactLabel = contactBtn.querySelector('span');
       if (contactLabel) {
-        contactLabel.textContent = FOUNDER.email ? t('about.contact') : t('about.contactOperator');
+        contactLabel.textContent = t('about.contact');
       }
     }
 
@@ -6441,6 +6459,8 @@ document.addEventListener('DOMContentLoaded', function () {
       if (lastReportId) shareReportWhatsApp(lastReportId);
       else shareWhatsApp(buildDefaultShareMessage());
     });
+    const btnSuccessNative = $('#btnSuccessNativeShare');
+    if (btnSuccessNative) btnSuccessNative.addEventListener('click', () => { nativeShareReport(); });
     $('#btnSuccessFile').addEventListener('click', () => {
       if (!lastReportId) return;
       closeModal('success');
@@ -7008,6 +7028,7 @@ document.addEventListener('DOMContentLoaded', function () {
       void ptsEl.offsetWidth;
       ptsEl.classList.add('is-animating');
     }
+    updateSuccessNativeButton();
     openModal('success');
     const fileBtn = $('#btnSuccessFile');
     if (fileBtn) {
@@ -7629,10 +7650,47 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
+  function canShareImageFiles() {
+    if (!navigator.share || typeof navigator.canShare !== 'function') return false;
+    try {
+      const probe = new File(['x'], 'probe.png', { type: 'image/png' });
+      return navigator.canShare({ files: [probe] });
+    } catch {
+      return false;
+    }
+  }
+
   function updateShareWinNativeButton() {
     const btn = $('#btnShareWinNativeShare');
     if (!btn) return;
+    btn.classList.toggle('hidden', !canShareImageFiles());
+  }
+
+  function updateSuccessNativeButton() {
+    const btn = $('#btnSuccessNativeShare');
+    if (!btn) return;
     btn.classList.toggle('hidden', !navigator.share);
+  }
+
+  async function nativeShareReport() {
+    if (!navigator.share) return;
+    const report = lastReportId ? findReportById(lastReportId) : null;
+    const text = report ? buildShareReportMessage(report) : buildDefaultShareMessage();
+    const shareData = { title: t('success.title'), text };
+    try {
+      if (typeof navigator.canShare === 'function' && !navigator.canShare(shareData)) return;
+      await navigator.share(shareData);
+      if (report) markReportShared(report.id);
+      if (window.CivicAnalytics) {
+        CivicAnalytics.track('share_report_native', {
+          reportId: report ? String(report.id) : '',
+        }, report && report.ward);
+      }
+      celebrateFirstShare();
+    } catch (err) {
+      if (err && err.name === 'AbortError') return;
+      /* fall back silently — WhatsApp/Twitter buttons remain available */
+    }
   }
 
   function showShareWinModal(reportId, type, opts) {
@@ -9164,8 +9222,6 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   /* ---------- Viral: seasonal hooks, ward social proof & weekly recap ---------- */
-  const SEASON_HOOK_DISMISS_KEY = 'civicradar_season_hook_dismissed';
-  const REF_WELCOME_KEY = 'civicradar_ref_welcome_seen';
 
   // Reports in a ward (or whole city when ward is empty) over the trailing 7 days.
   function getWardWeekStats(ward) {

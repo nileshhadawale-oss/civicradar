@@ -7,14 +7,14 @@
  *   [ ] supabaseAnonKey    — Supabase anon public key
  *   [ ] legal.grievanceEmail — DPDP grievance officer contact (privacy.html / terms.html)
  *   [ ] founder.email      — About modal + partner inquiries
- *   [ ] founder.operatorEmail — Legal/hosting contact until founder turns 18
+ *   [ ] founder.operatorEmail — Legal/hosting contact (privacy/terms fallback)
  *   [ ] Run supabase/schema.sql once in Supabase SQL Editor
  *   [ ] Deploy to HTTPS (camera + GPS require it in production)
  *   [ ] Counsel review of privacy.html and terms.html
  *   See LAUNCH_CHECKLIST.md for full gate details.
  *
  * CUSTOMIZE THIS FILE before sharing with colleges, press, or partners.
- * Your daughter's name, school, and contact details live here — not buried in code.
+ * Public-facing copy and contact emails live here — not buried in code.
  *
  * Backend (optional):
  *   1. Create a free project at https://supabase.com
@@ -107,20 +107,20 @@ window.CIVICRADAR_CONFIG = {
     // Review with qualified Indian counsel before public launch.
   },
 
-  /* ----- Founder & college-application story (edit these) ----- */
+  /* ----- About modal & partner contact (edit these) ----- */
   founder: {
-    name: 'Nihira Hadawale',
-    role: 'Founder & Developer (age 17)',
-    school: 'MCST — Junior, Class of 2027',
-    location: 'New Jersey, USA',
-    // **[YOU]** Nihira's public contact — shown in About modal + partner inquiries
-    email: 'hadawalenihira@gmail.com',                               // e.g. 'nihira@yourdomain.com'
-    operatorName: 'Nilesh Hadawale',         // [AGENT/DONE] pre-filled
-    // **[YOU]** Nilesh's email — legal/hosting contact until founder turns 18
+    name: '',  // leave empty — public UI shows "The CivicRadar team"
+    role: '',
+    school: '',
+    location: '',
+    // **[YOU]** Public support / partner contact — shown in About modal
+    email: 'hadawalenihira@gmail.com',                               // e.g. 'hello@yourdomain.com'
+    operatorName: '',  // leave empty — no personal names in public UI
+    // **[YOU]** Legal/hosting contact (privacy.html / terms.html fallback)
     operatorEmail: 'nilesh.hadawale@gmail.com',
-    operatorRelation: 'Parent / legal operator until founder turns 18',
-    tagline: 'Community hazard map for Mumbai, Pune & Thane monsoon — built from New Jersey with family on the ground.',
-    story: 'CivicRadar was built by Nihira Hadawale, a high school student in New Jersey with family in Mumbai, to help neighbours see and report stagnant-water hazards each monsoon across Mumbai, Pune, and Thane. Every year I hear from relatives about dengue in their wards — from far away, I wanted to help in a way that lasts. CivicRadar is a free community app: ward map pins, Me too corroboration, and volunteer cleanup logging. Official corporation filing (BMC, PMC, or TMC) is an optional next step when you want the government clock — not a government product, just tools I wish my family\'s neighbourhoods had years ago.',
+    operatorRelation: '',
+    tagline: 'Community hazard map for Mumbai, Pune & Thane monsoon civic reporting.',
+    story: 'CivicRadar helps neighbours in Mumbai, Pune, and Thane see and report stagnant-water hazards each monsoon. It is a free community app: ward map pins, Me too corroboration, and volunteer cleanup logging. Official corporation filing (BMC, PMC, or TMC) is an optional next step when you want the government clock — not a government product.',
     highlights: [
       'Built for Mumbai, Pune, and Thane wards facing dengue from stagnant water each monsoon',
       'Community-first ward map with Me too corroboration and volunteer cleanup logging',

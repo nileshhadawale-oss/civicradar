@@ -283,7 +283,7 @@
     {
       audioId: '03-about',
       narrateMs: 33000,
-      caption: 'Free for Mumbai residents — built for all 24 BMC wards. Nilesh Hadawale operates until founder Nihira turns 18.',
+      caption: 'Free for Mumbai residents — built for all 24 BMC wards. The CivicRadar team keeps it free for citizens.',
       run: async () => {
         await tourClick($('#btnProfile'));
         await sleep(400);

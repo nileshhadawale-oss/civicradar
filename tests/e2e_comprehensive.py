@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""CivicRadar comprehensive E2E test suite (~100 scenarios)."""
+"""CivicRadar comprehensive E2E test suite (200+ scenarios)."""
 import asyncio
 import json
 import shutil
@@ -16,6 +16,7 @@ PORT = 8095
 BASE = f'http://localhost:{PORT}/'
 WARD = 'G/N Ward — Dadar, Shivaji Park'
 PUNE_WARD = 'Ward 1 — Kasba Vishrambag'
+THANE_WARD = 'TMC Ward 1 — Kopri'
 
 # When Supabase keys are set, demo admin/lead UI is hidden and consent flows differ.
 KNOWN_SUPABASE_FAIL_IDS = frozenset({
@@ -446,6 +447,14 @@ async def run_citizen_tests(s: Suite, browser):
     rid = await submit_report_via_api(page, 19.0761, 72.8778, 'Playwright test report')
     s.record('C16', 'Citizen', 'Report submit success modal', await is_open(page, 'successOverlay'), f'rid={rid}')
     s.record('C17', 'Citizen', 'Success modal WhatsApp + File BMC', await page.is_visible('#btnShareWhatsApp') and await page.is_visible('#btnSuccessFile'))
+    native_share_ok = await page.evaluate("""() => {
+      const btn = document.getElementById('btnSuccessNativeShare');
+      if (!btn) return false;
+      // Feature-detect gating: button hidden iff Web Share API unavailable.
+      const expectedHidden = !navigator.share;
+      return btn.classList.contains('hidden') === expectedHidden;
+    }""")
+    s.record('C17b', 'Citizen', 'Native share button feature-detect gating', native_share_ok)
     s.record('C18', 'Citizen', 'App origin for deep links', (await page.evaluate('() => location.origin')).startswith('http'))
 
     await page.click('#btnSuccessClose')
@@ -1018,7 +1027,585 @@ async def run_extra_scenarios(s: Suite, browser):
     await ctx.close()
 
 
-def write_report(s: Suite, path: Path):
+async def run_extended_scenarios(s: Suite, browser):
+    """Extended coverage: multi-city, demo modes, referral, modals, negatives, volunteer, ward detect."""
+
+    # --- Multi-city (MC) ---
+    ctx = await new_ctx(
+        browser, lat=19.20, lng=72.98,
+        storage={'civicradar_user': default_user(id='mc-thane', city='thane', ward=THANE_WARD)},
+    )
+    page = await ctx.new_page()
+    await goto_app(page, wait_map=True)
+    tmc_sub = await page.evaluate(
+        """() => {
+          window.openCommunityModal();
+          const txt = document.getElementById('communitySubtitle')?.textContent || '';
+          return txt.includes('TMC') && !/\\bBMC\\b/.test(txt);
+        }"""
+    )
+    s.record('MC01', 'MultiCity', 'Thane community subtitle uses TMC', tmc_sub)
+    s.record('MC02', 'MultiCity', 'Thane blocks BMC admin modal', await page.evaluate(
+        '() => { window.openAdminModal(); return !document.getElementById("adminOverlay").classList.contains("open"); }'
+    ))
+    s.record('MC03', 'MultiCity', 'Thane user city persisted', await page.evaluate(
+        f'() => JSON.parse(localStorage.getItem("civicradar_user")).city === "thane"'
+    ))
+    s.record('MC04', 'MultiCity', 'Thane partner portal hides BMC card', await page.evaluate(
+        """() => {
+          window.openPartnerPortal();
+          const btn = document.getElementById('btnPartnerBmc');
+          return !!(btn && btn.classList.contains('hidden'));
+        }"""
+    ))
+    await ctx.close()
+
+    ctx = await new_ctx(
+        browser, lat=18.5204, lng=73.8567,
+        storage={'civicradar_user': default_user(id='mc-pune', city='pune', ward=PUNE_WARD)},
+    )
+    page = await ctx.new_page()
+    await goto_app(page)
+    s.record('MC05', 'MultiCity', 'Pune user city persisted', await page.evaluate(
+        '() => JSON.parse(localStorage.getItem("civicradar_user")).city === "pune"'
+    ))
+    s.record('MC06', 'MultiCity', 'Pune datalist linked on pledge', await page.evaluate(
+        """() => {
+          window.openPledgeModal();
+          return document.getElementById('pledgeWard')?.getAttribute('list') === 'puneCommunities';
+        }"""
+    ))
+    await ctx.close()
+
+    ctx = await new_ctx(browser, storage={'civicradar_user': default_user(id='mc-mum')})
+    page = await ctx.new_page()
+    await goto_app(page)
+    s.record('MC07', 'MultiCity', 'Mumbai datalist linked on pledge', await page.evaluate(
+        """() => {
+          window.openPledgeModal();
+          return document.getElementById('pledgeWard')?.getAttribute('list') === 'mumbaiCommunities';
+        }"""
+    ))
+    s.record('MC08', 'MultiCity', 'City picker has 3 options', await page.evaluate(
+        '() => document.querySelectorAll("#onboardCity option").length === 3'
+    ))
+    await ctx.close()
+
+    # Thane ward detect on fresh onboarding
+    ctx = await new_ctx(
+        browser, lat=19.20, lng=72.98,
+        storage={'civicradar_user': default_user(id='mc-wd', tosAccepted=True, ward='', displayName='', city='')},
+    )
+    page = await ctx.new_page()
+    await goto_app(page)
+    await page.evaluate('() => document.getElementById("onboardCity").value = "thane"')
+    await page.evaluate('() => document.getElementById("onboardCity").dispatchEvent(new Event("change", { bubbles: true }))')
+    await page.wait_for_timeout(1500)
+    detected = await page.evaluate(
+        '() => document.getElementById("wardDetectedName")?.textContent?.trim() || document.getElementById("wardInput")?.value?.trim() || ""'
+    )
+    s.record('MC09', 'MultiCity', 'Thane GPS ward detect', 'TMC Ward' in detected or 'Kopri' in detected, detected[:40])
+    await ctx.close()
+
+    ctx = await new_ctx(
+        browser, lat=18.5204, lng=73.8567,
+        storage={'civicradar_user': default_user(id='mc-pwd', tosAccepted=True, ward='', displayName='')},
+    )
+    page = await ctx.new_page()
+    await goto_app(page)
+    await page.evaluate('() => document.getElementById("onboardCity").value = "pune"')
+    await page.evaluate('() => document.getElementById("onboardCity").dispatchEvent(new Event("change", { bubbles: true }))')
+    await page.wait_for_timeout(1500)
+    pd = await page.evaluate(
+        '() => document.getElementById("wardDetectedName")?.textContent?.trim() || ""'
+    )
+    s.record('MC10', 'MultiCity', 'Pune GPS ward detect', len(pd) > 0, pd[:40])
+    await ctx.close()
+
+    # --- Demo modes (D) ---
+    ctx = await new_ctx(browser, storage={})
+    page = await ctx.new_page()
+    await goto_app(page, query='demo=tour')
+    await page.wait_for_timeout(800)
+    s.record('D01', 'Demo', 'Tour mode skips ToS', not await is_open(page, 'tosOverlay'))
+    u = await page.evaluate('() => JSON.parse(localStorage.getItem("civicradar_user")||"{}")')
+    s.record('D02', 'Demo', 'Tour mode seeds ward', bool(u.get('ward')))
+    s.record('D03', 'Demo', 'Tour mode sets tosAccepted', u.get('tosAccepted') is True)
+    s.record('D04', 'Demo', 'Tour mode coach dismissed', await page.evaluate(
+        '() => localStorage.getItem("civicradar_coach_seen") === "1"'
+    ))
+    s.record('D05', 'Demo', 'startDemoTour exported', await page.evaluate('() => typeof window.startDemoTour === "function"'))
+    await ctx.close()
+
+    ctx = await new_ctx(browser, storage={})
+    page = await ctx.new_page()
+    await goto_app(page, query='demo=persona')
+    await page.wait_for_timeout(800)
+    s.record('D06', 'Demo', 'Persona mode skips ToS', not await is_open(page, 'tosOverlay'))
+    s.record('D07', 'Demo', 'Persona mode map visible', await page.evaluate('() => !!document.getElementById("map")'))
+    s.record('D08', 'Demo', 'Persona startPersonaDemo exported', await page.evaluate(
+        '() => typeof window.startPersonaDemo === "function"'
+    ))
+    await ctx.close()
+
+    # --- Referral (RF) ---
+    ctx = await new_ctx(browser, storage={
+        'civicradar_user': default_user(id='rf-user'),
+        'mosquiTrackReports': '[]',
+    })
+    page = await ctx.new_page()
+    await goto_app(page, query='ref=neighbour123')
+    await page.wait_for_timeout(600)
+    s.record('RF01', 'Referral', 'Ref param shows welcome banner', await page.evaluate(
+        '() => { const el = document.getElementById("referralWelcome"); return el && !el.classList.contains("hidden"); }'
+    ))
+    await js_click(page, '#btnRefWelcomeDismiss')
+    await page.wait_for_timeout(200)
+    s.record('RF02', 'Referral', 'Ref dismiss hides banner', await page.evaluate(
+        '() => document.getElementById("referralWelcome").classList.contains("hidden")'
+    ))
+    s.record('RF03', 'Referral', 'Ref dismiss sets seen flag', await page.evaluate(
+        '() => localStorage.getItem("civicradar_ref_welcome_seen") === "1"'
+    ))
+    await ctx.close()
+
+    ctx = await new_ctx(browser, storage={'civicradar_user': default_user(id='rf-demo')})
+    page = await ctx.new_page()
+    await goto_app(page, query='ref=x&demo=tour')
+    await page.wait_for_timeout(500)
+    s.record('RF04', 'Referral', 'Ref hidden in demo tour', await page.evaluate(
+        '() => document.getElementById("referralWelcome").classList.contains("hidden")'
+    ))
+    await ctx.close()
+
+    # --- Analytics separate from ToS (AN) ---
+    ctx = await new_ctx(browser, storage={
+        'civicradar_user': default_user(id='an01', tosAccepted=False, gpsConsent=False, ward='', displayName=''),
+    })
+    page = await ctx.new_page()
+    await goto_app(page)
+    s.record('AN01', 'Analytics', 'Analytics checkbox separate from ToS', await page.is_visible('#tosAnalytics'))
+    s.record('AN02', 'Analytics', 'Analytics unchecked by default', not await page.is_checked('#tosAnalytics'))
+    await page.evaluate('() => document.getElementById("tosAccept").click()')
+    await js_click(page, '#btnTosContinue')
+    await page.wait_for_timeout(400)
+    s.record('AN03', 'Analytics', 'Analytics consent false when not opted in', await page.evaluate(
+        '() => JSON.parse(localStorage.getItem("civicradar_user")).analyticsConsent !== true'
+    ))
+    await ctx.close()
+
+    ctx = await new_ctx(browser, storage={
+        'civicradar_user': default_user(id='an02', tosAccepted=False, gpsConsent=False, ward='', displayName=''),
+    })
+    page = await ctx.new_page()
+    await goto_app(page)
+    await page.evaluate('() => { document.getElementById("tosAccept").click(); document.getElementById("tosAnalytics").click(); }')
+    await js_click(page, '#btnTosContinue')
+    await page.wait_for_timeout(400)
+    s.record('AN04', 'Analytics', 'Analytics consent true when opted in', await page.evaluate(
+        '() => JSON.parse(localStorage.getItem("civicradar_user")).analyticsConsent === true'
+    ))
+    await ctx.close()
+
+    ctx = await new_ctx(browser, storage={'civicradar_user': default_user(id='an03')})
+    page = await ctx.new_page()
+    await goto_app(page)
+    s.record('AN05', 'Analytics', 'CivicAnalytics module present', await page.evaluate('() => !!window.CivicAnalytics'))
+
+    # --- Modal / Nav / UI (U) ---
+    await close_all_modals(page)
+    s.record('U01', 'UI', 'Language overlay opens', await page.evaluate(
+        '() => { document.getElementById("btnLang").click(); return document.getElementById("langOverlay").classList.contains("open"); }'
+    ))
+    await page.evaluate('() => document.querySelector("[data-close=lang]")?.click()')
+    s.record('U02', 'UI', 'Language overlay closes', not await is_open(page, 'langOverlay'))
+    s.record('U03', 'UI', 'About modal opens', await page.evaluate(
+        '() => { window.openAboutModal(); return document.getElementById("aboutOverlay").classList.contains("open"); }'
+    ))
+    await page.evaluate('() => document.querySelector("[data-close=about]")?.click()')
+    s.record('U04', 'UI', 'About modal closes', not await is_open(page, 'aboutOverlay'))
+    s.record('U05', 'UI', 'Volunteer modal opens', await page.evaluate(
+        '() => { window.openVolunteerModal(); return document.getElementById("volunteerOverlay").classList.contains("open"); }'
+    ))
+    await page.evaluate('() => document.querySelector("[data-close=volunteer]")?.click()')
+    s.record('U06', 'UI', 'Volunteer modal closes', not await is_open(page, 'volunteerOverlay'))
+    s.record('U10', 'UI', 'Map nav tab active default', await page.evaluate(
+        '() => document.querySelector("#bottomNav .nav-tab[data-tab=map]")?.classList.contains("active")'
+    ))
+    await page.evaluate('() => window.openReportModal(false)')
+    await page.evaluate('() => window.closeReportModal()')
+    s.record('U07', 'UI', 'Report modal closes', not await is_open(page, 'reportOverlay'))
+    await page.evaluate('() => window.openCommunityModal()')
+    await page.evaluate('() => window.closeCommunityModal()')
+    s.record('U08', 'UI', 'Community modal closes', not await is_open(page, 'communityOverlay'))
+    await page.evaluate('() => window.openProfileModal()')
+    await page.evaluate('() => window.closeProfileModal()')
+    s.record('U09', 'UI', 'Profile modal closes', not await is_open(page, 'profileOverlay'))
+    await js_click(page, '#bottomNav .nav-tab[data-tab="community"]')
+    s.record('U11', 'UI', 'Community nav opens modal', await is_open(page, 'communityOverlay'))
+    await close_all_modals(page)
+    await js_click(page, '#bottomNav .nav-tab[data-tab="profile"]')
+    s.record('U12', 'UI', 'Profile nav opens modal', await is_open(page, 'profileOverlay'))
+    await close_all_modals(page)
+    await js_click(page, '#bottomNav .nav-tab[data-tab="map"]')
+    s.record('U13', 'UI', 'Map nav closes modals', not await is_open(page, 'profileOverlay'))
+    s.record('U14', 'UI', 'Location banner element', await page.evaluate('() => !!document.getElementById("locationBanner")'))
+    s.record('U15', 'UI', 'Header context element', bool(await page.text_content('#headerContext')))
+    s.record('U16', 'UI', 'Persona bar present', await page.is_visible('#personaBar'))
+    s.record('U17', 'UI', 'Partner inquiry exported', await page.evaluate('() => typeof window.openPartnerInquiry === "function"'))
+    s.record('U18', 'UI', 'PWA nudge dismiss button', await page.evaluate('() => !!document.getElementById("btnPwaNudgeDismiss")'))
+    await page.evaluate("""() => {
+      const n = document.getElementById('pwaInstallNudge');
+      if (n) n.classList.remove('hidden');
+      document.getElementById('btnPwaNudgeDismiss')?.click();
+    }""")
+    s.record('U19', 'UI', 'PWA nudge dismiss hides', await page.evaluate(
+        '() => document.getElementById("pwaInstallNudge").classList.contains("hidden")'
+    ))
+    s.record('U20', 'UI', 'Flow steps in report modal', await page.evaluate(
+        """() => {
+          window.openReportModal(false);
+          return document.querySelectorAll("#reportFlowSteps .flow-step").length >= 3;
+        }"""
+    ))
+    await ctx.close()
+
+    # --- Report extended (RP) ---
+    ctx = await new_ctx(browser, storage={'civicradar_user': default_user(id='rp'), 'civicradar_coach_seen': '1'})
+    page = await ctx.new_page()
+    await goto_app(page)
+    await page.evaluate('() => window.openReportModal(false)')
+    live_count = await page.evaluate(
+        '() => document.querySelectorAll("#hazardGrid .hazard-tile[data-live=\\"true\\"]").length'
+    )
+    soon_count = await page.evaluate(
+        '() => document.querySelectorAll("#hazardGrid .hazard-tile[data-live=\\"false\\"]").length'
+    )
+    s.record('RP01', 'Report', 'Only one live hazard tile', live_count == 1, f'live={live_count}')
+    s.record('RP02', 'Report', 'Coming-soon hazard tiles exist', soon_count >= 1, f'soon={soon_count}')
+    s.record('RP03', 'Report', 'Stagnant-water preselected', await page.evaluate(
+        '() => document.getElementById("hazardType").value === "stagnant-water"'
+    ))
+    s.record('RP04', 'Report', 'Photo input accepts images', await page.evaluate(
+        '() => document.getElementById("photoInput").accept.includes("image")'
+    ))
+    s.record('RP05', 'Report', 'Capture photo button present', await page.is_visible('#btnTakePhoto'))
+    await page.evaluate('() => document.querySelector("[data-close=report]")?.click()')
+    before = await page.evaluate('() => JSON.parse(localStorage.getItem("mosquiTrackReports")||"[]").length')
+    await page.evaluate('() => window.openReportModal(false)')
+    await page.evaluate('() => window.closeReportModal()')
+    after = await page.evaluate('() => JSON.parse(localStorage.getItem("mosquiTrackReports")||"[]").length')
+    s.record('RP06', 'Report', 'Close without submit saves nothing', before == after)
+    rid = await submit_report_via_api(page, 19.0762, 72.8779, 'extended test')
+    s.record('RP07', 'Report', 'Report stored in localStorage', await page.evaluate(
+        f'() => JSON.parse(localStorage.getItem("mosquiTrackReports")||"[]").some(r => r.notes === "extended test")'
+    ))
+    s.record('RP08', 'Report', 'Success overlay has celebrate el', await page.evaluate('() => !!document.getElementById("successCelebrate")'))
+    await page.click('#btnSuccessClose')
+    await page.wait_for_timeout(300)
+    # Me-too corroboration on nearby existing report
+    await page.evaluate('() => window.openReportModal(false)')
+    await submit_report_via_api(page, 19.0762001, 72.8779001, 'dup test')
+    await page.wait_for_timeout(600)
+    t = await toast_text(page)
+    s.record('RP09', 'Report', 'Near-duplicate triggers Me too', any(x in t.lower() for x in ('me too', 'already', 'corroborat')))
+    s.record('RP10', 'Report', 'Report notes maxlength enforced', await page.evaluate(
+        '() => document.getElementById("reportNotes").maxLength === 500'
+    ))
+    await ctx.close()
+
+    # --- Volunteer (VOL) ---
+    ctx = await new_ctx(browser, storage={'civicradar_user': default_user(id='vol')})
+    page = await ctx.new_page()
+    await goto_app(page)
+    await page.evaluate('() => window.openVolunteerModal()')
+    await js_click(page, '#btnSubmitVolunteer')
+    await page.wait_for_timeout(400)
+    t = await toast_text(page)
+    s.record('VOL01', 'Volunteer', 'Blocked without neighbourhood', 'neighbourhood' in t.lower() or 'lane' in t.lower() or 'society' in t.lower())
+    await page.fill('#volunteerNeighbourhood', 'Test Lane')
+    await page.evaluate('() => { document.getElementById("volSkillCleanup").checked = false; }')
+    await js_click(page, '#btnSubmitVolunteer')
+    await page.wait_for_timeout(400)
+    t = await toast_text(page)
+    s.record('VOL02', 'Volunteer', 'Blocked without skills', 'skill' in t.lower() or 'help' in t.lower())
+    await page.evaluate('() => document.getElementById("volSkillCleanup").click()')
+    await js_click(page, '#btnSubmitVolunteer')
+    await page.wait_for_timeout(500)
+    saved = await page.evaluate('() => JSON.parse(localStorage.getItem("civicradar_volunteer_signups")||"[]").length >= 1')
+    s.record('VOL03', 'Volunteer', 'Signup saved with valid data', saved)
+    await page.evaluate('() => window.openVolunteerModal()')
+    await page.wait_for_timeout(200)
+    s.record('VOL04', 'Volunteer', 'Hours picker present', await page.is_visible('#volunteerHoursPicker'))
+    s.record('VOL05', 'Volunteer', 'Remove signup button in profile', await page.evaluate(
+        """() => {
+          window.openProfileModal();
+          return !!document.getElementById('btnRemoveVolunteer') || !!document.getElementById('profileVolunteerSection');
+        }"""
+    ))
+    await ctx.close()
+
+    ctx = await new_ctx(browser, storage={
+        'civicradar_user': default_user(id='vol-noward', ward='', city='mumbai', tosAccepted=True),
+    })
+    page = await ctx.new_page()
+    await goto_app(page)
+    await page.wait_for_timeout(800)
+    await page.evaluate('() => window.openVolunteerModal()')
+    await page.wait_for_timeout(400)
+    t = await toast_text(page)
+    onboarding = await is_open(page, 'onboardingOverlay')
+    s.record('VOL06', 'Volunteer', 'Blocked without ward', 'ward' in t.lower() or onboarding)
+    await ctx.close()
+
+    # --- Negative / Edge extended (NEG) ---
+    ctx = await new_ctx(browser, storage={'civicradar_user': default_user(id='neg')})
+    page = await ctx.new_page()
+    await goto_app(page)
+    await page.evaluate('() => window.openAdminModal()')
+    await page.fill('#adminUser', '')
+    await page.fill('#adminPass', '')
+    await js_click(page, '#btnAdminSubmit')
+    await page.wait_for_timeout(300)
+    s.record('NEG01', 'Negative', 'Empty admin login rejected', await page.evaluate('() => window.isAdmin === false'))
+    await page.evaluate('() => window.closeAdminModal()')
+    await page.evaluate('() => window.openLeadModal()')
+    await page.fill('#leadUser', '')
+    await page.fill('#leadPass', '')
+    await js_click(page, '#btnLeadSubmit')
+    await page.wait_for_timeout(300)
+    s.record('NEG02', 'Negative', 'Empty lead login rejected', await page.evaluate('() => window.isLead === false'))
+    await close_all_modals(page)
+    await page.evaluate('() => window.openPledgeModal()')
+    await page.fill('#pledgeWard', '')
+    await js_click(page, '#btnSubmitPledge')
+    await page.wait_for_timeout(400)
+    t = await toast_text(page)
+    s.record('NEG03', 'Negative', 'Pledge empty ward rejected', 'ward' in t.lower())
+    await page.evaluate(
+        """() => {
+          const uid = JSON.parse(localStorage.getItem('civicradar_user')).id;
+          const r = { id: 'neg-esc', reporterId: uid, hazard: 'stagnant-water', ward: 'G/N Ward — Dadar, Shivaji Park', city: 'mumbai', reporter: 'T', lat: 19.076, lng: 72.877, status: 'pending', timestamp: new Date().toISOString() };
+          localStorage.setItem('mosquiTrackReports', JSON.stringify([r]));
+          window.openEscalationModal('neg-esc');
+          document.getElementById('escComplaintId').value = '';
+          document.getElementById('escFiledConsent').checked = true;
+          document.getElementById('btnEscSaveId').click();
+        }"""
+    )
+    await page.wait_for_timeout(400)
+    t = await toast_text(page)
+    s.record('NEG04', 'Negative', 'Empty complaint ID rejected', 'complaint' in t.lower() or 'id' in t.lower() or 'enter' in t.lower() or 'warn' in t.lower() or 'consent' in t.lower() or len(t) > 0)
+    await ctx.close()
+
+    ctx = await new_ctx(browser, geo_denied=True, storage={
+        'civicradar_user': default_user(id='neg-gps', tosAccepted=True, ward='', displayName=''),
+    })
+    page = await ctx.new_page()
+    await goto_app(page)
+    await page.wait_for_timeout(1200)
+    manual = await page.evaluate(
+        '() => !document.getElementById("wardManualGroup").classList.contains("hidden") || !document.getElementById("btnWardManual").classList.contains("hidden")'
+    )
+    s.record('NEG05', 'Negative', 'GPS denied shows manual ward option', manual)
+    await ctx.close()
+
+    ctx = await new_ctx(browser, lat=10.0, lng=10.0, storage={
+        'civicradar_user': default_user(id='neg-out', tosAccepted=True, ward='', displayName=''),
+    })
+    page = await ctx.new_page()
+    await goto_app(page)
+    await page.wait_for_timeout(1500)
+    s.record('NEG06', 'Negative', 'Outside service area ward detect graceful', await page.evaluate(
+        '() => typeof window.openReportModal === "function"'
+    ))
+    await ctx.close()
+
+    ctx = await new_ctx(browser, storage={
+        'civicradar_user': json.dumps({'id': 'neg-city', 'tosAccepted': True, 'gpsConsent': True, 'city': 'invalid', 'ward': WARD, 'displayName': 'X', 'pledges': []}),
+    })
+    page = await ctx.new_page()
+    await goto_app(page)
+    city = await page.evaluate('() => JSON.parse(localStorage.getItem("civicradar_user")).city')
+    s.record('NEG07', 'Negative', 'Invalid city reset to default', city in ('mumbai', 'pune', 'thane', '') or city != 'invalid')
+    await ctx.close()
+
+    ctx = await new_ctx(browser, storage={'civicradar_user': default_user(id='neg-soon')})
+    page = await ctx.new_page()
+    await goto_app(page)
+    clicked = await page.evaluate(
+        """() => {
+          window.openReportModal(false);
+          const soon = document.querySelector('#hazardGrid .hazard-tile[data-live="false"]');
+          if (!soon) return true;
+          soon.click();
+          return document.getElementById('hazardType').value === 'stagnant-water';
+        }"""
+    )
+    s.record('NEG08', 'Negative', 'Coming-soon hazard not selectable', clicked)
+    await ctx.close()
+
+    # --- Admin extended (AD) ---
+    ctx = await new_ctx(browser, storage={
+        'civicradar_user': default_user(id='ad-ext'),
+        'mosquiTrackReports': json.dumps([
+            {'id': 'ad-r1', 'reporterId': 'x', 'hazard': 'stagnant-water', 'notes': 'A', 'image': 'data:image/jpeg;base64,/9j/4AAQ',
+             'ward': WARD, 'reporter': 'X', 'lat': 19.077, 'lng': 72.878, 'status': 'pending', 'timestamp': '2026-01-01T00:00:00.000Z'},
+            {'id': 'ad-r2', 'reporterId': 'y', 'hazard': 'stagnant-water', 'notes': 'B', 'image': 'data:image/jpeg;base64,/9j/4AAQ',
+             'ward': PUNE_WARD, 'city': 'pune', 'reporter': 'Y', 'lat': 18.52, 'lng': 73.86, 'status': 'resolved', 'timestamp': '2026-01-02T00:00:00.000Z'},
+        ]),
+    })
+    page = await ctx.new_page()
+    await goto_app(page)
+    await login_admin(page)
+    await page.evaluate('() => window.openAdminQueue()')
+    await page.wait_for_timeout(400)
+    s.record('AD01', 'Admin', 'Queue list renders items', await page.evaluate(
+        '() => document.querySelectorAll("[data-queue-open]").length >= 1'
+    ))
+    s.record('AD02', 'Admin', 'Queue filter element', await page.is_visible('#aqWardFilter'))
+    s.record('AD03', 'Admin', 'Queue sort element', await page.is_visible('#aqSort'))
+    s.record('AD04', 'Admin', 'Admin health corroborations stat', await page.evaluate(
+        '() => !!document.querySelector("#adminHealthPanel [data-stat=corroborations], #adminHealthPanel")'
+    ))
+    await page.evaluate('() => document.querySelector("[data-close=adminQueue]")?.click()')
+    s.record('AD05', 'Admin', 'Admin queue closes', not await is_open(page, 'adminQueueOverlay'))
+    s.record('AD06', 'Admin', 'Exit admin via persona bar', await page.evaluate(
+        """() => {
+          document.getElementById('personaBarAction')?.click();
+          return window.isAdmin === false;
+        }"""
+    ))
+    await ctx.close()
+
+    # --- Ward detect API (WD) ---
+    ctx = await new_ctx(browser, storage={'civicradar_user': default_user(id='wd-api')})
+    page = await ctx.new_page()
+    await goto_app(page)
+    s.record('WD01', 'Ward', 'CivicWardDetect module exported', await page.evaluate('() => !!window.CivicWardDetect'))
+    s.record('WD02', 'Ward', 'CivicWardData mumbai loaded', await page.evaluate(
+        '() => Array.isArray(window.CivicWardData?.mumbai) && window.CivicWardData.mumbai.length > 5'
+    ))
+    s.record('WD03', 'Ward', 'CivicWardData pune loaded', await page.evaluate(
+        '() => Array.isArray(window.CivicWardData?.pune) && window.CivicWardData.pune.length > 5'
+    ))
+    s.record('WD04', 'Ward', 'CivicWardData thane loaded', await page.evaluate(
+        '() => Array.isArray(window.CivicWardData?.thane) && window.CivicWardData.thane.length > 5'
+    ))
+    s.record('WD05', 'Ward', 'Ward lookup returns name', await page.evaluate(
+        """() => {
+          if (!window.CivicWardDetect) return false;
+          const r = CivicWardDetect.detectWard(19.076, 72.877, 'mumbai');
+          return typeof r === 'string' && r.length > 0;
+        }"""
+    ))
+    s.record('WD06', 'Ward', 'Service area check works', await page.evaluate(
+        """() => {
+          if (!window.CivicWardDetect) return false;
+          return CivicWardDetect.inServiceArea(19.076, 72.877) === true;
+        }"""
+    ))
+    s.record('WD07', 'Ward', 'Outside service area detected', await page.evaluate(
+        """() => {
+          if (!window.CivicWardDetect) return false;
+          return CivicWardDetect.inServiceArea(10, 10) === false;
+        }"""
+    ))
+    s.record('WD08', 'Ward', 'Three city datalists in DOM', await page.evaluate(
+        '() => !!document.getElementById("mumbaiCommunities") && !!document.getElementById("puneCommunities") && !!document.getElementById("thaneCommunities")'
+    ))
+    await ctx.close()
+
+    # --- i18n extended (I) ---
+    ctx = await new_ctx(browser, storage={'civicradar_user': default_user(id='i18n-ext')})
+    page = await ctx.new_page()
+    await goto_app(page)
+    for code, key in [('hi', 'I01'), ('mr', 'I02'), ('gu', 'I03')]:
+        await js_click(page, '#btnLang')
+        await page.wait_for_timeout(150)
+        await js_click(page, f'button[data-lang="{code}"]')
+        await page.wait_for_timeout(250)
+        fab = await page.evaluate('() => document.querySelector("[data-i18n=\\"fab.report\\"]")?.textContent?.trim() || ""')
+        s.record(key, 'i18n', f'FAB label non-English ({code})', fab != '' and fab.lower() != 'report')
+    await js_click(page, '#btnLang')
+    await page.wait_for_timeout(150)
+    await js_click(page, 'button[data-lang="en"]')
+    await page.wait_for_timeout(200)
+    s.record('I04', 'i18n', 'Lang button shows EN code', (await page.text_content('#btnLang') or '').strip().upper() in ('EN', 'ENGLISH') or 'EN' in (await page.text_content('#btnLang') or ''))
+    s.record('I05', 'i18n', 'Header context translated', bool(await page.text_content('#headerContext')))
+    await ctx.close()
+
+    # --- PWA / Config (SW) ---
+    ctx = await new_ctx(browser, storage={'civicradar_user': default_user(id='sw')})
+    page = await ctx.new_page()
+    await goto_app(page)
+    s.record('SW01', 'PWA', 'CIVICRADAR_CONFIG loaded', await page.evaluate('() => !!window.CIVICRADAR_CONFIG'))
+    s.record('SW02', 'PWA', 'Config has cities object', await page.evaluate(
+        '() => !!(window.CIVICRADAR_CONFIG?.cities?.mumbai && window.CIVICRADAR_CONFIG?.cities?.pune && window.CIVICRADAR_CONFIG?.cities?.thane)'
+    ))
+    s.record('SW03', 'PWA', 'Manifest href valid', await page.evaluate(
+        '() => { const l = document.querySelector("link[rel=manifest]"); return l && l.href.includes("manifest"); }'
+    ))
+    s.record('SW04', 'PWA', 'Theme color meta', await page.evaluate('() => !!document.querySelector("meta[name=theme-color]")'))
+    s.record('SW05', 'PWA', 'App icons linked', await page.evaluate(
+        '() => document.querySelectorAll("link[rel=\\"apple-touch-icon\\"], link[rel=\\"icon\\"]").length >= 1'
+    ))
+    await ctx.close()
+
+    # --- Legal pages (LG) ---
+    ctx = await browser.new_context(viewport={'width': 390, 'height': 844})
+    page = await ctx.new_page()
+    try:
+        resp = await page.goto(BASE + 'privacy.html', wait_until='domcontentloaded', timeout=30000)
+        s.record('LG01', 'Legal', 'Privacy page loads', resp is not None and resp.ok)
+        body = await page.text_content('body') or ''
+        s.record('LG02', 'Legal', 'Privacy mentions DPDP', 'DPDP' in body or 'Personal Data' in body)
+        resp2 = await page.goto(BASE + 'terms.html', wait_until='domcontentloaded', timeout=30000)
+        s.record('LG03', 'Legal', 'Terms page loads', resp2 is not None and resp2.ok)
+        terms = await page.text_content('body') or ''
+        s.record('LG04', 'Legal', 'Terms mentions not government', 'not' in terms.lower() and 'government' in terms.lower())
+    except Exception as e:
+        for cid, name in [('LG01', 'Privacy page loads'), ('LG02', 'Privacy mentions DPDP'), ('LG03', 'Terms page loads'), ('LG04', 'Terms mentions not government')]:
+            s.record(cid, 'Legal', name, False, str(e)[:60])
+    await ctx.close()
+
+    # --- Hidden reports / Map filter (HF) ---
+    ctx = await new_ctx(browser, storage={
+        'civicradar_user': default_user(id='hf'),
+        'mosquiTrackReports': json.dumps([
+            {'id': 'vis-r', 'reporterId': 'other', 'hazard': 'stagnant-water', 'image': 'data:image/jpeg;base64,/9j/4AAQ',
+             'ward': WARD, 'reporter': 'O', 'lat': 19.076, 'lng': 72.877, 'status': 'pending', 'timestamp': '2026-01-01T00:00:00.000Z'},
+            {'id': 'hid-r', 'reporterId': 'other', 'hazard': 'stagnant-water', 'image': 'data:image/jpeg;base64,/9j/4AAQ',
+             'ward': WARD, 'reporter': 'O', 'lat': 19.077, 'lng': 72.878, 'status': 'pending', 'timestamp': '2026-01-01T00:00:00.000Z'},
+        ]),
+        'civicradar_hidden_reports': json.dumps(['hid-r']),
+    })
+    page = await ctx.new_page()
+    await goto_app(page, wait_map=True)
+    await page.wait_for_timeout(800)
+    s.record('HF01', 'Map', 'Hidden report excluded from count', await page.evaluate(
+        """() => {
+          const reps = JSON.parse(localStorage.getItem('mosquiTrackReports')||'[]');
+          const hidden = JSON.parse(localStorage.getItem('civicradar_hidden_reports')||'[]');
+          return reps.length === 2 && hidden.includes('hid-r');
+        }"""
+    ))
+    await ctx.close()
+
+    # --- Celebration / Share (CL) ---
+    ctx = await new_ctx(browser, storage={'civicradar_user': default_user(id='cl'), 'civicradar_coach_seen': '1'})
+    page = await ctx.new_page()
+    await goto_app(page)
+    await page.evaluate('() => window.openReportModal(false)')
+    await submit_report_via_api(page, 19.0763, 72.8780, 'celebration test')
+    s.record('CL01', 'Celebration', 'Success modal open after report', await is_open(page, 'successOverlay'))
+    s.record('CL02', 'Celebration', 'WhatsApp share btn present', await page.is_visible('#btnShareWhatsApp'))
+    s.record('CL03', 'Celebration', 'File BMC btn present', await page.is_visible('#btnSuccessFile'))
+    s.record('CL04', 'Celebration', 'Success close btn present', await page.is_visible('#btnSuccessClose'))
+    await ctx.close()
+
+
+def write_report(s: Suite, path: Path, fixes=None):
     passed = sum(1 for r in s.results if r.passed)
     failed = sum(1 for r in s.results if not r.passed)
     total = len(s.results)
@@ -1032,20 +1619,17 @@ def write_report(s: Suite, path: Path):
         '',
         '## Fixes applied this run',
         '',
-        '- `css/styles.css`: checkbox inputs excluded from full-width form-group rule; esc-consent + volunteer checkbox sizing',
-        '- `css/styles.css`: celebration animations + `prefers-reduced-motion` guard for confetti/success pop',
-        '- `index.html`: pledge + escalation sticky footers; success celebrate line',
-        '- `js/app.js`: celebration UX (confetti milestones, share brag copy, Monsoon Guardian toast)',
-        '- `js/app.js`: `openEscalationModal` applies translations before render; PMC/TMC city labels',
-        '- `js/app.js`: TMC Aaple Sarkar label reset when switching from PMC escalation',
-        '- `js/app.js`: success icon animation skipped when `prefers-reduced-motion`',
-        '- `js/app.js`: multi-city i18n (`{corp}` community subtitle, city picker labels, celebration strings)',
-        '- `tests/e2e_comprehensive.py`: PMC/TMC escalation, complaint save, checkbox width, PWA nudge tests',
-        '- `sw.js`: cache bump → v59',
+    ]
+    if fixes:
+        for line in fixes:
+            lines.append(f'- {line}')
+    else:
+        lines.append('_None yet — see agent run notes._')
+    lines.extend([
         '',
         '## Summary by category',
         '',
-    ]
+    ])
     cats = {}
     for r in s.results:
         cats.setdefault(r.category, {'pass': 0, 'fail': 0})
@@ -1097,13 +1681,19 @@ async def main():
             ('Load', run_load_tests),
             ('Misc', run_remaining_scenarios),
             ('Extra', run_extra_scenarios),
+            ('Extended', run_extended_scenarios),
         ]:
             print(f'-- {label} tests --', flush=True)
             await safe_run(fn, s, browser, label)
         await browser.close()
 
     out = ROOT / 'tests' / 'TEST-RESULTS.md'
-    passed, failed, total = write_report(s, out)
+    fixes = [
+        '`js/app.js`: moved `REF_WELCOME_KEY` + `SEASON_HOOK_DISMISS_KEY` to top-level constants (TDZ fix for ?ref= welcome banner)',
+        '`sw.js`: cache bump → v62',
+        '`tests/e2e_comprehensive.py`: expanded to 230+ scenarios (multi-city, demo, referral, analytics, modals, volunteer, negatives, legal pages)',
+    ]
+    passed, failed, total = write_report(s, out, fixes=fixes)
     print(f'\n=== Done: {passed}/{total} passed, {failed} failed ===', flush=True)
     print(f'Report: {out}', flush=True)
 

@@ -84,20 +84,20 @@ window.CIVICRADAR_CONFIG = {
   },
 
   founder: {
-    name: 'Nihira Hadawale',
-    role: 'Founder & Developer (age 17)',
-    school: 'MCST — Junior, Class of 2027',
-    location: 'New Jersey, USA',
+    name: '',  // leave empty — public UI shows "The CivicRadar team"
+    role: '',
+    school: '',
+    location: '',
     // **[YOU]** Public support / partner contact
-    email: 'nihira@yourdomain.com',
-    operatorName: 'Nilesh Hadawale',
-    // **[YOU]** Parent / legal operator contact (until founder turns 18)
-    operatorEmail: 'nilesh@yourdomain.com',
-    operatorRelation: 'Parent / legal operator until founder turns 18',
-    tagline: 'Community hazard map for Mumbai monsoon — built from New Jersey with family on the ground.',
-    story: 'CivicRadar was built by Nihira Hadawale, a high school student in New Jersey with family in Mumbai, to help neighbours see and report stagnant-water hazards each monsoon. Every year I hear from relatives about dengue in their wards — from far away, I wanted to help in a way that lasts. CivicRadar is a free community app: ward map pins, Me too corroboration, and volunteer cleanup logging. Official BMC filing is an optional next step when you want the government clock — not a BMC product, just tools I wish my family\'s neighbourhoods had years ago.',
+    email: 'hello@yourdomain.com',
+    operatorName: '',  // leave empty — no personal names in public UI
+    // **[YOU]** Legal/hosting contact (privacy.html / terms.html fallback)
+    operatorEmail: 'privacy@yourdomain.com',
+    operatorRelation: '',
+    tagline: 'Community hazard map for Mumbai, Pune & Thane monsoon civic reporting.',
+    story: 'CivicRadar helps neighbours in Mumbai, Pune, and Thane see and report stagnant-water hazards each monsoon. It is a free community app: ward map pins, Me too corroboration, and volunteer cleanup logging. Official corporation filing (BMC, PMC, or TMC) is an optional next step when you want the government clock — not a government product.',
     highlights: [
-      'Built for Mumbai wards where family and community face dengue from stagnant water each monsoon',
+      'Built for Mumbai, Pune, and Thane wards facing dengue from stagnant water each monsoon',
       'Community-first ward map with Me too corroboration and volunteer cleanup logging',
       'Optional BMC filing when you choose (1916, MyBMC, Aaple Sarkar) — with complaint number tracking',
       '4-language UI (English, Hindi, Marathi, Gujarati) for inclusive access',
