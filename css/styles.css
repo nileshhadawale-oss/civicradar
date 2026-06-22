@@ -290,6 +290,11 @@ html, body {
   font-size: 0.75rem;
   color: var(--text-muted);
   margin-top: 6px;
+  line-height: 1.4;
+}
+
+.field-hint--compact {
+  margin: 0 0 14px;
 }
 
 .ward-detect-status {
@@ -1193,6 +1198,33 @@ body.pwa-nudge-visible #btnCamera {
   accent-color: var(--primary);
 }
 
+/* Checkbox rows inside form groups — override .form-group label/input defaults */
+.form-group .checkbox-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0;
+  font-weight: 400;
+  color: var(--text-dark);
+}
+
+.form-group .checkbox-row input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  min-height: 20px;
+  margin: 0;
+  padding: 0;
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  scroll-margin-bottom: 0;
+}
+
+.form-group .checkbox-row span {
+  flex: 1;
+  min-width: 0;
+}
+
 /* ============================================
    Buttons
    ============================================ */
@@ -2093,13 +2125,15 @@ body.pwa-nudge-visible #btnCamera {
   gap: 8px;
 }
 .hours-picker__btn {
+  flex: 1 1 calc(25% - 6px);
   min-width: var(--touch-min);
   min-height: var(--touch-min);
-  padding: 8px 12px;
+  padding: 8px 10px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--bg-main);
   font-weight: 600;
+  font-size: 0.875rem;
   cursor: pointer;
 }
 .hours-picker__btn.active {
@@ -2111,16 +2145,39 @@ body.pwa-nudge-visible #btnCamera {
 .checkbox-group {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 0;
 }
-.checkbox-label {
+
+.checkbox-group .checkbox-row {
+  margin-bottom: 0;
+}
+
+/* Volunteer modal — tighter spacing, title clearance for close btn */
+#volunteerModal h2 {
+  padding-right: 44px;
+}
+
+#volunteerModal .form-group {
+  margin-bottom: 14px;
+}
+
+#volunteerModal .modal__subtitle {
+  margin-bottom: 16px;
+}
+
+#volunteerModal .field-hint {
+  margin-top: 4px;
+}
+
+#volunteerModal .modal__sticky-footer {
   display: flex;
-  align-items: flex-start;
+  flex-direction: column;
   gap: 8px;
-  font-size: 0.875rem;
-  cursor: pointer;
 }
-.checkbox-label input { margin-top: 3px; }
+
+#volunteerModal .modal__sticky-footer .btn--ghost {
+  margin-top: 0;
+}
 
 .coord-scope-tag {
   font-size: 0.8125rem;

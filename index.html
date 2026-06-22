@@ -423,7 +423,7 @@
 
   <!-- Volunteer Signup Modal -->
   <div class="modal-overlay" id="volunteerOverlay" aria-hidden="true">
-    <div class="modal" id="volunteerModal" role="dialog" aria-labelledby="volunteerTitle">
+    <div class="modal modal--tall" id="volunteerModal" role="dialog" aria-labelledby="volunteerTitle">
       <div class="modal__handle"></div>
       <button type="button" class="modal__close" data-close="volunteer" aria-label="Close">&times;</button>
       <h2 id="volunteerTitle" data-i18n="volunteer.title">Volunteer in my ward</h2>
@@ -450,21 +450,30 @@
       <div class="form-group">
         <label data-i18n="volunteer.skills">I can help with</label>
         <div class="checkbox-group">
-          <label class="checkbox-label"><input type="checkbox" id="volSkillCleanup" value="cleanup" checked> <span data-i18n="volunteer.skill.cleanup">Cleanup stagnant water</span></label>
-          <label class="checkbox-label"><input type="checkbox" id="volSkillAwareness" value="awareness"> <span data-i18n="volunteer.skill.awareness">Awareness &amp; WhatsApp outreach</span></label>
-          <label class="checkbox-label"><input type="checkbox" id="volSkillPledge" value="pledge"> <span data-i18n="volunteer.skill.pledge">Pledge delivery (supplies)</span></label>
+          <label class="checkbox-row">
+            <input type="checkbox" id="volSkillCleanup" value="cleanup" checked>
+            <span data-i18n="volunteer.skill.cleanup">Cleanup stagnant water</span>
+          </label>
+          <label class="checkbox-row">
+            <input type="checkbox" id="volSkillAwareness" value="awareness">
+            <span data-i18n="volunteer.skill.awareness">Awareness &amp; WhatsApp outreach</span>
+          </label>
+          <label class="checkbox-row">
+            <input type="checkbox" id="volSkillPledge" value="pledge">
+            <span data-i18n="volunteer.skill.pledge">Pledge delivery (supplies)</span>
+          </label>
         </div>
       </div>
-      <div class="form-group">
-        <p class="field-hint" data-i18n="volunteer.ageNote">18+ required per Terms. Under-18? Participate only with a parent/guardian or school NSS coordinator who accepts Terms.</p>
-      </div>
+      <p class="field-hint field-hint--compact" data-i18n="volunteer.ageNote">18+ required per Terms. Under-18? Participate only with a parent/guardian or school NSS coordinator who accepts Terms.</p>
       <div class="form-group">
         <label for="volunteerContact" data-i18n="volunteer.contact">Phone / WhatsApp (optional)</label>
         <input type="tel" id="volunteerContact" maxlength="20" placeholder="+91 …" autocomplete="tel">
         <p class="field-hint" data-i18n="volunteer.contactHint">Optional — shared with your ward or neighbourhood coordinator only if you enter it. You control this; CivicRadar never auto-calls.</p>
       </div>
-      <button type="button" class="btn btn--primary btn--full" id="btnSubmitVolunteer" data-i18n="volunteer.submit">Save volunteer signup</button>
-      <button type="button" class="btn btn--ghost btn--full hidden" id="btnRemoveVolunteer" data-i18n="volunteer.remove">Remove my signup</button>
+      <div class="modal__sticky-footer">
+        <button type="button" class="btn btn--primary btn--full" id="btnSubmitVolunteer" data-i18n="volunteer.submit">Save volunteer signup</button>
+        <button type="button" class="btn btn--ghost btn--full hidden" id="btnRemoveVolunteer" data-i18n="volunteer.remove">Remove my signup</button>
+      </div>
     </div>
   </div>
 
