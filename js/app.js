@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   /* ---------- Constants ---------- */
   // Build tag attached to feedback rows. Kept in step with the SW cache version.
-  const CIVIC_APP_VERSION = 'v69';
+  const CIVIC_APP_VERSION = 'v73';
   const REPORTS_KEY = 'mosquiTrackReports';
   const USER_KEY = 'civicradar_user';
   const PLEDGES_KEY = 'mosquiTrackPledges';
@@ -112,8 +112,11 @@ document.addEventListener('DOMContentLoaded', function () {
   /* ---------- Global Role Flags ---------- */
   let isAdmin = false;
   let isLead = false;
+  let isSuperAdmin = false;
   window.isAdmin = false;
   window.isLead = false;
+  window.isSuperAdmin = false;
+  let accessProofDataUrl = null;
 
   /* ---------- State ---------- */
   let map = null;
@@ -134,6 +137,12 @@ document.addEventListener('DOMContentLoaded', function () {
   let pendingSuccessCardBlob = null;
   let lastFocusedEl = null;
   let focusTrapHandler = null;
+  // Native camera / file picker can pop history or deliver a ghost tap on Map nav
+  // before async photo processing finishes — guard the report sheet until capture completes.
+  let reportPhotoFlowActive = false;
+  let reportPhotoProcessing = false;
+  let reportCameraTimer = null;
+  let reportPhotoDismissGuard = 0;
 
   const DEMO_WARD_SEED = [
     { name: 'G/N Ward — Dadar, Shivaji Park', city: 'mumbai', points: 2840, reports: 142, isDemo: true },
@@ -174,6 +183,9 @@ document.addEventListener('DOMContentLoaded', function () {
     about: $('#aboutOverlay'),
     inquiry: $('#inquiryOverlay'),
     feedback: $('#feedbackOverlay'),
+    accessRequest: $('#accessRequestOverlay'),
+    accessClaim: $('#accessClaimOverlay'),
+    accessReview: $('#accessReviewOverlay'),
   };
 
   let user;
@@ -1062,6 +1074,76 @@ document.addEventListener('DOMContentLoaded', function () {
       'feedback.error': 'Could not send — your text is safe. Please try again.',
       'feedback.success': 'Thanks! Your feedback was sent.',
       'feedback.successLocal': 'Saved — we will sync it when you are back online.',
+      'access.title': 'Request coordinator access',
+      'access.subtitle': 'For NGO & community coordinators and BMC officials.',
+      'access.step1': 'Apply with a few quick details',
+      'access.step2': 'The CivicRadar team reviews',
+      'access.step3': 'Get a claim code to unlock access',
+      'access.roleLabel': 'I am a…',
+      'access.roleNgo': 'NGO coordinator',
+      'access.roleBmc': 'BMC official',
+      'access.nameLabel': 'Your name',
+      'access.namePh': 'Full name',
+      'access.orgLabel': 'Organization',
+      'access.orgPh': 'NGO / department / RWA name',
+      'access.optional': '(optional)',
+      'access.cityLabel': 'City',
+      'access.wardLabel': 'Ward',
+      'access.wardPh': 'Your ward',
+      'access.contactLabel': 'Contact — email or phone',
+      'access.emailPh': 'you@example.com',
+      'access.phonePh': 'Phone',
+      'access.contactHint': 'Give at least one. If you add an email, that is how we send your claim code.',
+      'access.proofLabel': 'ID / proof',
+      'access.proofOptional': '(optional — encouraged for BMC)',
+      'access.proofAdd': 'Attach proof photo',
+      'access.noteLabel': 'Anything else?',
+      'access.notePh': 'Ward focus, how you’ll use it, etc.',
+      'access.submit': 'Submit request',
+      'access.haveCode': 'I already have a claim code',
+      'access.confirmTitle': 'Request received',
+      'access.confirmBody': 'Thanks! The CivicRadar team will review your request and email you a claim code, usually within a few days. Enter that code in the app to unlock your access.',
+      'access.confirmLocal': 'Saved on this device — it will sync to the team when you are back online.',
+      'access.done': 'Done',
+      'access.profileCta': 'For NGOs & BMC: Request coordinator access',
+      'access.partnerCta': 'Don’t have access yet? Request coordinator access',
+      'access.partnerClaim': 'I have a claim code',
+      'access.claimTitle': 'Enter your claim code',
+      'access.claimSubtitle': 'Approved by the CivicRadar team? Enter the code we sent to unlock your access.',
+      'access.claimLabel': 'Claim code',
+      'access.claimPh': 'CR-XXXXXX',
+      'access.claimSubmit': 'Unlock access',
+      'access.reviewOpen': 'Access requests',
+      'access.reviewTag': 'CivicRadar team',
+      'access.reviewTitle': 'Access requests',
+      'access.reviewSubtitle': 'Approve or reject coordinator & BMC access requests. Approving issues a claim code to share.',
+      'access.pending': 'Pending',
+      'access.approved': 'Approved',
+      'access.rejected': 'Rejected',
+      'access.reviewEmpty': 'No requests yet. New coordinator and BMC requests appear here.',
+      'access.approve': 'Approve',
+      'access.reject': 'Reject',
+      'access.copyCode': 'Copy code',
+      'access.codeCopied': 'Claim code copied — send it from {email}.',
+      'access.roleNgoTag': 'NGO coordinator',
+      'access.roleBmcTag': 'BMC official',
+      'access.statusApproved': 'Approved',
+      'access.statusRejected': 'Rejected',
+      'access.statusPending': 'Pending',
+      'access.errName': 'Please add your name.',
+      'access.errContact': 'Add an email or phone so we can reach you.',
+      'access.submitted': 'Request sent — we will review and email your claim code.',
+      'access.submittedLocal': 'Request saved — we will sync and review it when you are online.',
+      'access.submitError': 'Could not send — your details are safe. Please try again.',
+      'access.claimErrEmpty': 'Enter the claim code we sent you.',
+      'access.claimErrInvalid': 'That code is not valid or not yet approved.',
+      'access.claimErrUsed': 'That code has already been used.',
+      'access.claimedNgo': 'Access unlocked — welcome, coordinator!',
+      'access.claimedBmc': 'BMC access unlocked — review your ward queue.',
+      'access.approvedToast': 'Approved — claim code {code}',
+      'access.rejectedToast': 'Request rejected.',
+      'access.proofAttached': 'Proof attached',
+      'access.proofTooBig': 'Image too large — please attach a smaller photo.',
     },
     hi: {
       'lang.name': 'हिन्दी', 'lang.native': 'हिन्दी',
@@ -1711,6 +1793,76 @@ document.addEventListener('DOMContentLoaded', function () {
       'feedback.error': 'भेजा नहीं जा सका — आपका टेक्स्ट सुरक्षित है। कृपया फिर से प्रयास करें।',
       'feedback.success': 'धन्यवाद! आपका सुझाव भेज दिया गया।',
       'feedback.successLocal': 'सहेजा गया — ऑनलाइन होने पर हम इसे सिंक कर देंगे।',
+      'access.title': 'समन्वयक एक्सेस का अनुरोध करें',
+      'access.subtitle': 'NGO व सामुदायिक समन्वयकों और BMC अधिकारियों के लिए।',
+      'access.step1': 'कुछ आसान जानकारी के साथ आवेदन करें',
+      'access.step2': 'CivicRadar टीम समीक्षा करती है',
+      'access.step3': 'एक्सेस अनलॉक करने के लिए क्लेम कोड पाएं',
+      'access.roleLabel': 'मैं हूँ…',
+      'access.roleNgo': 'NGO समन्वयक',
+      'access.roleBmc': 'BMC अधिकारी',
+      'access.nameLabel': 'आपका नाम',
+      'access.namePh': 'पूरा नाम',
+      'access.orgLabel': 'संस्था',
+      'access.orgPh': 'NGO / विभाग / RWA का नाम',
+      'access.optional': '(वैकल्पिक)',
+      'access.cityLabel': 'शहर',
+      'access.wardLabel': 'वार्ड',
+      'access.wardPh': 'आपका वार्ड',
+      'access.contactLabel': 'संपर्क — ईमेल या फ़ोन',
+      'access.emailPh': 'you@example.com',
+      'access.phonePh': 'फ़ोन',
+      'access.contactHint': 'कम से कम एक दें। ईमेल देने पर हम उसी पर क्लेम कोड भेजेंगे।',
+      'access.proofLabel': 'पहचान / प्रमाण',
+      'access.proofOptional': '(वैकल्पिक — BMC के लिए सुझाया गया)',
+      'access.proofAdd': 'प्रमाण फ़ोटो जोड़ें',
+      'access.noteLabel': 'और कुछ?',
+      'access.notePh': 'वार्ड फोकस, उपयोग कैसे करेंगे, आदि।',
+      'access.submit': 'अनुरोध भेजें',
+      'access.haveCode': 'मेरे पास पहले से क्लेम कोड है',
+      'access.confirmTitle': 'अनुरोध प्राप्त हुआ',
+      'access.confirmBody': 'धन्यवाद! CivicRadar टीम आपके अनुरोध की समीक्षा करेगी और आमतौर पर कुछ दिनों में आपको क्लेम कोड ईमेल करेगी। एक्सेस अनलॉक करने के लिए वह कोड ऐप में दर्ज करें।',
+      'access.confirmLocal': 'इस डिवाइस पर सहेजा गया — ऑनलाइन होने पर टीम को सिंक हो जाएगा।',
+      'access.done': 'पूर्ण',
+      'access.profileCta': 'NGO व BMC के लिए: समन्वयक एक्सेस का अनुरोध करें',
+      'access.partnerCta': 'अभी एक्सेस नहीं है? समन्वयक एक्सेस का अनुरोध करें',
+      'access.partnerClaim': 'मेरे पास क्लेम कोड है',
+      'access.claimTitle': 'अपना क्लेम कोड दर्ज करें',
+      'access.claimSubtitle': 'CivicRadar टीम ने मंज़ूरी दी? एक्सेस अनलॉक करने के लिए भेजा गया कोड दर्ज करें।',
+      'access.claimLabel': 'क्लेम कोड',
+      'access.claimPh': 'CR-XXXXXX',
+      'access.claimSubmit': 'एक्सेस अनलॉक करें',
+      'access.reviewOpen': 'एक्सेस अनुरोध',
+      'access.reviewTag': 'CivicRadar टीम',
+      'access.reviewTitle': 'एक्सेस अनुरोध',
+      'access.reviewSubtitle': 'समन्वयक व BMC एक्सेस अनुरोध मंज़ूर/अस्वीकार करें। मंज़ूरी पर क्लेम कोड जारी होता है।',
+      'access.pending': 'लंबित',
+      'access.approved': 'मंज़ूर',
+      'access.rejected': 'अस्वीकृत',
+      'access.reviewEmpty': 'अभी कोई अनुरोध नहीं। नए समन्वयक व BMC अनुरोध यहाँ दिखेंगे।',
+      'access.approve': 'मंज़ूर करें',
+      'access.reject': 'अस्वीकार करें',
+      'access.copyCode': 'कोड कॉपी करें',
+      'access.codeCopied': 'क्लेम कोड कॉपी हुआ — {email} से भेजें।',
+      'access.roleNgoTag': 'NGO समन्वयक',
+      'access.roleBmcTag': 'BMC अधिकारी',
+      'access.statusApproved': 'मंज़ूर',
+      'access.statusRejected': 'अस्वीकृत',
+      'access.statusPending': 'लंबित',
+      'access.errName': 'कृपया अपना नाम जोड़ें।',
+      'access.errContact': 'संपर्क के लिए ईमेल या फ़ोन जोड़ें।',
+      'access.submitted': 'अनुरोध भेजा गया — हम समीक्षा कर आपको क्लेम कोड ईमेल करेंगे।',
+      'access.submittedLocal': 'अनुरोध सहेजा गया — ऑनलाइन होने पर सिंक व समीक्षा होगी।',
+      'access.submitError': 'भेजा नहीं जा सका — आपकी जानकारी सुरक्षित है। कृपया फिर प्रयास करें।',
+      'access.claimErrEmpty': 'भेजा गया क्लेम कोड दर्ज करें।',
+      'access.claimErrInvalid': 'यह कोड मान्य नहीं है या अभी मंज़ूर नहीं हुआ।',
+      'access.claimErrUsed': 'यह कोड पहले ही उपयोग हो चुका है।',
+      'access.claimedNgo': 'एक्सेस अनलॉक — स्वागत है, समन्वयक!',
+      'access.claimedBmc': 'BMC एक्सेस अनलॉक — अपनी वार्ड कतार देखें।',
+      'access.approvedToast': 'मंज़ूर — क्लेम कोड {code}',
+      'access.rejectedToast': 'अनुरोध अस्वीकृत।',
+      'access.proofAttached': 'प्रमाण जोड़ा गया',
+      'access.proofTooBig': 'छवि बहुत बड़ी — कृपया छोटी फ़ोटो जोड़ें।',
     },
     mr: {
       'lang.name': 'मराठी', 'lang.native': 'मराठी',
@@ -2357,6 +2509,76 @@ document.addEventListener('DOMContentLoaded', function () {
       'feedback.error': 'पाठवता आले नाही — तुमचा मजकूर सुरक्षित आहे. कृपया पुन्हा प्रयत्न करा.',
       'feedback.success': 'धन्यवाद! तुमचा अभिप्राय पाठवला गेला.',
       'feedback.successLocal': 'जतन केले — ऑनलाइन झाल्यावर आम्ही ते सिंक करू.',
+      'access.title': 'समन्वयक प्रवेशासाठी विनंती करा',
+      'access.subtitle': 'NGO व समुदाय समन्वयक आणि BMC अधिकाऱ्यांसाठी.',
+      'access.step1': 'काही सोप्या तपशिलांसह अर्ज करा',
+      'access.step2': 'CivicRadar टीम पुनरावलोकन करते',
+      'access.step3': 'प्रवेश अनलॉक करण्यासाठी क्लेम कोड मिळवा',
+      'access.roleLabel': 'मी आहे…',
+      'access.roleNgo': 'NGO समन्वयक',
+      'access.roleBmc': 'BMC अधिकारी',
+      'access.nameLabel': 'तुमचे नाव',
+      'access.namePh': 'पूर्ण नाव',
+      'access.orgLabel': 'संस्था',
+      'access.orgPh': 'NGO / विभाग / RWA चे नाव',
+      'access.optional': '(पर्यायी)',
+      'access.cityLabel': 'शहर',
+      'access.wardLabel': 'वॉर्ड',
+      'access.wardPh': 'तुमचा वॉर्ड',
+      'access.contactLabel': 'संपर्क — ईमेल किंवा फोन',
+      'access.emailPh': 'you@example.com',
+      'access.phonePh': 'फोन',
+      'access.contactHint': 'किमान एक द्या. ईमेल दिल्यास त्यावरच आम्ही क्लेम कोड पाठवू.',
+      'access.proofLabel': 'ओळख / पुरावा',
+      'access.proofOptional': '(पर्यायी — BMC साठी सुचवलेले)',
+      'access.proofAdd': 'पुरावा फोटो जोडा',
+      'access.noteLabel': 'आणखी काही?',
+      'access.notePh': 'वॉर्ड फोकस, वापर कसा कराल, इ.',
+      'access.submit': 'विनंती पाठवा',
+      'access.haveCode': 'माझ्याकडे आधीच क्लेम कोड आहे',
+      'access.confirmTitle': 'विनंती मिळाली',
+      'access.confirmBody': 'धन्यवाद! CivicRadar टीम तुमच्या विनंतीचे पुनरावलोकन करेल आणि सहसा काही दिवसांत तुम्हाला क्लेम कोड ईमेल करेल. प्रवेश अनलॉक करण्यासाठी तो कोड अॅपमध्ये टाका.',
+      'access.confirmLocal': 'या डिव्हाइसवर जतन — ऑनलाइन झाल्यावर टीमकडे सिंक होईल.',
+      'access.done': 'पूर्ण',
+      'access.profileCta': 'NGO व BMC साठी: समन्वयक प्रवेशाची विनंती करा',
+      'access.partnerCta': 'अजून प्रवेश नाही? समन्वयक प्रवेशाची विनंती करा',
+      'access.partnerClaim': 'माझ्याकडे क्लेम कोड आहे',
+      'access.claimTitle': 'तुमचा क्लेम कोड टाका',
+      'access.claimSubtitle': 'CivicRadar टीमने मंजूर केले? प्रवेश अनलॉक करण्यासाठी पाठवलेला कोड टाका.',
+      'access.claimLabel': 'क्लेम कोड',
+      'access.claimPh': 'CR-XXXXXX',
+      'access.claimSubmit': 'प्रवेश अनलॉक करा',
+      'access.reviewOpen': 'प्रवेश विनंत्या',
+      'access.reviewTag': 'CivicRadar टीम',
+      'access.reviewTitle': 'प्रवेश विनंत्या',
+      'access.reviewSubtitle': 'समन्वयक व BMC प्रवेश विनंत्या मंजूर/नाकारा. मंजुरीवर क्लेम कोड जारी होतो.',
+      'access.pending': 'प्रलंबित',
+      'access.approved': 'मंजूर',
+      'access.rejected': 'नाकारले',
+      'access.reviewEmpty': 'अजून विनंत्या नाहीत. नवीन समन्वयक व BMC विनंत्या इथे दिसतील.',
+      'access.approve': 'मंजूर करा',
+      'access.reject': 'नाकारा',
+      'access.copyCode': 'कोड कॉपी करा',
+      'access.codeCopied': 'क्लेम कोड कॉपी झाला — {email} वरून पाठवा.',
+      'access.roleNgoTag': 'NGO समन्वयक',
+      'access.roleBmcTag': 'BMC अधिकारी',
+      'access.statusApproved': 'मंजूर',
+      'access.statusRejected': 'नाकारले',
+      'access.statusPending': 'प्रलंबित',
+      'access.errName': 'कृपया तुमचे नाव जोडा.',
+      'access.errContact': 'संपर्कासाठी ईमेल किंवा फोन जोडा.',
+      'access.submitted': 'विनंती पाठवली — आम्ही पुनरावलोकन करून तुम्हाला क्लेम कोड ईमेल करू.',
+      'access.submittedLocal': 'विनंती जतन — ऑनलाइन झाल्यावर सिंक व पुनरावलोकन होईल.',
+      'access.submitError': 'पाठवता आले नाही — तुमचे तपशील सुरक्षित आहेत. कृपया पुन्हा प्रयत्न करा.',
+      'access.claimErrEmpty': 'पाठवलेला क्लेम कोड टाका.',
+      'access.claimErrInvalid': 'हा कोड वैध नाही किंवा अजून मंजूर झालेला नाही.',
+      'access.claimErrUsed': 'हा कोड आधीच वापरला गेला आहे.',
+      'access.claimedNgo': 'प्रवेश अनलॉक — स्वागत आहे, समन्वयक!',
+      'access.claimedBmc': 'BMC प्रवेश अनलॉक — तुमची वॉर्ड रांग पाहा.',
+      'access.approvedToast': 'मंजूर — क्लेम कोड {code}',
+      'access.rejectedToast': 'विनंती नाकारली.',
+      'access.proofAttached': 'पुरावा जोडला',
+      'access.proofTooBig': 'प्रतिमा खूप मोठी — कृपया लहान फोटो जोडा.',
     },    gu: {
       'lang.name': 'Gujarati', 'lang.native': 'ગુજરાતી',
       'nav.map': 'નકશો', 'nav.community': 'સમુદાય', 'nav.profile': 'પ્રોફાઇલ',
@@ -3000,6 +3222,76 @@ document.addEventListener('DOMContentLoaded', function () {
       'feedback.error': 'મોકલી શકાયું નહીં — તમારો ટેક્સ્ટ સુરક્ષિત છે. કૃપા કરીને ફરી પ્રયાસ કરો.',
       'feedback.success': 'આભાર! તમારો પ્રતિસાદ મોકલાઈ ગયો.',
       'feedback.successLocal': 'સાચવ્યું — ઓનલાઈન થશો ત્યારે અમે તેને સિંક કરીશું.',
+      'access.title': 'સંયોજક ઍક્સેસ માટે વિનંતી કરો',
+      'access.subtitle': 'NGO અને સમુદાય સંયોજકો તથા BMC અધિકારીઓ માટે.',
+      'access.step1': 'થોડી ઝડપી વિગતો સાથે અરજી કરો',
+      'access.step2': 'CivicRadar ટીમ સમીક્ષા કરે છે',
+      'access.step3': 'ઍક્સેસ અનલૉક કરવા ક્લેમ કોડ મેળવો',
+      'access.roleLabel': 'હું છું…',
+      'access.roleNgo': 'NGO સંયોજક',
+      'access.roleBmc': 'BMC અધિકારી',
+      'access.nameLabel': 'તમારું નામ',
+      'access.namePh': 'પૂરું નામ',
+      'access.orgLabel': 'સંસ્થા',
+      'access.orgPh': 'NGO / વિભાગ / RWA નું નામ',
+      'access.optional': '(વૈકલ્પિક)',
+      'access.cityLabel': 'શહેર',
+      'access.wardLabel': 'વોર્ડ',
+      'access.wardPh': 'તમારો વોર્ડ',
+      'access.contactLabel': 'સંપર્ક — ઈમેલ અથવા ફોન',
+      'access.emailPh': 'you@example.com',
+      'access.phonePh': 'ફોન',
+      'access.contactHint': 'ઓછામાં ઓછું એક આપો. ઈમેલ આપશો તો તેના પર જ અમે ક્લેમ કોડ મોકલીશું.',
+      'access.proofLabel': 'ઓળખ / પુરાવો',
+      'access.proofOptional': '(વૈકલ્પિક — BMC માટે ભલામણ)',
+      'access.proofAdd': 'પુરાવો ફોટો જોડો',
+      'access.noteLabel': 'બીજું કંઈ?',
+      'access.notePh': 'વોર્ડ ફોકસ, કેવી રીતે વાપરશો, વગેરે.',
+      'access.submit': 'વિનંતી મોકલો',
+      'access.haveCode': 'મારી પાસે પહેલેથી ક્લેમ કોડ છે',
+      'access.confirmTitle': 'વિનંતી મળી',
+      'access.confirmBody': 'આભાર! CivicRadar ટીમ તમારી વિનંતીની સમીક્ષા કરશે અને સામાન્ય રીતે થોડા દિવસોમાં તમને ક્લેમ કોડ ઈમેલ કરશે. ઍક્સેસ અનલૉક કરવા તે કોડ ઍપમાં દાખલ કરો.',
+      'access.confirmLocal': 'આ ડિવાઇસ પર સાચવ્યું — ઓનલાઈન થશો ત્યારે ટીમ સુધી સિંક થશે.',
+      'access.done': 'પૂર્ણ',
+      'access.profileCta': 'NGO અને BMC માટે: સંયોજક ઍક્સેસ માટે વિનંતી કરો',
+      'access.partnerCta': 'હજુ ઍક્સેસ નથી? સંયોજક ઍક્સેસ માટે વિનંતી કરો',
+      'access.partnerClaim': 'મારી પાસે ક્લેમ કોડ છે',
+      'access.claimTitle': 'તમારો ક્લેમ કોડ દાખલ કરો',
+      'access.claimSubtitle': 'CivicRadar ટીમે મંજૂરી આપી? ઍક્સેસ અનલૉક કરવા મોકલેલ કોડ દાખલ કરો.',
+      'access.claimLabel': 'ક્લેમ કોડ',
+      'access.claimPh': 'CR-XXXXXX',
+      'access.claimSubmit': 'ઍક્સેસ અનલૉક કરો',
+      'access.reviewOpen': 'ઍક્સેસ વિનંતીઓ',
+      'access.reviewTag': 'CivicRadar ટીમ',
+      'access.reviewTitle': 'ઍક્સેસ વિનંતીઓ',
+      'access.reviewSubtitle': 'સંયોજક અને BMC ઍક્સેસ વિનંતીઓ મંજૂર/નકારો. મંજૂરી પર ક્લેમ કોડ જારી થાય છે.',
+      'access.pending': 'બાકી',
+      'access.approved': 'મંજૂર',
+      'access.rejected': 'નકારેલ',
+      'access.reviewEmpty': 'હજુ કોઈ વિનંતી નથી. નવી સંયોજક અને BMC વિનંતીઓ અહીં દેખાશે.',
+      'access.approve': 'મંજૂર કરો',
+      'access.reject': 'નકારો',
+      'access.copyCode': 'કોડ કૉપિ કરો',
+      'access.codeCopied': 'ક્લેમ કોડ કૉપિ થયો — {email} પરથી મોકલો.',
+      'access.roleNgoTag': 'NGO સંયોજક',
+      'access.roleBmcTag': 'BMC અધિકારી',
+      'access.statusApproved': 'મંજૂર',
+      'access.statusRejected': 'નકારેલ',
+      'access.statusPending': 'બાકી',
+      'access.errName': 'કૃપા કરી તમારું નામ ઉમેરો.',
+      'access.errContact': 'સંપર્ક માટે ઈમેલ અથવા ફોન ઉમેરો.',
+      'access.submitted': 'વિનંતી મોકલાઈ — અમે સમીક્ષા કરી તમને ક્લેમ કોડ ઈમેલ કરીશું.',
+      'access.submittedLocal': 'વિનંતી સાચવી — ઓનલાઈન થશો ત્યારે સિંક અને સમીક્ષા થશે.',
+      'access.submitError': 'મોકલી શકાયું નહીં — તમારી વિગતો સુરક્ષિત છે. કૃપા કરી ફરી પ્રયાસ કરો.',
+      'access.claimErrEmpty': 'મોકલેલ ક્લેમ કોડ દાખલ કરો.',
+      'access.claimErrInvalid': 'આ કોડ માન્ય નથી અથવા હજુ મંજૂર થયો નથી.',
+      'access.claimErrUsed': 'આ કોડ પહેલેથી વપરાઈ ગયો છે.',
+      'access.claimedNgo': 'ઍક્સેસ અનલૉક — સ્વાગત છે, સંયોજક!',
+      'access.claimedBmc': 'BMC ઍક્સેસ અનલૉક — તમારી વોર્ડ કતાર જુઓ.',
+      'access.approvedToast': 'મંજૂર — ક્લેમ કોડ {code}',
+      'access.rejectedToast': 'વિનંતી નકારી.',
+      'access.proofAttached': 'પુરાવો જોડ્યો',
+      'access.proofTooBig': 'છબી ઘણી મોટી — કૃપા કરી નાનો ફોટો જોડો.',
     },  };
   const LANG_ORDER = ['en', 'hi', 'mr', 'gu'];
   let currentLang = localStorage.getItem(LANG_KEY) || 'en';
@@ -3478,6 +3770,7 @@ document.addEventListener('DOMContentLoaded', function () {
         await this.pullAll();
         await this.pushLocalOwned();
         this.flushPendingFeedback();
+        this.flushPendingAccessRequests();
         this.subscribe();
         updateAuthMode();
         updateSyncStatus();
@@ -3779,6 +4072,60 @@ document.addEventListener('DOMContentLoaded', function () {
         }
       }
       savePendingFeedback(remaining);
+    },
+
+    // ---- Coordinator access requests ----
+    async submitAccessRequest(payload) {
+      if (!this.enabled) return { error: { message: 'offline' } };
+      const { data, error } = await this.client.rpc('request_access', payload);
+      if (error && window.CivicAnalytics) {
+        CivicAnalytics.trackError(error.message, { context: 'request_access' });
+      }
+      return { data, error: error || null };
+    },
+
+    async listAccessRequests() {
+      if (!this.enabled) return { data: [], error: { message: 'offline' } };
+      const { data, error } = await this.client
+        .from('access_requests')
+        .select('*')
+        .order('created_at', { ascending: false });
+      return { data: data || [], error: error || null };
+    },
+
+    async approveAccessRequest(id) {
+      if (!this.enabled) return { data: null, error: { message: 'offline' } };
+      const { data, error } = await this.client.rpc('approve_access_request', { p_id: id });
+      return { data, error: error || null };
+    },
+
+    async rejectAccessRequest(id) {
+      if (!this.enabled) return { error: { message: 'offline' } };
+      const { error } = await this.client.rpc('reject_access_request', { p_id: id });
+      return { error: error || null };
+    },
+
+    async claimAccess(code) {
+      if (!this.enabled) return { data: null, error: { message: 'offline' } };
+      const { data, error } = await this.client.rpc('claim_access', { p_code: code });
+      return { data, error: error || null };
+    },
+
+    // Best-effort: push any access requests saved while offline once back online.
+    async flushPendingAccessRequests() {
+      if (!this.enabled) return;
+      const list = getPendingAccessSync();
+      if (!list.length) return;
+      const remaining = [];
+      for (const payload of list) {
+        try {
+          const { error } = await this.client.rpc('request_access', payload);
+          if (error) remaining.push(payload);
+        } catch {
+          remaining.push(payload);
+        }
+      }
+      savePendingAccessSync(remaining);
     },
 
     async updateReportStatus(id, status) {
@@ -4352,6 +4699,462 @@ document.addEventListener('DOMContentLoaded', function () {
       btn.classList.remove('is-loading');
       btn.disabled = false;
     }
+  }
+
+  /* ---------- Coordinator access requests (NGO / BMC) ----------
+   * Low-friction self-serve flow: anyone (even logged-out) can apply with a few
+   * fields. The CivicRadar super-admin reviews and approves; approval issues a
+   * one-time claim code the applicant redeems to unlock their role. Works fully
+   * in local/no-Supabase mode (queued on-device) so the flow is always usable.
+   */
+  const ACCESS_LOCAL_KEY = 'civicradar_access_local';   // local-mode store (submit/review/claim)
+  const ACCESS_SYNC_KEY = 'civicradar_access_sync';     // connected-mode offline submit queue
+
+  function getLocalAccessRequests() {
+    try { return JSON.parse(localStorage.getItem(ACCESS_LOCAL_KEY) || '[]'); }
+    catch { return []; }
+  }
+  function saveLocalAccessRequests(list) {
+    try { localStorage.setItem(ACCESS_LOCAL_KEY, JSON.stringify(list.slice(-100))); }
+    catch { /* storage full — non-fatal */ }
+  }
+  function getPendingAccessSync() {
+    try { return JSON.parse(localStorage.getItem(ACCESS_SYNC_KEY) || '[]'); }
+    catch { return []; }
+  }
+  function savePendingAccessSync(list) {
+    try { localStorage.setItem(ACCESS_SYNC_KEY, JSON.stringify(list.slice(-50))); }
+    catch { /* non-fatal */ }
+  }
+
+  function genClaimCodeLocal() {
+    const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no ambiguous chars
+    let s = '';
+    for (let i = 0; i < 6; i++) s += alphabet[Math.floor(Math.random() * alphabet.length)];
+    return 'CR-' + s;
+  }
+
+  // Friendly request role → operational profile role used everywhere else.
+  function accessRoleToOperational(roleRequested) {
+    return roleRequested === 'bmc_official' ? 'bmc' : 'ngo_lead';
+  }
+
+  function accessRoleLabel(roleRequested) {
+    return roleRequested === 'bmc_official' ? t('access.roleBmcTag') : t('access.roleNgoTag');
+  }
+
+  function populateAccessCitySelect() {
+    const sel = $('#accessCity');
+    if (!sel) return;
+    const current = sel.value || user.city || DEFAULT_CITY;
+    sel.innerHTML = CITY_IDS.map((id) => {
+      const label = (CITIES[id] && CITIES[id].label) || id;
+      return `<option value="${id}">${escapeHtml(label)}</option>`;
+    }).join('');
+    sel.value = CITIES[current] ? current : DEFAULT_CITY;
+    syncAccessWardList();
+  }
+
+  function syncAccessWardList() {
+    const sel = $('#accessCity');
+    const wardInput = $('#accessWard');
+    if (!sel || !wardInput) return;
+    wardInput.setAttribute('list', wardDatalistId(sel.value));
+  }
+
+  function resetAccessRequestForm() {
+    const form = $('#accessForm');
+    if (form) form.reset();
+    accessProofDataUrl = null;
+    const proofName = $('#accessProofName');
+    if (proofName) { proofName.classList.add('hidden'); proofName.textContent = ''; }
+    const err = $('#accessError');
+    if (err) { err.classList.add('hidden'); err.textContent = ''; }
+    const btn = $('#btnAccessSubmit');
+    if (btn) { btn.classList.remove('is-loading'); btn.disabled = false; }
+    const formWrap = $('#accessRequestForm');
+    const confirm = $('#accessRequestConfirm');
+    if (formWrap) formWrap.classList.remove('hidden');
+    if (confirm) confirm.classList.add('hidden');
+    const ngoRadio = $('#accessForm input[name="accessRole"][value="ngo_coordinator"]');
+    if (ngoRadio) ngoRadio.checked = true;
+    populateAccessCitySelect();
+  }
+
+  window.openAccessRequestModal = function (preferredRole) {
+    resetAccessRequestForm();
+    if (preferredRole) {
+      const radio = $(`#accessForm input[name="accessRole"][value="${preferredRole}"]`);
+      if (radio) radio.checked = true;
+    }
+    openModal('accessRequest');
+  };
+  window.closeAccessRequestModal = function () { closeModal('accessRequest'); };
+
+  // Downscale an attached proof image to a small JPEG data URL (optional field).
+  function readAccessProof(file) {
+    return new Promise((resolve, reject) => {
+      if (!file) { resolve(null); return; }
+      if (file.size > 8 * 1024 * 1024) { reject(new Error('too_big')); return; }
+      const reader = new FileReader();
+      reader.onload = () => {
+        const img = new Image();
+        img.onload = () => {
+          try {
+            const maxW = 640;
+            const scale = Math.min(1, maxW / (img.width || maxW));
+            const w = Math.max(1, Math.round((img.width || maxW) * scale));
+            const h = Math.max(1, Math.round((img.height || maxW) * scale));
+            const canvas = document.createElement('canvas');
+            canvas.width = w; canvas.height = h;
+            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+            resolve(canvas.toDataURL('image/jpeg', 0.6));
+          } catch { resolve(reader.result); }
+        };
+        img.onerror = () => resolve(reader.result);
+        img.src = reader.result;
+      };
+      reader.onerror = () => reject(new Error('read_failed'));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function handleAccessProofPick(e) {
+    const file = e.target && e.target.files && e.target.files[0];
+    const nameEl = $('#accessProofName');
+    if (!file) return;
+    try {
+      accessProofDataUrl = await readAccessProof(file);
+      if (nameEl) {
+        nameEl.textContent = `${t('access.proofAttached')}: ${file.name}`;
+        nameEl.classList.remove('hidden');
+      }
+    } catch (err) {
+      accessProofDataUrl = null;
+      showToast(t('access.proofTooBig'), 'error', 4000);
+      if (nameEl) nameEl.classList.add('hidden');
+    }
+  }
+
+  function buildAccessRequestPayload() {
+    const checked = $('#accessForm input[name="accessRole"]:checked');
+    const roleRequested = (checked && checked.value) || 'ngo_coordinator';
+    return {
+      p_full_name: ($('#accessName').value || '').trim(),
+      p_role_requested: roleRequested,
+      p_org_name: ($('#accessOrg').value || '').trim() || null,
+      p_city: ($('#accessCity').value || DEFAULT_CITY),
+      p_ward: ($('#accessWard').value || '').trim() || null,
+      p_contact_email: ($('#accessEmail').value || '').trim() || null,
+      p_contact_phone: ($('#accessPhone').value || '').trim() || null,
+      p_note: ($('#accessNote').value || '').trim() || null,
+      p_proof_url: accessProofDataUrl || null,
+    };
+  }
+
+  function showAccessConfirm(local) {
+    const formWrap = $('#accessRequestForm');
+    const confirm = $('#accessRequestConfirm');
+    const localNote = $('#accessConfirmLocalNote');
+    if (formWrap) formWrap.classList.add('hidden');
+    if (confirm) confirm.classList.remove('hidden');
+    if (localNote) localNote.classList.toggle('hidden', !local);
+  }
+
+  async function submitAccessRequest() {
+    const errEl = $('#accessError');
+    const btn = $('#btnAccessSubmit');
+    if (!btn) return;
+    if (errEl) { errEl.classList.add('hidden'); errEl.textContent = ''; }
+
+    const payload = buildAccessRequestPayload();
+    if (!payload.p_full_name) {
+      if (errEl) { errEl.textContent = t('access.errName'); errEl.classList.remove('hidden'); }
+      $('#accessName').focus();
+      return;
+    }
+    if (!payload.p_contact_email && !payload.p_contact_phone) {
+      if (errEl) { errEl.textContent = t('access.errContact'); errEl.classList.remove('hidden'); }
+      $('#accessEmail').focus();
+      return;
+    }
+
+    btn.classList.add('is-loading');
+    btn.disabled = true;
+    try {
+      if (Backend.enabled) {
+        const { error } = await Backend.submitAccessRequest(payload);
+        if (error) {
+          // Network/offline error: queue so the request is never lost.
+          if (/offline|fetch|network/i.test(error.message || '')) {
+            const list = getPendingAccessSync();
+            list.push(payload);
+            savePendingAccessSync(list);
+            showToast(t('access.submittedLocal'), 'info', 4500);
+            showAccessConfirm(true);
+          } else {
+            throw new Error(error.message || 'submit_failed');
+          }
+        } else {
+          showToast(t('access.submitted'), 'success', 4500);
+          showAccessConfirm(false);
+        }
+      } else {
+        // Local / no-backend mode: store on-device (review + claim work locally).
+        const list = getLocalAccessRequests();
+        list.push({
+          id: 'local-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8),
+          created_at: new Date().toISOString(),
+          full_name: payload.p_full_name,
+          org_name: payload.p_org_name,
+          role_requested: payload.p_role_requested,
+          city: payload.p_city,
+          ward: payload.p_ward,
+          contact_email: payload.p_contact_email,
+          contact_phone: payload.p_contact_phone,
+          note: payload.p_note,
+          has_proof: !!payload.p_proof_url,
+          status: 'pending',
+          claim_code: null,
+        });
+        saveLocalAccessRequests(list);
+        showToast(t('access.submittedLocal'), 'info', 4500);
+        showAccessConfirm(true);
+      }
+      if (window.CivicAnalytics) {
+        CivicAnalytics.track('access_request_submitted', { role: payload.p_role_requested }, payload.p_ward);
+      }
+    } catch (e) {
+      if (errEl) { errEl.textContent = t('access.submitError'); errEl.classList.remove('hidden'); }
+      showToast(t('access.submitError'), 'error', 4000);
+      console.warn('Access request submit failed:', (e && e.message) || e);
+    } finally {
+      btn.classList.remove('is-loading');
+      btn.disabled = false;
+    }
+  }
+
+  /* ---------- Claim code redemption ---------- */
+  function resetAccessClaimForm() {
+    const form = $('#accessClaimForm');
+    if (form) form.reset();
+    const err = $('#accessClaimError');
+    if (err) { err.classList.add('hidden'); err.textContent = ''; }
+    const btn = $('#btnAccessClaimSubmit');
+    if (btn) { btn.classList.remove('is-loading'); btn.disabled = false; }
+  }
+
+  window.openAccessClaimModal = function () {
+    resetAccessClaimForm();
+    closeModal('accessRequest');
+    openModal('accessClaim');
+  };
+  window.closeAccessClaimModal = function () { closeModal('accessClaim'); };
+
+  function unlockClaimedRole(assignment) {
+    const opRole = assignment && assignment.role;
+    if (opRole === 'bmc') {
+      closeModal('accessClaim');
+      grantBmcAccess();
+      showToast(t('access.claimedBmc'), 'success', 4500);
+    } else {
+      closeModal('accessClaim');
+      grantLeadAccess(
+        assignment && assignment.ward,
+        (assignment && assignment.coordinator_scope) || 'ward',
+        '',
+        (assignment && assignment.city) || ''
+      );
+      showToast(t('access.claimedNgo'), 'success', 4500);
+    }
+    if (window.CivicAnalytics) CivicAnalytics.track('access_claimed', { role: opRole || 'ngo_lead' });
+  }
+
+  async function submitAccessClaim() {
+    const inputEl = $('#accessClaimCode');
+    const errEl = $('#accessClaimError');
+    const btn = $('#btnAccessClaimSubmit');
+    if (!inputEl || !btn) return;
+    if (errEl) { errEl.classList.add('hidden'); errEl.textContent = ''; }
+    const code = (inputEl.value || '').trim().toUpperCase();
+    if (!code) {
+      if (errEl) { errEl.textContent = t('access.claimErrEmpty'); errEl.classList.remove('hidden'); }
+      inputEl.focus();
+      return;
+    }
+
+    btn.classList.add('is-loading');
+    btn.disabled = true;
+    try {
+      if (Backend.enabled) {
+        const { data, error } = await Backend.claimAccess(code);
+        if (error || !data) {
+          const used = /code_used/i.test((error && error.message) || '');
+          if (errEl) {
+            errEl.textContent = used ? t('access.claimErrUsed') : t('access.claimErrInvalid');
+            errEl.classList.remove('hidden');
+          }
+          return;
+        }
+        unlockClaimedRole(data);
+      } else {
+        // Local mode: match an approved on-device request.
+        const list = getLocalAccessRequests();
+        const idx = list.findIndex((r) => r.claim_code === code && r.status === 'approved');
+        if (idx === -1) {
+          const usedIdx = list.findIndex((r) => r.claim_code === code && r.claimed_at);
+          if (errEl) {
+            errEl.textContent = usedIdx !== -1 ? t('access.claimErrUsed') : t('access.claimErrInvalid');
+            errEl.classList.remove('hidden');
+          }
+          return;
+        }
+        const req = list[idx];
+        req.claimed_at = new Date().toISOString();
+        saveLocalAccessRequests(list);
+        unlockClaimedRole({
+          role: accessRoleToOperational(req.role_requested),
+          ward: req.ward,
+          city: req.city,
+          coordinator_scope: 'ward',
+        });
+      }
+    } catch (e) {
+      if (errEl) { errEl.textContent = t('access.claimErrInvalid'); errEl.classList.remove('hidden'); }
+      console.warn('Claim access failed:', (e && e.message) || e);
+    } finally {
+      btn.classList.remove('is-loading');
+      btn.disabled = false;
+    }
+  }
+
+  /* ---------- Super-admin review screen ---------- */
+  window.openAccessReview = function () {
+    if (!isAdmin && !isSuperAdmin) return; // server RLS is the real guard
+    renderAccessReview();
+    openModal('accessReview');
+  };
+  window.closeAccessReview = function () { closeModal('accessReview'); };
+
+  async function loadAccessRequestsForReview() {
+    if (Backend.enabled) {
+      const { data } = await Backend.listAccessRequests();
+      return data || [];
+    }
+    return getLocalAccessRequests().slice().reverse();
+  }
+
+  function accessRequestCardHtml(req) {
+    const roleTag = accessRoleLabel(req.role_requested);
+    const contact = [req.contact_email, req.contact_phone].filter(Boolean).join(' · ');
+    const meta = [req.org_name, req.ward, (CITIES[req.city] && CITIES[req.city].label) || req.city]
+      .filter(Boolean).map((m) => escapeHtml(m)).join(' · ');
+    const status = req.status || 'pending';
+    let actions = '';
+    if (status === 'pending') {
+      actions = `
+        <div class="access-req__actions">
+          <button type="button" class="btn btn--primary btn--sm" data-access-action="approve" data-access-id="${escapeHtml(req.id)}">
+            <i class="ph ph-check"></i> ${escapeHtml(t('access.approve'))}
+          </button>
+          <button type="button" class="btn btn--outline btn--sm" data-access-action="reject" data-access-id="${escapeHtml(req.id)}">
+            <i class="ph ph-x"></i> ${escapeHtml(t('access.reject'))}
+          </button>
+        </div>`;
+    } else if (status === 'approved' && req.claim_code) {
+      actions = `
+        <div class="access-req__code">
+          <code class="claim-code">${escapeHtml(req.claim_code)}</code>
+          <button type="button" class="btn btn--outline btn--sm" data-access-action="copy" data-access-code="${escapeHtml(req.claim_code)}">
+            <i class="ph ph-copy"></i> ${escapeHtml(t('access.copyCode'))}
+          </button>
+        </div>`;
+    }
+    const statusKey = status === 'approved' ? 'access.statusApproved'
+      : status === 'rejected' ? 'access.statusRejected' : 'access.statusPending';
+    return `
+      <li class="queue-item access-req access-req--${status}">
+        <div class="access-req__head">
+          <strong>${escapeHtml(req.full_name || '')}</strong>
+          <span class="access-req__role">${escapeHtml(roleTag)}</span>
+        </div>
+        ${meta ? `<p class="access-req__meta">${meta}</p>` : ''}
+        ${contact ? `<p class="access-req__contact"><i class="ph ph-address-book"></i> ${escapeHtml(contact)}</p>` : ''}
+        ${req.note ? `<p class="access-req__note">${escapeHtml(req.note)}</p>` : ''}
+        <span class="access-req__status access-req__status--${status}">${escapeHtml(t(statusKey))}</span>
+        ${actions}
+      </li>`;
+  }
+
+  async function renderAccessReview() {
+    const listEl = $('#accessReviewList');
+    if (!listEl) return;
+    const all = await loadAccessRequestsForReview();
+    const pending = all.filter((r) => (r.status || 'pending') === 'pending');
+    const approved = all.filter((r) => r.status === 'approved');
+    const rejected = all.filter((r) => r.status === 'rejected');
+    const setNum = (id, n) => { const el = $(id); if (el) el.textContent = String(n); };
+    setNum('#arPending', pending.length);
+    setNum('#arApproved', approved.length);
+    setNum('#arRejected', rejected.length);
+    // Pending first, then approved (so the team can re-copy codes), then rejected.
+    const ordered = pending.concat(approved, rejected);
+    listEl.innerHTML = ordered.length
+      ? ordered.map(accessRequestCardHtml).join('')
+      : `<li class="queue-empty">${escapeHtml(t('access.reviewEmpty'))}</li>`;
+    updateAccessReviewBadge(pending.length);
+  }
+
+  function updateAccessReviewBadge(count) {
+    const badge = $('#accessReviewBadge');
+    if (!badge) return;
+    if (count > 0) {
+      badge.textContent = String(count);
+      badge.classList.remove('hidden');
+    } else {
+      badge.classList.add('hidden');
+    }
+  }
+
+  async function refreshAccessReviewBadge() {
+    try {
+      const all = await loadAccessRequestsForReview();
+      updateAccessReviewBadge(all.filter((r) => (r.status || 'pending') === 'pending').length);
+    } catch { /* non-fatal */ }
+  }
+
+  async function approveAccessReq(id) {
+    if (Backend.enabled) {
+      const { data, error } = await Backend.approveAccessRequest(id);
+      if (error || !data) { showToast(t('access.submitError'), 'error', 4000); return; }
+      showToast(t('access.approvedToast').replace('{code}', data.claim_code || ''), 'success', 6000);
+    } else {
+      const list = getLocalAccessRequests();
+      const req = list.find((r) => r.id === id);
+      if (!req) return;
+      req.status = 'approved';
+      req.claim_code = req.claim_code || genClaimCodeLocal();
+      req.reviewed_at = new Date().toISOString();
+      saveLocalAccessRequests(list);
+      showToast(t('access.approvedToast').replace('{code}', req.claim_code), 'success', 6000);
+    }
+    renderAccessReview();
+  }
+
+  async function rejectAccessReq(id) {
+    if (Backend.enabled) {
+      const { error } = await Backend.rejectAccessRequest(id);
+      if (error) { showToast(t('access.submitError'), 'error', 4000); return; }
+    } else {
+      const list = getLocalAccessRequests();
+      const req = list.find((r) => r.id === id);
+      if (!req) return;
+      req.status = 'rejected';
+      req.reviewed_at = new Date().toISOString();
+      saveLocalAccessRequests(list);
+    }
+    showToast(t('access.rejectedToast'), 'info', 3500);
+    renderAccessReview();
   }
 
   function renderAboutModal() {
@@ -5574,7 +6377,14 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!Backend.enabled) return;
     try {
       const profile = await Backend.getMyRole();
-      if (profile && profile.role === 'bmc') setAdminMode(true);
+      if (profile && profile.role === 'admin') {
+        // Super-admin: the CivicRadar reviewer. Gets the admin surface + the
+        // access-requests review screen (server RLS enforces the real guard).
+        isSuperAdmin = true;
+        window.isSuperAdmin = true;
+        setAdminMode(true);
+        refreshAccessReviewBadge();
+      } else if (profile && profile.role === 'bmc') setAdminMode(true);
       else if (profile && profile.role === 'ngo_lead') {
         if (profile.ward) { user.ward = user.ward || profile.ward; }
         if (profile.city) { user.city = user.city || profile.city; }
@@ -5844,10 +6654,57 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
+  function isReportPhotoPickerActive() {
+    return reportPhotoFlowActive || reportPhotoProcessing
+      || (Date.now() - reportPhotoDismissGuard < 800);
+  }
+
+  function finishReportPhotoFlow() {
+    reportPhotoFlowActive = false;
+    reportPhotoProcessing = false;
+  }
+
+  function pushReportPhotoHistory() {
+    try {
+      history.pushState({ civicReportPhoto: true }, '');
+    } catch { /* history unavailable */ }
+  }
+
+  function ensureReportModalOpen() {
+    if (overlays.report && !overlays.report.classList.contains('open')) openModal('report');
+  }
+
+  function openReportPhotoPicker() {
+    const input = $('#photoInput');
+    if (!input || reportPhotoProcessing) return;
+    reportPhotoFlowActive = true;
+    pushReportPhotoHistory();
+    input.click();
+  }
+
+  function advanceReportPhotoReady() {
+    ensureReportModalOpen();
+    showPhotoConfirm();
+    updateReportFlowSteps('submit');
+    requestAnimationFrame(() => {
+      const group = $('#photoConfirmGroup');
+      if (group && !group.classList.contains('hidden')) {
+        group.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      }
+    });
+  }
+
   function closeModal(name) {
     const el = overlays[name];
     if (!el) return;
-    if (name === 'report') resetSubmitReportButton();
+    if (name === 'report') {
+      resetSubmitReportButton();
+      finishReportPhotoFlow();
+      if (reportCameraTimer) {
+        clearTimeout(reportCameraTimer);
+        reportCameraTimer = null;
+      }
+    }
     el.classList.remove('open');
     el.setAttribute('aria-hidden', 'true');
     const anyOpen = Object.values(overlays).some((o) => o && o.classList.contains('open'));
@@ -5863,8 +6720,12 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function closeAllModals() {
-    Object.keys(overlays).forEach(closeModal);
+    Object.keys(overlays).forEach((name) => {
+      if (name === 'report' && isReportPhotoPickerActive()) return;
+      closeModal(name);
+    });
   }
+  window.closeAllModals = closeAllModals;
 
   // Push a history entry when opening the full-screen Community/Profile tabs so
   // Android's hardware back button closes them instead of leaving the app.
@@ -5898,13 +6759,14 @@ document.addEventListener('DOMContentLoaded', function () {
     const canvas = $('#imageCanvas');
     if (canvas.classList.contains('visible')) showPhotoConfirm();
     else resetPhotoConfirm();
-    updateReportFlowSteps(canvas.classList.contains('visible') ? 'details' : 'photo');
+    updateReportFlowSteps(canvas.classList.contains('visible') ? 'submit' : 'photo');
     openModal('report');
     if (openCamera) {
+      if (reportCameraTimer) clearTimeout(reportCameraTimer);
       requestAnimationFrame(() => {
-        setTimeout(() => {
-          const input = $('#photoInput');
-          if (input && overlays.report.classList.contains('open')) input.click();
+        reportCameraTimer = setTimeout(() => {
+          reportCameraTimer = null;
+          if (overlays.report.classList.contains('open')) openReportPhotoPicker();
         }, 320);
       });
     }
@@ -6001,6 +6863,7 @@ document.addEventListener('DOMContentLoaded', function () {
   window.openAdminQueue = function () {
     if (!hasRole('bmc')) return;
     renderAdminQueue();
+    refreshAccessReviewBadge();
     setNavTab('map');
     openModal('adminQueue');
   };
@@ -6542,7 +7405,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (btnBecomeCoord) {
       btnBecomeCoord.addEventListener('click', () => {
         closeModal('about');
-        window.openPartnerInquiry();
+        window.openAccessRequestModal('ngo_coordinator');
       });
     }
     $('#btnAbout').addEventListener('click', window.openAboutModal);
@@ -6561,6 +7424,72 @@ document.addEventListener('DOMContentLoaded', function () {
       feedbackForm.addEventListener('submit', (e) => {
         e.preventDefault();
         submitFeedback();
+      });
+    }
+
+    /* ---- Coordinator access request / claim / review wiring ---- */
+    const btnProfileAccess = $('#btnProfileAccessRequest');
+    if (btnProfileAccess) {
+      btnProfileAccess.addEventListener('click', () => {
+        closeModal('profile');
+        window.openAccessRequestModal();
+      });
+    }
+    const btnPartnerRequest = $('#btnPartnerRequest');
+    if (btnPartnerRequest) {
+      btnPartnerRequest.addEventListener('click', () => {
+        closeModal('partner');
+        window.openAccessRequestModal();
+      });
+    }
+    const btnPartnerClaim = $('#btnPartnerClaim');
+    if (btnPartnerClaim) {
+      btnPartnerClaim.addEventListener('click', () => {
+        closeModal('partner');
+        window.openAccessClaimModal();
+      });
+    }
+    const accessForm = $('#accessForm');
+    if (accessForm) {
+      accessForm.addEventListener('submit', (e) => { e.preventDefault(); submitAccessRequest(); });
+    }
+    const accessCity = $('#accessCity');
+    if (accessCity) accessCity.addEventListener('change', syncAccessWardList);
+    const btnAccessProof = $('#btnAccessProof');
+    if (btnAccessProof) btnAccessProof.addEventListener('click', () => $('#accessProofInput')?.click());
+    const accessProofInput = $('#accessProofInput');
+    if (accessProofInput) accessProofInput.addEventListener('change', handleAccessProofPick);
+    const btnAccessHaveCode = $('#btnAccessHaveCode');
+    if (btnAccessHaveCode) btnAccessHaveCode.addEventListener('click', () => window.openAccessClaimModal());
+    const btnAccessConfirmCode = $('#btnAccessConfirmCode');
+    if (btnAccessConfirmCode) btnAccessConfirmCode.addEventListener('click', () => window.openAccessClaimModal());
+    const btnAccessDone = $('#btnAccessDone');
+    if (btnAccessDone) btnAccessDone.addEventListener('click', () => closeModal('accessRequest'));
+
+    const accessClaimForm = $('#accessClaimForm');
+    if (accessClaimForm) {
+      accessClaimForm.addEventListener('submit', (e) => { e.preventDefault(); submitAccessClaim(); });
+    }
+
+    const btnAccessReviewOpen = $('#btnAccessReviewOpen');
+    if (btnAccessReviewOpen) btnAccessReviewOpen.addEventListener('click', () => window.openAccessReview());
+    const btnAccessReviewClose = $('#btnAccessReviewClose');
+    if (btnAccessReviewClose) {
+      btnAccessReviewClose.addEventListener('click', () => { closeModal('accessReview'); setNavTab('map'); });
+    }
+    const accessReviewList = $('#accessReviewList');
+    if (accessReviewList) {
+      accessReviewList.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-access-action]');
+        if (!btn) return;
+        const action = btn.dataset.accessAction;
+        if (action === 'approve') approveAccessReq(btn.dataset.accessId);
+        else if (action === 'reject') rejectAccessReq(btn.dataset.accessId);
+        else if (action === 'copy') {
+          const email = getGrievanceEmail() || getPartnerEmail() || '';
+          copyTextSafe(btn.dataset.accessCode, null);
+          showToast(t('access.codeCopied').replace('{email}', email), 'success', 5000);
+        }
       });
     }
     $('#btnDeleteData').addEventListener('click', () => { deleteMyData(); });
@@ -6693,12 +7622,16 @@ document.addEventListener('DOMContentLoaded', function () {
         shareWardChallengeWhatsApp();
       });
     }
-    $('#btnTakePhoto').addEventListener('click', () => $('#photoInput').click());
+    $('#btnTakePhoto').addEventListener('click', () => openReportPhotoPicker());
     $('#photoInput').addEventListener('change', handlePhotoCapture);
+    $('#photoInput').addEventListener('cancel', () => {
+      reportPhotoFlowActive = false;
+    });
     $('#confirmRelevant').addEventListener('change', (e) => {
       if (e.target.checked) {
         const error = $('#confirmRelevantError');
         if (error) error.classList.add('hidden');
+        if ($('#imageCanvas').classList.contains('visible')) updateReportFlowSteps('submit');
       }
     });
     $('#reportNotes').addEventListener('input', () => {
@@ -6889,7 +7822,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Android hardware back / browser back: close the Community/Profile tab and
     // return to the Map tab instead of navigating away from the app.
+    // Returning from the native camera also pops history — keep the report sheet open.
     window.addEventListener('popstate', () => {
+      if (isReportPhotoPickerActive()) {
+        reportPhotoFlowActive = false;
+        ensureReportModalOpen();
+        reportPhotoDismissGuard = Date.now();
+        return;
+      }
       let closedAny = false;
       ['community', 'profile'].forEach((name) => {
         const overlay = overlays[name];
@@ -6899,6 +7839,13 @@ document.addEventListener('DOMContentLoaded', function () {
         }
       });
       if (closedAny) setNavTab('map');
+    });
+
+    window.addEventListener('pageshow', (e) => {
+      if (e.persisted && $('#imageCanvas')?.classList.contains('visible')) {
+        ensureReportModalOpen();
+        updateReportFlowSteps('submit');
+      }
     });
 
     let adminTapCount = 0;
@@ -7019,6 +7966,8 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function rejectPhoto(scanResult) {
+    finishReportPhotoFlow();
+    ensureReportModalOpen();
     const canvas = $('#imageCanvas');
     if (window.ImageModeration) {
       ImageModeration.clearPhotoCanvas(canvas, $('#photoInput'));
@@ -7034,7 +7983,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function handlePhotoCapture(e) {
     const file = e.target.files[0];
-    if (!file) return;
+    if (!file) {
+      reportPhotoFlowActive = false;
+      return;
+    }
+    reportPhotoProcessing = true;
+    ensureReportModalOpen();
 
     if (window.ImageModeration) {
       const fileCheck = ImageModeration.validateFile(file, getModCfg());
@@ -7073,13 +8027,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
         canvas.classList.add('visible');
         lastReportDataUrl = canvas.toDataURL('image/jpeg', JPEG_QUALITY);
-        showPhotoConfirm();
-        updateReportFlowSteps('details');
+        finishReportPhotoFlow();
+        advanceReportPhotoReady();
       };
       img.onerror = () => {
+        finishReportPhotoFlow();
         setPhotoScanning(false);
         showToast(t('moderation.blocked.fileType'), 'error');
         $('#photoInput').value = '';
+        ensureReportModalOpen();
       };
       img.src = ev.target.result;
     };

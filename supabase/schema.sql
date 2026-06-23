@@ -686,3 +686,228 @@ drop policy if exists "feedback_select_none" on public.feedback;
 create policy "feedback_select_none"
   on public.feedback for select
   using (false);
+
+-- =====================================================================
+-- Coordinator access requests + approval workflow — migration v72
+-- BMC officials and NGO/community coordinators request elevated access
+-- in-app; the CivicRadar super-admin reviews and approves. Approving issues a
+-- one-time CLAIM CODE the requester redeems in-app to unlock their role — the
+-- most robust path for anonymous applicants (no account needed to apply).
+--
+-- Operational roles (profiles.role):
+--   citizen  : default
+--   ngo_lead : NGO / community coordinator   (requested as 'ngo_coordinator')
+--   bmc      : BMC official                  (requested as 'bmc_official')
+--   admin    : CivicRadar super-admin        — the approver
+--
+-- ▶ BOOTSTRAP YOUR FIRST SUPER-ADMIN (run once, after they have signed in once
+--   so a profiles row exists — replace the email with your reviewer's):
+--     update public.profiles set role = 'admin' where email = 'civicradarnh@gmail.com';
+--
+-- Additive and safe to re-run.
+-- =====================================================================
+
+-- Allow the new super-admin role on profiles (idempotent constraint swap).
+alter table public.profiles drop constraint if exists profiles_role_check;
+alter table public.profiles add constraint profiles_role_check
+  check (role in ('citizen', 'bmc', 'ngo_lead', 'admin'));
+
+-- Role helper used by RLS + RPC guards below.
+create or replace function public.is_admin()
+returns boolean language sql stable security definer set search_path = public as $$
+  select exists (select 1 from public.profiles where id = auth.uid() and role = 'admin');
+$$;
+
+create table if not exists public.access_requests (
+  id             uuid primary key default gen_random_uuid(),
+  created_at     timestamptz not null default now(),
+  full_name      text not null,
+  org_name       text,
+  role_requested text not null default 'ngo_coordinator'
+                 check (role_requested in ('ngo_coordinator', 'bmc_official')),
+  city           text default 'mumbai',
+  ward           text,
+  contact_email  text,
+  contact_phone  text,
+  note           text,
+  proof_url      text,                       -- optional ID/proof (data URL or Storage path)
+  status         text not null default 'pending'
+                 check (status in ('pending', 'approved', 'rejected')),
+  claim_code     text,                       -- issued on approve (one-time)
+  claimed_at     timestamptz,
+  reviewed_at    timestamptz,
+  reviewed_by    uuid,
+  requester_id   uuid                        -- anon auth uid if signed in (nullable)
+);
+
+create index if not exists access_requests_status_idx on public.access_requests (status, created_at desc);
+create unique index if not exists access_requests_claim_code_idx
+  on public.access_requests (claim_code) where claim_code is not null;
+
+alter table public.access_requests enable row level security;
+
+-- Anyone (anon or signed-in) may submit a *pending* request and nothing more —
+-- they can never pre-approve themselves or mint a claim code.
+drop policy if exists "access_requests_insert_pending" on public.access_requests;
+create policy "access_requests_insert_pending"
+  on public.access_requests for insert
+  with check (
+    status = 'pending' and claim_code is null and claimed_at is null
+    and reviewed_at is null and reviewed_by is null
+  );
+
+-- Only the super-admin can read or update requests.
+drop policy if exists "access_requests_select_admin" on public.access_requests;
+create policy "access_requests_select_admin"
+  on public.access_requests for select
+  using (public.is_admin());
+
+drop policy if exists "access_requests_update_admin" on public.access_requests;
+create policy "access_requests_update_admin"
+  on public.access_requests for update
+  to authenticated
+  using (public.is_admin())
+  with check (public.is_admin());
+
+-- Submit a request (SECURITY DEFINER so requester_id is captured safely and the
+-- caller cannot spoof status/claim fields). Validates the low-friction minimums.
+create or replace function public.request_access(
+  p_full_name text,
+  p_role_requested text,
+  p_org_name text default null,
+  p_city text default 'mumbai',
+  p_ward text default null,
+  p_contact_email text default null,
+  p_contact_phone text default null,
+  p_note text default null,
+  p_proof_url text default null
+)
+returns uuid
+language plpgsql security definer set search_path = public as $$
+declare new_id uuid;
+        rr text := lower(coalesce(p_role_requested, 'ngo_coordinator'));
+begin
+  if rr not in ('ngo_coordinator', 'bmc_official') then rr := 'ngo_coordinator'; end if;
+  if coalesce(btrim(p_full_name), '') = '' then raise exception 'name_required'; end if;
+  if coalesce(btrim(p_contact_email), '') = '' and coalesce(btrim(p_contact_phone), '') = '' then
+    raise exception 'contact_required';
+  end if;
+  insert into public.access_requests (
+    full_name, org_name, role_requested, city, ward,
+    contact_email, contact_phone, note, proof_url, requester_id
+  ) values (
+    btrim(p_full_name),
+    nullif(btrim(coalesce(p_org_name, '')), ''),
+    rr,
+    coalesce(nullif(btrim(coalesce(p_city, '')), ''), 'mumbai'),
+    nullif(btrim(coalesce(p_ward, '')), ''),
+    nullif(btrim(coalesce(p_contact_email, '')), ''),
+    nullif(btrim(coalesce(p_contact_phone, '')), ''),
+    nullif(btrim(coalesce(p_note, '')), ''),
+    nullif(btrim(coalesce(p_proof_url, '')), ''),
+    auth.uid()
+  ) returning id into new_id;
+  return new_id;
+end $$;
+
+grant execute on function public.request_access(text, text, text, text, text, text, text, text, text)
+  to anon, authenticated;
+
+-- Generate a short, human-friendly one-time claim code (e.g. CR-7Q2KX9).
+create or replace function public.gen_claim_code()
+returns text language sql volatile set search_path = public as $$
+  select 'CR-' || upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, 6));
+$$;
+
+-- Approve a pending request (admin only). Issues a one-time claim code and, if
+-- the requester was signed in when applying, elevates their profile immediately
+-- too. Returns the claim code so the team can email it from the role mailbox.
+create or replace function public.approve_access_request(p_id uuid)
+returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare req record;
+        code text;
+        op_role text;
+begin
+  if not public.is_admin() then raise exception 'not_authorized'; end if;
+  select * into req from public.access_requests where id = p_id for update;
+  if not found then raise exception 'not_found'; end if;
+  code := coalesce(req.claim_code, public.gen_claim_code());
+  op_role := case when req.role_requested = 'bmc_official' then 'bmc' else 'ngo_lead' end;
+  update public.access_requests set
+    status = 'approved', claim_code = code,
+    reviewed_at = now(), reviewed_by = auth.uid()
+  where id = p_id;
+  if req.requester_id is not null then
+    update public.profiles set
+      role = op_role,
+      ward = coalesce(req.ward, ward),
+      city = coalesce(req.city, city, 'mumbai'),
+      coordinator_scope = case when op_role = 'ngo_lead' then coalesce(coordinator_scope, 'ward')
+                               else coordinator_scope end
+    where id = req.requester_id;
+  end if;
+  return jsonb_build_object('id', p_id, 'claim_code', code, 'role', op_role);
+end $$;
+
+grant execute on function public.approve_access_request(uuid) to authenticated;
+
+create or replace function public.reject_access_request(p_id uuid)
+returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  if not public.is_admin() then raise exception 'not_authorized'; end if;
+  update public.access_requests set
+    status = 'rejected', reviewed_at = now(), reviewed_by = auth.uid()
+  where id = p_id;
+end $$;
+
+grant execute on function public.reject_access_request(uuid) to authenticated;
+
+-- Redeem a claim code → elevates the caller's profile to the approved role.
+-- Works for anyone signed in (the app uses anonymous sessions), which is why a
+-- claim code is the robust path for applicants who applied without an account.
+create or replace function public.claim_access(p_code text)
+returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare req record;
+        op_role text;
+begin
+  if auth.uid() is null then raise exception 'auth_required'; end if;
+  select * into req from public.access_requests
+    where claim_code = upper(btrim(p_code)) and status = 'approved' for update;
+  if not found then raise exception 'invalid_code'; end if;
+  if req.claimed_at is not null and req.requester_id is distinct from auth.uid() then
+    raise exception 'code_used';
+  end if;
+  op_role := case when req.role_requested = 'bmc_official' then 'bmc' else 'ngo_lead' end;
+  update public.profiles set
+    role = op_role,
+    ward = coalesce(req.ward, ward),
+    city = coalesce(req.city, city, 'mumbai'),
+    coordinator_scope = case when op_role = 'ngo_lead' then coalesce(coordinator_scope, 'ward')
+                             else coordinator_scope end
+  where id = auth.uid();
+  update public.access_requests set
+    claimed_at = now(), requester_id = coalesce(requester_id, auth.uid())
+  where id = req.id;
+  return jsonb_build_object(
+    'role', op_role,
+    'ward', req.ward,
+    'city', coalesce(req.city, 'mumbai'),
+    'coordinator_scope', case when op_role = 'ngo_lead' then 'ward' else null end
+  );
+end $$;
+
+grant execute on function public.claim_access(text) to authenticated;
+
+-- Realtime so the super-admin sees new access requests instantly.
+do $$
+begin
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'access_requests'
+  ) then
+    alter publication supabase_realtime add table public.access_requests;
+  end if;
+end $$;

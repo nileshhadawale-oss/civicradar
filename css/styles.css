@@ -3966,3 +3966,158 @@ html[lang="gu"] .leaflet-container { font-family: var(--font-devanagari); }
 @media (prefers-reduced-motion: reduce) {
   .hazard-tile:not(.hazard-tile--soon):active { transform: none; }
 }
+
+/* ============================================
+   Coordinator access requests (NGO / BMC) — v72
+   ============================================ */
+.partner-link--cta {
+  color: var(--primary);
+  font-weight: 600;
+  text-decoration: none;
+  border: 1.5px dashed rgba(99, 102, 241, 0.4);
+  border-radius: var(--radius);
+  margin-top: 6px;
+}
+.partner-link--cta:hover { background: rgba(99, 102, 241, 0.06); }
+
+/* How-it-works explainer */
+.access-steps {
+  counter-reset: access-step;
+  list-style: none;
+  margin: 4px 0 16px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.access-steps li {
+  position: relative;
+  padding-left: 34px;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  min-height: 24px;
+  display: flex;
+  align-items: center;
+}
+.access-steps li::before {
+  counter-increment: access-step;
+  content: counter(access-step);
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.field-optional {
+  font-weight: 400;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+.mt-8 { margin-top: 8px; }
+.form-row--split {
+  display: flex;
+  gap: 10px;
+}
+.form-row--split > .form-group { flex: 1; min-width: 0; }
+
+/* Submission confirmation panel */
+.access-confirm { text-align: center; padding: 8px 4px 4px; }
+.access-confirm__icon { font-size: 2.75rem; color: var(--success); line-height: 1; }
+.access-confirm h3 { margin: 10px 0 6px; font-size: 1.125rem; }
+.access-confirm p { color: var(--text-muted); font-size: 0.875rem; margin-bottom: 14px; }
+.access-confirm__note {
+  background: rgba(245, 158, 11, 0.1);
+  border-radius: var(--radius-sm, 8px);
+  padding: 8px 10px;
+  color: var(--warning);
+  font-size: 0.8125rem;
+}
+
+.claim-input {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+}
+
+/* Review cards (super-admin) */
+.access-req { display: flex; flex-direction: column; gap: 6px; }
+.access-req__head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.access-req__role {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(99, 102, 241, 0.12);
+  color: var(--primary-dark);
+  white-space: nowrap;
+}
+.access-req__meta, .access-req__contact, .access-req__note {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+.access-req__note { font-style: italic; }
+.access-req__status {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  align-self: flex-start;
+}
+.access-req__status--pending { color: var(--warning); }
+.access-req__status--approved { color: var(--success); }
+.access-req__status--rejected { color: var(--text-muted); }
+.access-req__actions { display: flex; gap: 8px; margin-top: 4px; }
+.access-req__actions .btn { flex: 1; }
+.access-req__code {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+.claim-code {
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--success);
+  padding: 4px 10px;
+  border-radius: var(--radius-sm, 8px);
+}
+.access-req--approved { border-left: 3px solid var(--success); }
+.access-req--rejected { opacity: 0.65; }
+
+.badge-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  margin-left: 6px;
+  border-radius: 999px;
+  background: var(--danger);
+  color: #fff;
+  font-size: 0.6875rem;
+  font-weight: 700;
+}
+.queue-empty {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  padding: 24px 12px;
+  list-style: none;
+}

@@ -216,3 +216,69 @@ separate change once that work lands:
   existing `const CFG = window.CIVICRADAR_CONFIG || {}` usage.
 - **Tag analytics with environment (optional)** — pass `environment` into the
   analytics payload so staging traffic can be filtered out of prod metrics.
+
+---
+
+## 9. Coordinator access requests & approval
+
+CivicRadar lets BMC officials and NGO/community coordinators request elevated
+access in-app, with the CivicRadar team as the approver. The flow is designed to
+be obvious to users and especially **low-friction for NGO coordinators**.
+
+### How it works (user-facing)
+
+1. **Apply** — From **Profile → "For NGOs & BMC: Request coordinator access"**,
+   the partner portal ("Don't have access yet?"), or the About modal, the user
+   opens a short request form. Required fields are minimal: name, role
+   (NGO coordinator vs BMC official), ward/city, and **one** contact (email or
+   phone). Organization, a proof photo (encouraged for BMC, optional for NGO),
+   and a note are optional. **No login is required to apply.**
+2. **Review** — The CivicRadar team reviews pending requests.
+3. **Claim** — On approval the applicant receives a one-time **claim code** they
+   enter in-app ("I have a claim code") to unlock their role.
+
+### Roles
+
+| Friendly (request) | Operational (`profiles.role`) | Notes |
+| --- | --- | --- |
+| — | `citizen` | Default. |
+| `ngo_coordinator` | `ngo_lead` | NGO / community / RWA coordinator. |
+| `bmc_official` | `bmc` | BMC official (municipal queue). |
+| — | `admin` | CivicRadar super-admin — **the approver**. |
+
+The request form uses the friendly names; approval maps them to the existing
+operational roles so all current role-gating keeps working.
+
+### One-time setup (founder)
+
+1. **Re-run `supabase/schema.sql`** in the Supabase SQL Editor (additive and
+   safe to re-run). This creates the `access_requests` table + RLS, adds the
+   `admin` role to `profiles`, and installs the `request_access`,
+   `approve_access_request`, `reject_access_request`, and `claim_access` RPCs.
+2. **Bootstrap your first super-admin** (after they have signed in once so a
+   `profiles` row exists — replace the email with your reviewer's):
+
+   ```sql
+   update public.profiles set role = 'admin' where email = 'civicradarnh@gmail.com';
+   ```
+
+### Approving requests (the team)
+
+1. Sign in (the super-admin gets the admin surface automatically on reload).
+2. Open the BMC queue → **"Access requests"**.
+3. Tap **Approve** (issues a claim code and, if the applicant was signed in,
+   elevates their profile immediately too) or **Reject**.
+4. Email the claim code to the applicant from the role mailbox
+   (`civicradarnh@gmail.com`). The review screen surfaces a **Copy code** button
+   for this. (Automated email is intentionally not wired — keep it simple.)
+
+### Security & offline notes
+
+- RLS lets anyone INSERT a **pending** request only — applicants can never
+  pre-approve themselves or mint a claim code. Only the `admin` role can read or
+  update requests. All elevation runs through `SECURITY DEFINER` RPCs with
+  admin/auth guards.
+- The whole flow also works in **local / no-Supabase mode** (requests, review,
+  approve, and claim are queued on-device) so the experience is never broken and
+  is fully testable. Connected-mode submissions made while offline are queued and
+  flushed on reconnect.

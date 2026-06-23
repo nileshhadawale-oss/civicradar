@@ -1,9 +1,9 @@
 # CivicRadar Test Results
 
-**Run:** 2026-06-22 14:19:17
+**Run:** 2026-06-22 17:25:35
 **Server:** http://localhost:8095/
 **Script:** `tests/e2e_comprehensive.py`
-**Total:** 254 | **Pass:** 254 | **Fail:** 0
+**Total:** 267 | **Pass:** 267 | **Fail:** 0
 
 ## Fixes applied this run
 
@@ -14,12 +14,19 @@
 - `js/config.js`: consolidated all contact/legal emails onto a single role inbox `civicradarnh@gmail.com` (legal.grievanceEmail, founder.email, founder.operatorEmail) — removed all personal Gmail addresses from deployable/source files (privacy.html / terms.html links are config-driven and now resolve to the role inbox)
 - `css/styles.css`: launch polish (v71) — consistency pass extending the v69 surface system to screens it missed: branded Leaflet map chrome (brand/devanagari typography, modal-matched popups, cohesive zoom controls with focus rings + larger close target), premium podium emphasis on the leaderboard (ranks 1–3), resting elevation on queue + hazard cards, and a warmer on-brand empty-state icon. Additive only; motion gated by prefers-reduced-motion
 - `index.html`: added a graceful `<noscript>` fallback (inline-styled, English + Hindi + Marathi) so JS-disabled or bundle-failure visitors get a friendly reload prompt instead of a blank screen
-- `sw.js`: cache bump → v71 (static assets changed: styles.css + index.html)
-- `tests/e2e_comprehensive.py`: SW06 expected cache version → v71
+- `supabase/schema.sql`: coordinator access requests + approval workflow (v72) — new `access_requests` table with RLS (anon/auth INSERT *pending only*; admin-only SELECT/UPDATE), `admin` super-admin role added to `profiles`, and SECURITY-DEFINER RPCs `request_access`, `approve_access_request`, `reject_access_request`, `claim_access` (+ `is_admin`/`gen_claim_code`). Approval issues a one-time claim code. FOUNDER MUST RE-RUN schema.sql once + bootstrap one super-admin
+- `index.html` + `js/app.js` + `css/styles.css`: in-app coordinator access request flow (NGO + BMC). Low-friction request form (name + role + one contact required; org/ward/proof/note optional; submits without login), confirmation panel, claim-code entry, and an admin-only review screen (one-tap approve/reject) reachable from the BMC queue. Works fully in local/no-Supabase mode (on-device queue). All strings localized in en/hi/mr/gu
+- `sw.js`: cache bump → v72 (static assets changed: index.html + styles.css + app.js)
+- `tests/e2e_comprehensive.py`: SW06 expected cache version → v72; added Access suite (AR01–AR11)
+- `js/app.js`: fix report photo flow race after native camera accept (popstate + Map ghost tap); advance to Submit step; cache bump v73
+- `sw.js` + `tests/e2e_comprehensive.py`: v73 cache bump; RP11/RP12 photo→submit regression tests; SW06 → v73
+- `js/app.js`: export `window.closeAllModals` for automation/E2E callers
+- `tests/e2e_comprehensive.py`: Access AR06/AR10 use safe modal close; hardened Leaflet waits (`wait_for_map_ready`, popup/marker waits)
 
 ## Summary by category
 
 - **API:** 5 pass / 0 fail
+- **Access:** 11 pass / 0 fail
 - **Admin:** 8 pass / 0 fail
 - **Analytics:** 5 pass / 0 fail
 - **BMC:** 9 pass / 0 fail
@@ -44,7 +51,7 @@
 - **Pledge:** 1 pass / 0 fail
 - **Profile:** 4 pass / 0 fail
 - **Referral:** 4 pass / 0 fail
-- **Report:** 13 pass / 0 fail
+- **Report:** 15 pass / 0 fail
 - **Share:** 1 pass / 0 fail
 - **Storage:** 2 pass / 0 fail
 - **Sync:** 1 pass / 0 fail
@@ -147,7 +154,7 @@ _None_
 | E16 | Edge | Invalid ward cleared on load | PASS |  |
 | L01 | Load | 15 parallel report contexts | PASS | 15/15 |
 | L02 | Load | 200 reports refresh under 3s | PASS | 0.01s |
-| L03 | Load | 50x loadReports parse under 500ms | PASS | 3ms |
+| L03 | Load | 50x loadReports parse under 500ms | PASS | 5ms |
 | L04 | Load | Rapid corroboration increments | PASS | n=5 |
 | L05 | Load | Analytics batch enqueue | PASS |  |
 | M01 | Map | Leaflet map container | PASS |  |
@@ -260,6 +267,8 @@ _None_
 | RP08 | Report | Success overlay has celebrate el | PASS |  |
 | RP09 | Report | Near-duplicate triggers Me too | PASS |  |
 | RP10 | Report | Report notes maxlength enforced | PASS |  |
+| RP11 | Report | Photo accept stays on submit step | PASS |  |
+| RP12 | Report | Popstate+Map tap during photo keeps report open | PASS |  |
 | VOL01 | Volunteer | Blocked without neighbourhood | PASS |  |
 | VOL02 | Volunteer | Blocked without skills | PASS |  |
 | VOL03 | Volunteer | Signup saved with valid data | PASS |  |
@@ -323,3 +332,14 @@ _None_
 | FB05 | Feedback | Local submit stores feedback + closes modal | PASS |  |
 | FB06 | Feedback | Submit shows success/saved toast | PASS |  |
 | FB07 | Feedback | Feedback strings render (i18n, no key leak) | PASS |  |
+| AR01 | Access | Request entry points present (Profile + Partner) | PASS |  |
+| AR02 | Access | Request modal opens with explainer | PASS |  |
+| AR03 | Access | Empty name blocked with inline error | PASS |  |
+| AR04 | Access | Contact required (email or phone) | PASS |  |
+| AR05 | Access | Low-friction NGO submit (name+email) confirms + stores | PASS |  |
+| AR06 | Access | Access strings render (i18n, no key leak) | PASS |  |
+| AR07 | Access | Admin review lists pending request | PASS |  |
+| AR08 | Access | Approve issues claim code | PASS |  |
+| AR09 | Access | Reject marks request rejected | PASS |  |
+| AR10 | Access | Claim code unlocks NGO coordinator role | PASS |  |
+| AR11 | Access | Invalid claim code rejected | PASS |  |

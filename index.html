@@ -638,6 +638,9 @@
         <button type="button" class="partner-link partner-link--muted" id="btnPartnerInquiry">
           <i class="ph ph-handshake"></i> <span data-i18n="profile.sponsor">Sponsor or partner with us</span>
         </button>
+        <button type="button" class="partner-link partner-link--cta" id="btnProfileAccessRequest">
+          <i class="ph ph-identification-card"></i> <span data-i18n="access.profileCta">For NGOs &amp; BMC: Request coordinator access</span>
+        </button>
       </div>
     </div>
   </div>
@@ -665,6 +668,12 @@
           </div>
         </button>
       </div>
+      <button type="button" class="partner-link partner-link--cta" id="btnPartnerRequest">
+        <i class="ph ph-identification-card"></i> <span data-i18n="access.partnerCta">Don’t have access yet? Request coordinator access</span>
+      </button>
+      <button type="button" class="partner-link partner-link--muted" id="btnPartnerClaim">
+        <i class="ph ph-key"></i> <span data-i18n="access.partnerClaim">I have a claim code</span>
+      </button>
     </div>
   </div>
 
@@ -796,6 +805,10 @@
 
       <ul class="queue-list" id="adminQueueList"></ul>
 
+      <button type="button" class="btn btn--outline btn--full" id="btnAccessReviewOpen">
+        <i class="ph ph-identification-card"></i> <span data-i18n="access.reviewOpen">Access requests</span>
+        <span class="badge-count hidden" id="accessReviewBadge">0</span>
+      </button>
       <button type="button" class="btn btn--ghost btn--full" id="btnAdminQueueClose" data-i18n="admin.returnMap">Return to map</button>
       <button type="button" class="btn btn--outline btn--full" id="btnAdminQueueExit" data-i18n="admin.exitMode">Exit BMC mode</button>
     </div>
@@ -1162,6 +1175,134 @@
           <span class="btn__label" data-i18n="feedback.submit">Send feedback</span>
         </button>
       </form>
+    </div>
+  </div>
+
+  <!-- Request coordinator access (NGO / BMC) -->
+  <div class="modal-overlay" id="accessRequestOverlay" aria-hidden="true">
+    <div class="modal modal--sm" id="accessRequestModal" role="dialog" aria-labelledby="accessRequestTitle">
+      <div class="modal__handle"></div>
+      <button type="button" class="modal__close" data-close="accessRequest" aria-label="Close">&times;</button>
+      <h2 id="accessRequestTitle"><i class="ph ph-identification-card"></i> <span data-i18n="access.title">Request coordinator access</span></h2>
+      <p class="modal__subtitle" data-i18n="access.subtitle">For NGO &amp; community coordinators and BMC officials.</p>
+
+      <div id="accessRequestForm">
+        <ol class="access-steps">
+          <li data-i18n="access.step1">Apply with a few quick details</li>
+          <li data-i18n="access.step2">The CivicRadar team reviews</li>
+          <li data-i18n="access.step3">Get a claim code to unlock access</li>
+        </ol>
+
+        <form id="accessForm" novalidate>
+          <div class="form-group">
+            <label class="form-label" id="accessRoleLabel" data-i18n="access.roleLabel">I am a…</label>
+            <div class="segmented" role="radiogroup" aria-labelledby="accessRoleLabel">
+              <label class="segmented__option">
+                <input type="radio" name="accessRole" value="ngo_coordinator" checked>
+                <span><i class="ph ph-hand-heart"></i> <span data-i18n="access.roleNgo">NGO coordinator</span></span>
+              </label>
+              <label class="segmented__option">
+                <input type="radio" name="accessRole" value="bmc_official">
+                <span><i class="ph ph-shield-check"></i> <span data-i18n="access.roleBmc">BMC official</span></span>
+              </label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="accessName" data-i18n="access.nameLabel">Your name</label>
+            <input type="text" id="accessName" maxlength="120" autocomplete="name" data-i18n-ph="access.namePh" placeholder="Full name">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="accessOrg"><span data-i18n="access.orgLabel">Organization</span> <span class="field-optional" id="accessOrgOpt" data-i18n="access.optional">(optional)</span></label>
+            <input type="text" id="accessOrg" maxlength="160" data-i18n-ph="access.orgPh" placeholder="NGO / department / RWA name">
+          </div>
+
+          <div class="form-row form-row--split">
+            <div class="form-group">
+              <label class="form-label" for="accessCity" data-i18n="access.cityLabel">City</label>
+              <select id="accessCity"></select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="accessWard"><span data-i18n="access.wardLabel">Ward</span> <span class="field-optional" data-i18n="access.optional">(optional)</span></label>
+              <input type="text" id="accessWard" maxlength="120" list="mumbaiCommunities" data-i18n-ph="access.wardPh" placeholder="Your ward" autocomplete="off">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="accessEmail" data-i18n="access.contactLabel">Contact — email or phone</label>
+            <input type="email" id="accessEmail" maxlength="160" autocomplete="email" inputmode="email" data-i18n-ph="access.emailPh" placeholder="you@example.com">
+            <input type="tel" id="accessPhone" class="mt-8" maxlength="40" autocomplete="tel" inputmode="tel" data-i18n-ph="access.phonePh" placeholder="Phone">
+            <p class="field-hint" data-i18n="access.contactHint">Give at least one. If you add an email, that is how we send your claim code.</p>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label"><span data-i18n="access.proofLabel">ID / proof</span> <span class="field-optional" data-i18n="access.proofOptional">(optional — encouraged for BMC)</span></label>
+            <button type="button" class="btn btn--outline btn--full" id="btnAccessProof"><i class="ph ph-paperclip"></i> <span data-i18n="access.proofAdd">Attach proof photo</span></button>
+            <input type="file" id="accessProofInput" accept="image/*" class="hidden">
+            <p class="field-hint hidden" id="accessProofName"></p>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="accessNote"><span data-i18n="access.noteLabel">Anything else?</span> <span class="field-optional" data-i18n="access.optional">(optional)</span></label>
+            <textarea id="accessNote" rows="2" maxlength="500" data-i18n-ph="access.notePh" placeholder="Ward focus, how you’ll use it, etc."></textarea>
+          </div>
+
+          <p class="form-error hidden" id="accessError" role="alert" aria-live="assertive"></p>
+
+          <button type="submit" class="btn btn--primary btn--full" id="btnAccessSubmit">
+            <span class="btn__label" data-i18n="access.submit">Submit request</span>
+          </button>
+          <button type="button" class="btn btn--ghost btn--full" id="btnAccessHaveCode" data-i18n="access.haveCode">I already have a claim code</button>
+        </form>
+      </div>
+
+      <div id="accessRequestConfirm" class="access-confirm hidden">
+        <div class="access-confirm__icon"><i class="ph ph-check-circle"></i></div>
+        <h3 data-i18n="access.confirmTitle">Request received</h3>
+        <p data-i18n="access.confirmBody">Thanks! The CivicRadar team will review your request and email you a claim code, usually within a few days. Enter that code in the app to unlock your access.</p>
+        <p class="access-confirm__note hidden" id="accessConfirmLocalNote" data-i18n="access.confirmLocal">Saved on this device — it will sync to the team when you are back online.</p>
+        <button type="button" class="btn btn--outline btn--full" id="btnAccessConfirmCode" data-i18n="access.haveCode">I already have a claim code</button>
+        <button type="button" class="btn btn--ghost btn--full" id="btnAccessDone" data-i18n="access.done">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Enter claim code (unlock approved access) -->
+  <div class="modal-overlay" id="accessClaimOverlay" aria-hidden="true">
+    <div class="modal modal--sm" id="accessClaimModal" role="dialog" aria-labelledby="accessClaimTitle">
+      <div class="modal__handle"></div>
+      <button type="button" class="modal__close" data-close="accessClaim" aria-label="Close">&times;</button>
+      <h2 id="accessClaimTitle"><i class="ph ph-key"></i> <span data-i18n="access.claimTitle">Enter your claim code</span></h2>
+      <p class="modal__subtitle" data-i18n="access.claimSubtitle">Approved by the CivicRadar team? Enter the code we sent to unlock your access.</p>
+      <form id="accessClaimForm" novalidate>
+        <div class="form-group">
+          <label class="form-label" for="accessClaimCode" data-i18n="access.claimLabel">Claim code</label>
+          <input type="text" id="accessClaimCode" class="claim-input" maxlength="20" autocomplete="off" data-i18n-ph="access.claimPh" placeholder="CR-XXXXXX">
+        </div>
+        <p class="form-error hidden" id="accessClaimError" role="alert" aria-live="assertive"></p>
+        <button type="submit" class="btn btn--primary btn--full" id="btnAccessClaimSubmit">
+          <span class="btn__label" data-i18n="access.claimSubmit">Unlock access</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Access requests review (super-admin) -->
+  <div class="modal-overlay" id="accessReviewOverlay" aria-hidden="true">
+    <div class="modal modal--tall modal--persona-admin" id="accessReviewModal" role="dialog" aria-labelledby="accessReviewTitle">
+      <div class="modal__handle"></div>
+      <button type="button" class="modal__close" data-close="accessReview" aria-label="Close">&times;</button>
+      <p class="persona-tag persona-tag--admin" data-i18n="access.reviewTag">CivicRadar team</p>
+      <h2 id="accessReviewTitle"><i class="ph ph-identification-card"></i> <span data-i18n="access.reviewTitle">Access requests</span></h2>
+      <p class="modal__subtitle" data-i18n="access.reviewSubtitle">Approve or reject coordinator &amp; BMC access requests. Approving issues a claim code to share.</p>
+      <div class="dashboard-stats dashboard-stats--3">
+        <div class="dashboard-stat"><span id="arPending">0</span><label data-i18n="access.pending">Pending</label></div>
+        <div class="dashboard-stat dashboard-stat--ok"><span id="arApproved">0</span><label data-i18n="access.approved">Approved</label></div>
+        <div class="dashboard-stat"><span id="arRejected">0</span><label data-i18n="access.rejected">Rejected</label></div>
+      </div>
+      <ul class="queue-list" id="accessReviewList"></ul>
+      <button type="button" class="btn btn--ghost btn--full" id="btnAccessReviewClose" data-i18n="admin.returnMap">Return to map</button>
     </div>
   </div>
 

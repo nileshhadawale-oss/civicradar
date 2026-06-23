@@ -10,6 +10,20 @@ Release process and environment details live in [`RELEASE.md`](./RELEASE.md).
 ## [Unreleased]
 
 ### Added
+- **Coordinator access requests + approval workflow** — BMC officials and
+  NGO/community coordinators can now request elevated access in-app (entry points
+  in Profile, the partner portal, and the About modal). A low-friction request
+  form (name, role, ward/city, one contact required; organization, proof photo,
+  and note optional) submits even without logging in. The CivicRadar team reviews
+  requests in an admin-only "Access requests" screen (reachable from the BMC
+  queue) and approves/rejects with one tap; approving issues a one-time **claim
+  code** the applicant enters to unlock their role. New `access_requests` table
+  with RLS (anon/auth may INSERT a pending request only; admin-only read/update),
+  an `admin` super-admin role on `profiles`, and `request_access` /
+  `approve_access_request` / `reject_access_request` / `claim_access` RPCs. Works
+  fully in local/no-Supabase mode (on-device queue). All UI strings localized in
+  en/hi/mr/gu. **Requires re-running `supabase/schema.sql` and bootstrapping one
+  super-admin.**
 - Multi-city support for **Mumbai, Pune, and Thane** — per-city map centers,
   bounds, ward detection, and corporation channels (BMC / PMC CARE / TMC).
 - Environment-aware configuration in `js/config.js` (and `js/config.example.js`):

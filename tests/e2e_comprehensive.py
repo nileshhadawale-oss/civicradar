@@ -192,7 +192,7 @@ async def goto_app(page, query='', wait_map=False):
     )
     if wait_map:
         try:
-            await page.wait_for_function('() => typeof L !== "undefined" && !!document.querySelector("#map .leaflet-container")', timeout=20000)
+            await wait_for_map_ready(page)
         except Exception:
             pass
     await page.wait_for_timeout(500)
@@ -241,7 +241,14 @@ async def js_click(page, selector: str):
 
 
 async def close_all_modals(page):
-    await page.evaluate('() => { if (typeof closeAllModals === "function") closeAllModals(); else Object.values({profile:"profileOverlay",community:"communityOverlay",report:"reportOverlay",lang:"langOverlay",lead:"leadOverlay",admin:"adminOverlay",partner:"partnerOverlay",coordinator:"coordinatorOverlay",adminQueue:"adminQueueOverlay"}).forEach(id => { const el = document.getElementById(id); if (el) { el.classList.remove("open"); el.setAttribute("aria-hidden","true"); } }); document.body.style.overflow=""; }')
+    await page.evaluate('() => { if (typeof window.closeAllModals === "function") window.closeAllModals(); else Object.values({profile:"profileOverlay",community:"communityOverlay",report:"reportOverlay",lang:"langOverlay",lead:"leadOverlay",admin:"adminOverlay",partner:"partnerOverlay",coordinator:"coordinatorOverlay",adminQueue:"adminQueueOverlay"}).forEach(id => { const el = document.getElementById(id); if (el) { el.classList.remove("open"); el.setAttribute("aria-hidden","true"); } }); document.body.style.overflow=""; }')
+
+
+async def wait_for_map_ready(page, timeout=20000):
+    await page.wait_for_function(
+        '() => typeof L !== "undefined" && !!document.querySelector("#map .leaflet-container")',
+        timeout=timeout,
+    )
 
 
 async def submit_report_via_api(page, lat=19.0760, lng=72.8777, notes='test hazard'):
@@ -474,6 +481,10 @@ async def run_citizen_tests(s: Suite, browser):
       return !!(el && !el.classList.contains('hidden'));
     }""")
     s.record('C19b', 'Citizen', 'PWA nudge after first report', pwa_nudge)
+    try:
+        await page.wait_for_function('() => document.querySelectorAll(".leaflet-interactive").length > 0', timeout=10000)
+    except Exception:
+        pass
     markers = await page.evaluate('() => document.querySelectorAll(".leaflet-interactive").length')
     s.record('C19', 'Citizen', 'Map shows markers after report', markers > 0, f'markers={markers}')
 
@@ -942,7 +953,10 @@ async def run_remaining_scenarios(s: Suite, browser):
     })
     page = await ctx.new_page()
     await goto_app(page, query=f'report={rid}', wait_map=True)
-    await page.wait_for_timeout(2000)
+    try:
+        await page.wait_for_function('() => !!document.querySelector(".leaflet-popup")', timeout=10000)
+    except Exception:
+        pass
     popup = await page.evaluate('() => !!document.querySelector(".leaflet-popup")')
     if not popup:
         popup = await page.evaluate('() => location.search.includes("report=")')
@@ -1353,6 +1367,58 @@ async def run_extended_scenarios(s: Suite, browser):
     s.record('RP10', 'Report', 'Report notes maxlength enforced', await page.evaluate(
         '() => document.getElementById("reportNotes").maxLength === 500'
     ))
+    # Photo accept must keep report modal open on Submit step (not Map).
+    await close_all_modals(page)
+    await page.evaluate('() => window.openReportModal(false)')
+    await page.wait_for_timeout(150)
+    await page.evaluate(
+        """() => new Promise((resolve) => {
+          const canvas = document.createElement('canvas');
+          canvas.width = 240;
+          canvas.height = 180;
+          const ctx = canvas.getContext('2d');
+          for (let y = 0; y < canvas.height; y += 4) {
+            for (let x = 0; x < canvas.width; x += 4) {
+              ctx.fillStyle = `rgb(${60 + (x % 80)}, ${90 + (y % 70)}, 30)`;
+              ctx.fillRect(x, y, 4, 4);
+            }
+          }
+          canvas.toBlob((blob) => {
+            const file = new File([blob], 'hazard.jpg', { type: 'image/jpeg' });
+            const dt = new DataTransfer();
+            dt.items.add(file);
+            const input = document.getElementById('photoInput');
+            input.files = dt.files;
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+            setTimeout(resolve, 600);
+          }, 'image/jpeg', 0.92);
+        })"""
+    )
+    await page.wait_for_timeout(200)
+    photo_ready = await page.evaluate(
+        """() => {
+          const overlay = document.getElementById('reportOverlay');
+          const submitStep = document.querySelector('#reportFlowSteps .flow-step[data-step=submit]');
+          const canvas = document.getElementById('imageCanvas');
+          const confirmGroup = document.getElementById('photoConfirmGroup');
+          return !!(overlay && overlay.classList.contains('open')
+            && canvas && canvas.classList.contains('visible')
+            && submitStep && submitStep.classList.contains('is-active')
+            && confirmGroup && !confirmGroup.classList.contains('hidden'));
+        }"""
+    )
+    s.record('RP11', 'Report', 'Photo accept stays on submit step', photo_ready)
+    # Simulated native-camera popstate + Map nav ghost tap during picker must not dismiss report.
+    race_ok = await page.evaluate(
+        """() => {
+          window.openReportModal(false);
+          document.getElementById('btnTakePhoto').click();
+          window.dispatchEvent(new PopStateEvent('popstate'));
+          document.querySelector('#bottomNav .nav-tab[data-tab=map]')?.click();
+          return document.getElementById('reportOverlay').classList.contains('open');
+        }"""
+    )
+    s.record('RP12', 'Report', 'Popstate+Map tap during photo keeps report open', race_ok)
     await ctx.close()
 
     # --- Volunteer (VOL) ---
@@ -1595,7 +1661,7 @@ async def run_extended_scenarios(s: Suite, browser):
     # GitHub Pages /civicradar/ subpath (root-absolute paths would 404 there).
     sw_src = await page.evaluate('() => fetch("sw.js").then(r => r.text())')
     sw_ok = (
-        "civicradar-v71" in sw_src
+        "civicradar-v73" in sw_src
         and "'/index.html'" not in sw_src
         and "'/js/app.js'" not in sw_src
         and "'index.html'" in sw_src
@@ -1633,7 +1699,12 @@ async def run_extended_scenarios(s: Suite, browser):
     })
     page = await ctx.new_page()
     await goto_app(page, wait_map=True)
-    await page.wait_for_timeout(800)
+    try:
+        await page.wait_for_function('() => typeof window.refreshReportMarkers === "function"', timeout=10000)
+        await page.evaluate('() => window.refreshReportMarkers()')
+        await page.wait_for_timeout(300)
+    except Exception:
+        pass
     s.record('HF01', 'Map', 'Hidden report excluded from count', await page.evaluate(
         """() => {
           const reps = JSON.parse(localStorage.getItem('mosquiTrackReports')||'[]');
@@ -1910,6 +1981,166 @@ async def run_feedback_scenarios(s: Suite, browser):
     await ctx.close()
 
 
+async def run_access_request_scenarios(s: Suite, browser):
+    # Coordinator access request → review → approve → claim flow (local mode).
+    ctx = await new_ctx(browser, storage={
+        'civicradar_user': default_user(id='ar01'),
+        'civicradar_coach_seen': '1',
+    })
+    page = await ctx.new_page()
+    await goto_app(page)
+
+    # AR01: discoverable entry points (Profile + Partner overlay request/claim).
+    entries_ok = await page.evaluate(
+        """() => !!document.getElementById('btnProfileAccessRequest')
+              && !!document.getElementById('btnPartnerRequest')
+              && !!document.getElementById('btnPartnerClaim')"""
+    )
+    s.record('AR01', 'Access', 'Request entry points present (Profile + Partner)', entries_ok)
+
+    # AR02: request modal opens with the how-it-works explainer.
+    await page.evaluate('() => window.openAccessRequestModal()')
+    await page.wait_for_timeout(300)
+    opened = await is_open(page, 'accessRequestOverlay')
+    steps = await page.evaluate('() => document.querySelectorAll("#accessRequestForm .access-steps li").length')
+    s.record('AR02', 'Access', 'Request modal opens with explainer', opened and steps >= 3)
+
+    # AR03: submitting with no name is blocked with an inline error.
+    await page.evaluate(
+        """() => { document.getElementById('accessName').value = '';
+                   document.getElementById('accessEmail').value = '';
+                   document.getElementById('accessPhone').value = ''; }"""
+    )
+    await js_click(page, '#btnAccessSubmit')
+    await page.wait_for_timeout(250)
+    name_err = await page.evaluate(
+        '() => { const e = document.getElementById("accessError"); return !!(e && !e.classList.contains("hidden")); }'
+    )
+    s.record('AR03', 'Access', 'Empty name blocked with inline error',
+             name_err and await is_open(page, 'accessRequestOverlay'))
+
+    # AR04: contact required — name without email/phone is blocked.
+    await page.evaluate('() => { document.getElementById("accessName").value = "Asha Coordinator"; }')
+    await js_click(page, '#btnAccessSubmit')
+    await page.wait_for_timeout(250)
+    contact_err = await page.evaluate(
+        '() => { const e = document.getElementById("accessError"); return !!(e && !e.classList.contains("hidden")); }'
+    )
+    s.record('AR04', 'Access', 'Contact required (email or phone)', contact_err)
+
+    # AR05: low-friction NGO path — name + email only (no org/proof) succeeds,
+    # shows confirmation, and stores a pending request on-device.
+    await page.evaluate(
+        """() => {
+          const ngo = document.querySelector('#accessForm input[name="accessRole"][value="ngo_coordinator"]');
+          if (ngo) ngo.checked = true;
+          document.getElementById('accessName').value = 'Asha Coordinator';
+          document.getElementById('accessEmail').value = 'asha@example.org';
+        }"""
+    )
+    await js_click(page, '#btnAccessSubmit')
+    await page.wait_for_timeout(500)
+    confirm_shown = await page.evaluate(
+        '() => !document.getElementById("accessRequestConfirm").classList.contains("hidden")'
+    )
+    stored_pending = await page.evaluate(
+        """() => {
+          const list = JSON.parse(localStorage.getItem('civicradar_access_local') || '[]');
+          const last = list[list.length - 1];
+          return list.length >= 1 && last.status === 'pending'
+            && last.role_requested === 'ngo_coordinator' && last.full_name.length > 0;
+        }"""
+    )
+    s.record('AR05', 'Access', 'Low-friction NGO submit (name+email) confirms + stores',
+             confirm_shown and stored_pending)
+
+    # AR06: i18n renders (no raw key leakage).
+    rendered_ok = await page.evaluate(
+        """() => {
+          const title = document.querySelector('#accessRequestTitle [data-i18n="access.title"]');
+          const submit = document.querySelector('#btnAccessSubmit [data-i18n="access.submit"]');
+          const t1 = (title && title.textContent || '').trim();
+          const t2 = (submit && submit.textContent || '').trim();
+          return t1 && t1 !== 'access.title' && t2 && t2 !== 'access.submit';
+        }"""
+    )
+    s.record('AR06', 'Access', 'Access strings render (i18n, no key leak)', rendered_ok)
+    await close_all_modals(page)
+
+    # AR07: super-admin review screen opens (reachable from admin surface) and
+    # lists the pending request with an approve action.
+    await login_admin(page)
+    await page.evaluate('() => window.openAccessReview()')
+    await page.wait_for_timeout(300)
+    review_open = await is_open(page, 'accessReviewOverlay')
+    pending_count = await page.evaluate('() => parseInt(document.getElementById("arPending").textContent || "0", 10)')
+    has_approve = await page.evaluate('() => !!document.querySelector("[data-access-action=approve]")')
+    s.record('AR07', 'Access', 'Admin review lists pending request', review_open and pending_count >= 1 and has_approve)
+
+    # AR08: one-tap approve issues a claim code and moves the request to approved.
+    await page.evaluate('() => document.querySelector("[data-access-action=approve]").click()')
+    await page.wait_for_timeout(400)
+    approved_code = await page.evaluate(
+        """() => {
+          const list = JSON.parse(localStorage.getItem('civicradar_access_local') || '[]');
+          const a = list.find(r => r.status === 'approved' && r.claim_code);
+          return a ? a.claim_code : '';
+        }"""
+    )
+    s.record('AR08', 'Access', 'Approve issues claim code', bool(approved_code) and approved_code.startswith('CR-'))
+
+    # AR09: reject path marks a request rejected (seed a second request first).
+    await page.evaluate(
+        """() => {
+          const list = JSON.parse(localStorage.getItem('civicradar_access_local') || '[]');
+          list.push({ id: 'local-reject-1', created_at: new Date().toISOString(),
+            full_name: 'Reject Me', role_requested: 'bmc_official', city: 'mumbai',
+            contact_email: 'r@example.com', status: 'pending', claim_code: null });
+          localStorage.setItem('civicradar_access_local', JSON.stringify(list));
+          window.openAccessReview();
+        }"""
+    )
+    await page.wait_for_timeout(300)
+    await page.evaluate(
+        """() => {
+          const btn = document.querySelector('[data-access-action=reject][data-access-id="local-reject-1"]');
+          if (btn) btn.click();
+        }"""
+    )
+    await page.wait_for_timeout(300)
+    rejected_ok = await page.evaluate(
+        """() => {
+          const list = JSON.parse(localStorage.getItem('civicradar_access_local') || '[]');
+          const r = list.find(x => x.id === 'local-reject-1');
+          return !!r && r.status === 'rejected';
+        }"""
+    )
+    s.record('AR09', 'Access', 'Reject marks request rejected', rejected_ok)
+
+    # AR10: claim-code unlock elevates the applicant to the coordinator role.
+    await close_all_modals(page)
+    await page.evaluate('() => window.openAccessClaimModal()')
+    await page.wait_for_timeout(250)
+    await page.evaluate('(code) => { document.getElementById("accessClaimCode").value = code; }', approved_code)
+    await js_click(page, '#btnAccessClaimSubmit')
+    await page.wait_for_timeout(500)
+    unlocked = await page.evaluate('() => window.isLead === true')
+    s.record('AR10', 'Access', 'Claim code unlocks NGO coordinator role', unlocked)
+
+    # AR11: a bogus claim code is rejected with an inline error.
+    await ensure_local_mode(page)
+    await page.evaluate('() => window.openAccessClaimModal()')
+    await page.wait_for_timeout(250)
+    await page.evaluate('() => { document.getElementById("accessClaimCode").value = "CR-NOPE99"; }')
+    await js_click(page, '#btnAccessClaimSubmit')
+    await page.wait_for_timeout(300)
+    bad_err = await page.evaluate(
+        '() => { const e = document.getElementById("accessClaimError"); return !!(e && !e.classList.contains("hidden")); }'
+    )
+    s.record('AR11', 'Access', 'Invalid claim code rejected', bad_err)
+    await ctx.close()
+
+
 async def main():
     ensure_server()
     await install_playwright()
@@ -1930,6 +2161,7 @@ async def main():
             ('Extended', run_extended_scenarios),
             ('ImageSafety', run_image_safety_scenarios),
             ('Feedback', run_feedback_scenarios),
+            ('Access', run_access_request_scenarios),
         ]:
             print(f'-- {label} tests --', flush=True)
             await safe_run(fn, s, browser, label)
@@ -1944,8 +2176,14 @@ async def main():
         '`js/config.js`: consolidated all contact/legal emails onto a single role inbox `civicradarnh@gmail.com` (legal.grievanceEmail, founder.email, founder.operatorEmail) — removed all personal Gmail addresses from deployable/source files (privacy.html / terms.html links are config-driven and now resolve to the role inbox)',
         '`css/styles.css`: launch polish (v71) — consistency pass extending the v69 surface system to screens it missed: branded Leaflet map chrome (brand/devanagari typography, modal-matched popups, cohesive zoom controls with focus rings + larger close target), premium podium emphasis on the leaderboard (ranks 1–3), resting elevation on queue + hazard cards, and a warmer on-brand empty-state icon. Additive only; motion gated by prefers-reduced-motion',
         '`index.html`: added a graceful `<noscript>` fallback (inline-styled, English + Hindi + Marathi) so JS-disabled or bundle-failure visitors get a friendly reload prompt instead of a blank screen',
-        '`sw.js`: cache bump → v71 (static assets changed: styles.css + index.html)',
-        '`tests/e2e_comprehensive.py`: SW06 expected cache version → v71',
+        '`supabase/schema.sql`: coordinator access requests + approval workflow (v72) — new `access_requests` table with RLS (anon/auth INSERT *pending only*; admin-only SELECT/UPDATE), `admin` super-admin role added to `profiles`, and SECURITY-DEFINER RPCs `request_access`, `approve_access_request`, `reject_access_request`, `claim_access` (+ `is_admin`/`gen_claim_code`). Approval issues a one-time claim code. FOUNDER MUST RE-RUN schema.sql once + bootstrap one super-admin',
+        '`index.html` + `js/app.js` + `css/styles.css`: in-app coordinator access request flow (NGO + BMC). Low-friction request form (name + role + one contact required; org/ward/proof/note optional; submits without login), confirmation panel, claim-code entry, and an admin-only review screen (one-tap approve/reject) reachable from the BMC queue. Works fully in local/no-Supabase mode (on-device queue). All strings localized in en/hi/mr/gu',
+        '`sw.js`: cache bump → v72 (static assets changed: index.html + styles.css + app.js)',
+        '`tests/e2e_comprehensive.py`: SW06 expected cache version → v72; added Access suite (AR01–AR11)',
+        '`js/app.js`: fix report photo flow race after native camera accept (popstate + Map ghost tap); advance to Submit step; cache bump v73',
+        '`sw.js` + `tests/e2e_comprehensive.py`: v73 cache bump; RP11/RP12 photo→submit regression tests; SW06 → v73',
+        '`js/app.js`: export `window.closeAllModals` for automation/E2E callers',
+        '`tests/e2e_comprehensive.py`: Access AR06/AR10 use safe modal close; hardened Leaflet waits (`wait_for_map_ready`, popup/marker waits)',
     ]
     passed, failed, total = write_report(s, out, fixes=fixes)
     print(f'\n=== Done: {passed}/{total} passed, {failed} failed ===', flush=True)
