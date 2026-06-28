@@ -150,7 +150,22 @@
       <span class="coach-mark__step" data-i18n="coach.step">Step 1 of 3</span>
       <h3 id="coachTitle" data-i18n="coach.title">Spot stagnant water?</h3>
       <p data-i18n="coach.body">Stand near the spot, tap Report, snap a photo. We pin it on your ward map so neighbours can back it.</p>
+      <p class="coach-mark__spot" id="coachSpotTip" data-i18n="coach.spotTip">No need to report right now. When you pass stagnant water — a puddle, clogged drain, or open tank — open CivicRadar and pin it on the spot so the location is accurate.</p>
       <button type="button" class="btn btn--primary btn--full" id="btnDismissCoach" data-i18n="coach.got">Got it</button>
+    </div>
+  </div>
+
+  <!-- First-run interactive guided tour (coach-mark spotlight) -->
+  <div id="tourOverlay" class="tour hidden" role="dialog" aria-modal="true" aria-labelledby="tourTitle" aria-describedby="tourBody">
+    <div class="tour__spotlight" id="tourSpotlight" aria-hidden="true"></div>
+    <div class="tour__bubble" id="tourBubble" tabindex="-1">
+      <span class="tour__step" id="tourStep">1 / 4</span>
+      <h3 class="tour__title" id="tourTitle" data-i18n="tour.map.title">Your ward map</h3>
+      <p class="tour__body" id="tourBody" data-i18n="tour.map.body">This is your ward map. Hazards near you show up here as pins.</p>
+      <div class="tour__actions">
+        <button type="button" class="tour__skip" id="btnTourSkip" data-i18n="tour.skip">Skip</button>
+        <button type="button" class="btn btn--primary tour__next" id="btnTourNext" data-i18n="tour.next">Next</button>
+      </div>
     </div>
   </div>
 
@@ -241,6 +256,31 @@
         <span class="flow-step" data-i18n="flow.ready">Ready</span>
       </div>
       <p class="modal__subtitle" data-i18n="onboard.subtitle">See hazards in your ward, rally neighbours, and earn Civic Points together.</p>
+      <div class="onboard-explainer" id="onboardHowItWorks">
+        <p class="onboard-explainer__why">
+          <i class="ph ph-shield-warning" aria-hidden="true"></i>
+          <span data-i18n="onboard.why">Stagnant water breeds dengue &amp; malaria. Your report puts the spot on your ward map and into the BMC queue — and alerts neighbours.</span>
+        </p>
+        <p class="onboard-explainer__title" data-i18n="onboard.howTitle">How it works</p>
+        <ol class="onboard-steps">
+          <li class="onboard-step">
+            <span class="onboard-step__num" aria-hidden="true">1</span>
+            <span data-i18n="onboard.how1">Spot stagnant water or a civic hazard</span>
+          </li>
+          <li class="onboard-step">
+            <span class="onboard-step__num" aria-hidden="true">2</span>
+            <span data-i18n="onboard.how2">Pin it &amp; snap a photo on the spot</span>
+          </li>
+          <li class="onboard-step">
+            <span class="onboard-step__num" aria-hidden="true">3</span>
+            <span data-i18n="onboard.how3">Submit — neighbours &amp; BMC see it, you earn Civic Points</span>
+          </li>
+        </ol>
+        <p class="onboard-explainer__note">
+          <i class="ph ph-map-pin" aria-hidden="true"></i>
+          <span data-i18n="onboard.spotNote">Best reported on the spot, so the location is accurate.</span>
+        </p>
+      </div>
       <div class="form-group" id="onboardCityGroup">
         <label for="onboardCity" data-i18n="onboard.city">Your city</label>
         <select id="onboardCity" aria-describedby="onboardCityHint">
@@ -334,6 +374,7 @@
       </div>
       <div class="success-points hidden" id="successPoints" aria-live="polite"></div>
       <p class="success-celebrate hidden" id="successCelebrate" aria-live="polite"></p>
+      <p class="success-progress hidden" id="successProgress" aria-live="polite"></p>
       <h2 id="successTitle" data-i18n="success.title">Report Logged</h2>
       <p class="success-tagline" id="successTagline" data-i18n="success.tagline">Pinned on your ward map</p>
       <p class="accountability-clock accountability-clock--warn" id="successClock"></p>
@@ -606,12 +647,27 @@
         <p class="empty-state" data-i18n="profile.emptyList">No reports yet. Tap Report to pin stagnant water near you.</p>
       </div>
 
+      <h3 class="section-title" data-i18n="settings.title">Reminders</h3>
+      <div class="profile-settings">
+        <label class="toggle-row" for="reportReminderToggle">
+          <span class="toggle-row__text">
+            <span class="toggle-row__label" data-i18n="settings.reminder.label">Remind me to report stagnant water nearby</span>
+            <span class="toggle-row__sub" data-i18n="settings.reminder.sub">A gentle monsoon-season nudge when you open CivicRadar. No background tracking.</span>
+          </span>
+          <input type="checkbox" id="reportReminderToggle" class="toggle-row__input">
+          <span class="toggle-row__switch" aria-hidden="true"></span>
+        </label>
+      </div>
+
       <div class="profile-footer">
         <button type="button" class="btn btn--outline btn--full hidden" id="btnInstall">
           <i class="ph ph-download-simple"></i> <span data-i18n="profile.install">Install CivicRadar app</span>
         </button>
         <button type="button" class="btn btn--ghost btn--full" id="btnAbout">
           <i class="ph ph-info"></i> <span data-i18n="profile.about">About CivicRadar</span>
+        </button>
+        <button type="button" class="btn btn--ghost btn--full" id="btnReplayTour">
+          <i class="ph ph-compass"></i> <span data-i18n="tour.replay">Replay app tour</span>
         </button>
         <button type="button" class="btn btn--ghost btn--full" id="btnProfileFeedback">
           <i class="ph ph-chat-teardrop-text"></i> <span data-i18n="feedback.menu">Send feedback</span>

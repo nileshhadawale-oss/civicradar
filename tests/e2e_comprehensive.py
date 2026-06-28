@@ -419,6 +419,12 @@ async def run_citizen_tests(s: Suite, browser):
     s.record('C08b', 'Citizen', 'City saved on onboarding', u.get('city') == 'mumbai')
     s.record('C09', 'Citizen', 'XSS display name sanitized', '<' not in (u.get('displayName') or ''))
 
+    await page.wait_for_timeout(700)
+    spot_visible = await page.evaluate(
+        '() => { const c = document.getElementById("coachMark"); const tip = document.getElementById("coachSpotTip"); return !!c && !c.classList.contains("hidden") && !!tip && /spot|location/i.test(tip.textContent); }'
+    )
+    s.record('C09b', 'Citizen', 'Report-on-the-spot guidance shown at onboarding completion', spot_visible)
+
     ctx_pune = await new_ctx(
         browser,
         lat=18.5204,
@@ -1055,7 +1061,12 @@ async def run_extra_scenarios(s: Suite, browser):
         }"""),
         ('X24', 'Escalation', 'Consent checkbox compact width', '() => { const uid = JSON.parse(localStorage.getItem("civicradar_user")).id; const r = { id: "esc-consent-test", reporterId: uid, hazard: "stagnant-water", ward: "G/N Ward — Dadar, Shivaji Park", city: "mumbai", reporter: "Test", lat: 19.076, lng: 72.877, status: "pending", timestamp: new Date().toISOString() }; localStorage.setItem("mosquiTrackReports", JSON.stringify([r])); window.openEscalationModal(r.id); const cb = document.getElementById("escFiledConsent"); if (!cb) return false; const w = cb.getBoundingClientRect().width; return w > 0 && w < 60; }'),
         ('X25', 'Pledge', 'Sticky footer present', '() => { window.openPledgeModal(); const m = document.getElementById("pledgeModal"); return m && !!m.querySelector(".modal__sticky-footer #btnSubmitPledge"); }'),
+        ('OB10', 'Onboarding', 'How-it-works explainer present', '() => !!document.getElementById("onboardHowItWorks")'),
+        ('OB11', 'Onboarding', 'Explainer renders 3 how-it-works steps', '() => document.querySelectorAll("#onboardHowItWorks .onboard-step").length >= 3'),
+        ('OB12', 'Onboarding', 'Why line populated', '() => { const e = document.querySelector("#onboardHowItWorks .onboard-explainer__why span"); return !!e && e.textContent.trim().length > 20; }'),
+        ('OB13', 'Onboarding', 'Report-on-the-spot guidance present + populated', '() => { const e = document.getElementById("coachSpotTip"); return !!e && /spot|location/i.test(e.textContent) && e.textContent.trim().length > 20; }'),
         ('X28', 'Celebration', 'Success celebrate element present', '() => !!document.getElementById("successCelebrate")'),
+        ('X29', 'Celebration', 'Success progress nudge element present', '() => !!document.getElementById("successProgress")'),
         ('V40', 'Viral', 'Referral welcome banner present + hidden by default', '() => { const el = document.getElementById("referralWelcome"); return !!el && el.classList.contains("hidden"); }'),
         ('V41', 'Viral', 'Seasonal hook element present in community', '() => { window.openCommunityModal(); return !!document.getElementById("seasonHook"); }'),
         ('V42', 'Viral', 'Ward weekly social proof line populated', '() => { window.openCommunityModal(); const el = document.getElementById("wardWeekSocial"); return !!el && el.textContent.trim().length > 0; }'),
@@ -1385,6 +1396,25 @@ async def run_extended_scenarios(s: Suite, browser):
         f'() => JSON.parse(localStorage.getItem("mosquiTrackReports")||"[]").some(r => r.notes === "extended test")'
     ))
     s.record('RP08', 'Report', 'Success overlay has celebrate el', await page.evaluate('() => !!document.getElementById("successCelebrate")'))
+    # First report: kudos line + progress nudge both shown and non-empty.
+    first_celebrate = await page.evaluate('() => document.getElementById("successCelebrate").textContent.trim()')
+    first_progress = await page.evaluate('() => { const el = document.getElementById("successProgress"); return el ? el.textContent.trim() : ""; }')
+    s.record('RP13', 'Report', 'First report shows celebrate + progress', len(first_celebrate) > 0 and len(first_progress) > 0,
+             f'celebrate="{first_celebrate[:30]}" progress="{first_progress[:30]}"')
+    await page.click('#btnSuccessClose')
+    await page.wait_for_timeout(300)
+    # Normal (non-milestone) report (count=2): kudos must be present + progress counts down to next badge.
+    await page.evaluate('() => window.openReportModal(false)')
+    await submit_report_via_api(page, 19.0900, 72.8900, 'normal kudos test')
+    await page.wait_for_timeout(200)
+    norm_celebrate = await page.evaluate('() => document.getElementById("successCelebrate").textContent.trim()')
+    norm_progress = await page.evaluate('() => { const el = document.getElementById("successProgress"); return el ? el.textContent.trim() : ""; }')
+    norm_hidden = await page.evaluate('() => document.getElementById("successCelebrate").classList.contains("hidden")')
+    s.record('RP14', 'Report', 'Non-milestone report shows rotating kudos', len(norm_celebrate) > 0 and not norm_hidden,
+             f'celebrate="{norm_celebrate[:40]}"')
+    s.record('RP15', 'Report', 'Non-milestone report shows progress-to-badge nudge',
+             ('1' in norm_progress and 'badge' in norm_progress.lower()),
+             f'progress="{norm_progress[:40]}"')
     await page.click('#btnSuccessClose')
     await page.wait_for_timeout(300)
     # Me-too corroboration on nearby existing report
@@ -1690,7 +1720,7 @@ async def run_extended_scenarios(s: Suite, browser):
     # GitHub Pages /civicradar/ subpath (root-absolute paths would 404 there).
     sw_src = await page.evaluate('() => fetch("sw.js").then(r => r.text())')
     sw_ok = (
-        "civicradar-v77" in sw_src
+        "civicradar-v80" in sw_src
         and "'/index.html'" not in sw_src
         and "'/js/app.js'" not in sw_src
         and "'index.html'" in sw_src
@@ -2015,6 +2045,234 @@ def write_report(s: Suite, path: Path, fixes=None):
     return passed, failed, total
 
 
+async def run_tour_scenarios(s: Suite, browser):
+    # Interactive first-run guided tour (coach-mark spotlight). Sequenced after the
+    # existing v79 coachSpotTip explainer; shown once; re-watchable from Profile.
+
+    # TR01/TR02 — elements present.
+    ctx = await new_ctx(browser, storage={
+        'civicradar_user': default_user(id='tour01'),
+        'civicradar_coach_seen': '1',
+        'civicradar_tour_seen': '1',
+    })
+    page = await ctx.new_page()
+    await goto_app(page, wait_map=True)
+    s.record('TR01', 'Tour', 'Tour overlay element present',
+             await page.evaluate('() => !!document.getElementById("tourOverlay")'))
+    s.record('TR02', 'Tour', 'Replay-tour entry present in Profile', await page.evaluate(
+        '() => { window.openProfileModal(); return !!document.getElementById("btnReplayTour"); }'
+    ))
+    await ctx.close()
+
+    # TR03/TR04/TR06 — first-run: coach -> tour, complete sets flag, no re-show on reload.
+    # NB: coach gates on a *truthy* flag, so '0' would suppress it — omit the key entirely.
+    ctx = await new_ctx(browser, storage={
+        'civicradar_user': default_user(id='tour02'),
+    })
+    page = await ctx.new_page()
+    await goto_app(page, wait_map=True)
+    await page.wait_for_timeout(900)
+    coach_shown = not await page.evaluate(
+        '() => document.getElementById("coachMark").classList.contains("hidden")'
+    )
+    if coach_shown:
+        await page.click('#btnDismissCoach')
+    await page.wait_for_timeout(700)
+    tour_open = not await page.evaluate(
+        '() => document.getElementById("tourOverlay").classList.contains("hidden")'
+    )
+    step_txt = await page.evaluate('() => document.getElementById("tourStep").textContent || ""')
+    s.record('TR03', 'Tour', 'Tour auto-shows after coach explainer on first run',
+             tour_open and step_txt.strip().startswith('1 /'))
+
+    # Progress through every step; final "Got it" completes the tour.
+    for _ in range(6):
+        hidden = await page.evaluate(
+            '() => document.getElementById("tourOverlay").classList.contains("hidden")'
+        )
+        if hidden:
+            break
+        await page.click('#btnTourNext')
+        await page.wait_for_timeout(180)
+    completed = await page.evaluate(
+        '() => document.getElementById("tourOverlay").classList.contains("hidden") '
+        '&& localStorage.getItem("civicradar_tour_seen") === "1"'
+    )
+    s.record('TR04', 'Tour', 'Completing tour hides overlay + sets seen flag', completed)
+
+    await page.reload(wait_until='domcontentloaded')
+    await page.wait_for_timeout(1200)
+    s.record('TR06', 'Tour', 'Tour does not reappear on reload once seen', await page.evaluate(
+        '() => document.getElementById("tourOverlay").classList.contains("hidden")'
+    ))
+    await ctx.close()
+
+    # TR05 — Skip sets the seen flag and hides the tour.
+    ctx = await new_ctx(browser, storage={
+        'civicradar_user': default_user(id='tour03'),
+    })
+    page = await ctx.new_page()
+    await goto_app(page, wait_map=True)
+    await page.wait_for_timeout(900)
+    if not await page.evaluate('() => document.getElementById("coachMark").classList.contains("hidden")'):
+        await page.click('#btnDismissCoach')
+    await page.wait_for_timeout(700)
+    skipped = False
+    if not await page.evaluate('() => document.getElementById("tourOverlay").classList.contains("hidden")'):
+        await page.click('#btnTourSkip')
+        await page.wait_for_timeout(250)
+        skipped = await page.evaluate(
+            '() => document.getElementById("tourOverlay").classList.contains("hidden") '
+            '&& localStorage.getItem("civicradar_tour_seen") === "1"'
+        )
+    s.record('TR05', 'Tour', 'Skip hides tour + sets seen flag', skipped)
+    await ctx.close()
+
+    # TR07 — Replay from Profile restarts the tour even when already seen.
+    ctx = await new_ctx(browser, storage={
+        'civicradar_user': default_user(id='tour04'),
+        'civicradar_coach_seen': '1',
+        'civicradar_tour_seen': '1',
+    })
+    page = await ctx.new_page()
+    await goto_app(page, wait_map=True)
+    await page.evaluate('() => window.openProfileModal()')
+    await page.wait_for_timeout(200)
+    await page.click('#btnReplayTour')
+    await page.wait_for_timeout(500)
+    s.record('TR07', 'Tour', 'Replay entry restarts tour on demand', await page.evaluate(
+        '() => !document.getElementById("tourOverlay").classList.contains("hidden")'
+    ))
+    await ctx.close()
+
+    # TR08 — demo mode never shows the tour.
+    ctx = await new_ctx(browser, storage={'civicradar_user': default_user(id='tour05')})
+    page = await ctx.new_page()
+    await goto_app(page, query='demo=tour', wait_map=True)
+    await page.wait_for_timeout(1000)
+    s.record('TR08', 'Tour', 'Tour does NOT show in demo mode', await page.evaluate(
+        '() => document.getElementById("tourOverlay").classList.contains("hidden")'
+    ))
+    await ctx.close()
+
+    # TR09 — referral entry (?ref=) shows coach but never the tour.
+    ctx = await new_ctx(browser, storage={
+        'civicradar_user': default_user(id='tour06'),
+    })
+    page = await ctx.new_page()
+    await goto_app(page, query='ref=neighbour42', wait_map=True)
+    await page.wait_for_timeout(900)
+    if not await page.evaluate('() => document.getElementById("coachMark").classList.contains("hidden")'):
+        await page.click('#btnDismissCoach')
+    await page.wait_for_timeout(700)
+    s.record('TR09', 'Tour', 'Tour does NOT show for referral (?ref=) entry', await page.evaluate(
+        '() => document.getElementById("tourOverlay").classList.contains("hidden")'
+    ))
+    await ctx.close()
+
+
+async def run_reminder_scenarios(s: Suite, browser):
+    # Feature 2a — opt-in report reminder (in-app fallback path) + Feature 2b — location nudge.
+    ctx = await new_ctx(browser, storage={
+        'civicradar_user': default_user(id='rem01'),
+        'civicradar_coach_seen': '1',
+    })
+    page = await ctx.new_page()
+    await goto_app(page, wait_map=True)
+
+    s.record('RR01', 'Reminder', 'Report-reminder opt-in toggle present',
+             await page.evaluate('() => !!document.getElementById("reportReminderToggle")'))
+
+    # Enabling persists the opt-in and does not error even when the Notification API
+    # is absent (iOS / unsupported). We feature-detect, so no permission prompt hangs.
+    persist = await page.evaluate(
+        """() => {
+          const had = ('Notification' in window);
+          const saved = had ? window.Notification : undefined;
+          try { delete window.Notification; } catch (e) {}
+          let errored = false;
+          try {
+            const cb = document.getElementById('reportReminderToggle');
+            cb.checked = true;
+            cb.dispatchEvent(new Event('change', { bubbles: true }));
+          } catch (e) { errored = true; }
+          if (had) window.Notification = saved;
+          return { optin: localStorage.getItem('civicradar_report_reminder_optin'), errored };
+        }"""
+    )
+    s.record('RR02', 'Reminder', 'Enable persists opt-in with no Notification API (no error)',
+             persist.get('optin') == '1' and persist.get('errored') is False)
+
+    off = await page.evaluate(
+        """() => {
+          const cb = document.getElementById('reportReminderToggle');
+          cb.checked = false;
+          cb.dispatchEvent(new Event('change', { bubbles: true }));
+          return localStorage.getItem('civicradar_report_reminder_optin');
+        }"""
+    )
+    s.record('RR03', 'Reminder', 'Disable persists opt-out', off == '0')
+
+    # In-app fallback fires when opted-in + due (no notification permission granted).
+    await page.evaluate(
+        """() => {
+          try { delete window.Notification; } catch (e) {}
+          if (window.__civicResetReminderSession) window.__civicResetReminderSession();
+          localStorage.setItem('civicradar_report_reminder_optin', '1');
+          localStorage.removeItem('civicradar_report_reminder_last');
+          localStorage.removeItem('civicradar_report_reminder_snooze');
+          document.getElementById('toastContainer').innerHTML = '';
+          window.maybeShowReportReminder();
+        }"""
+    )
+    await page.wait_for_timeout(400)
+    rt = (await toast_text(page)).lower()
+    s.record('RR04', 'Reminder', 'Opt-in reminder shows in-app card (no push backend)',
+             'puddle' in rt or 'report' in rt)
+
+    # Cadence: a second call the same day must not re-show (respects timestamp + snooze).
+    await page.evaluate(
+        "() => { document.getElementById('toastContainer').innerHTML = ''; window.maybeShowReportReminder(); }"
+    )
+    await page.wait_for_timeout(300)
+    rt2 = await toast_text(page)
+    s.record('RR05', 'Reminder', 'Reminder respects cadence (not re-shown same day)', rt2.strip() == '')
+
+    # Feature 2b — far pending hazard must NOT nudge.
+    await page.evaluate(
+        """() => {
+          const r = { id: 'prox-far', reporterId: 'someone-else', hazard: 'stagnant-water',
+            ward: 'G/N Ward — Dadar, Shivaji Park', city: 'mumbai', reporter: 'Neighbour',
+            lat: 19.2000, lng: 72.9800, status: 'pending', timestamp: new Date().toISOString() };
+          localStorage.setItem('mosquiTrackReports', JSON.stringify([r]));
+          if (window.__civicResetReminderSession) window.__civicResetReminderSession();
+          document.getElementById('toastContainer').innerHTML = '';
+          window.maybeProximityNudge(19.0760, 72.8777);
+        }"""
+    )
+    await page.wait_for_timeout(350)
+    far = await toast_text(page)
+    s.record('RR06', 'Reminder', 'No location nudge when hazard is far away', far.strip() == '')
+
+    # Feature 2b — nearby pending hazard surfaces the staleCheck nudge.
+    await page.evaluate(
+        """() => {
+          const r = { id: 'prox-near', reporterId: 'someone-else', hazard: 'stagnant-water',
+            ward: 'G/N Ward — Dadar, Shivaji Park', city: 'mumbai', reporter: 'Neighbour',
+            lat: 19.0761, lng: 72.8778, status: 'pending', timestamp: new Date().toISOString() };
+          localStorage.setItem('mosquiTrackReports', JSON.stringify([r]));
+          if (window.__civicResetReminderSession) window.__civicResetReminderSession();
+          document.getElementById('toastContainer').innerHTML = '';
+          window.maybeProximityNudge(19.0760, 72.8777);
+        }"""
+    )
+    await page.wait_for_timeout(400)
+    near = (await toast_text(page)).lower()
+    s.record('RR07', 'Reminder', 'Nearby pending hazard triggers location nudge', 'stagnant' in near)
+
+    await ctx.close()
+
+
 async def run_feedback_scenarios(s: Suite, browser):
     # In-app feedback form (Supabase-backed; local-mode fallback under test).
     ctx = await new_ctx(browser, storage={
@@ -2300,6 +2558,8 @@ async def main():
             ('Extended', run_extended_scenarios),
             ('ImageSafety', run_image_safety_scenarios),
             ('Feedback', run_feedback_scenarios),
+            ('Tour', run_tour_scenarios),
+            ('Reminder', run_reminder_scenarios),
             ('Access', run_access_request_scenarios),
         ]:
             print(f'-- {label} tests --', flush=True)
@@ -2330,6 +2590,12 @@ async def main():
         '`js/app.js` + `index.html`: second-pass review — contact-neutral coordinator access copy (phone-only path); admin OTP verify accepts super-admin role; magic-link callback errors via formatAuthError; claim-code copy toast fixed; bottom-nav ghost-tap guard during camera; Twitter share no duplicate hashtags',
         '`sw.js` + `tests/e2e_comprehensive.py`: v77 cache bump; AR12 phone-only confirm copy; AU01 admin OTP role check; SW06 → v77',
         '`tests/e2e_comprehensive.py`: ensure_server uses stdlib http.server + shorter probe timeout (fixes Windows 8095 HTTP.sys hang during test startup)',
+        '`js/app.js` + `index.html` + `css/styles.css`: warm kudos on EVERY report (rotating non-milestone copy) + new `#successProgress` progress-to-next-badge nudge; localized en/hi/mr/gu',
+        '`sw.js` + `tests/e2e_comprehensive.py`: v78 cache bump; RP13–RP15 kudos/progress tests; X29 progress element; SW06 → v78',
+        '`index.html` + `js/app.js` + `css/styles.css`: onboarding "How it works" why/3-step explainer + report-on-the-spot coach guidance (OB10–OB13, C09b); opt-in "report stagnant water nearby" reminder toggle in Profile with graceful Notification/iOS fallback + location-aware in-app nudge built on the existing reminder queue (RR01–RR07); localized en/hi/mr/gu',
+        '`sw.js` + `tests/e2e_comprehensive.py`: v79 cache bump; SW06 → v79',
+        '`index.html` + `js/app.js` + `css/styles.css`: first-run interactive coach-mark tour (v80) — skippable spotlight guided tour (Map → Report FAB → Me too → Profile) sequenced right after the v79 coachSpotTip explainer; shown once (`civicradar_tour_seen`), re-watchable via a "Replay app tour" entry in Profile; spotlight + bubble positioned from bounding rects, keyboard operable (Tab/Enter/Esc), focus-managed, backdrop/ESC dismiss, prefers-reduced-motion respected; suppressed for demo/referral/returning users; localized en/hi/mr/gu (TR01–TR09)',
+        '`sw.js` + `tests/e2e_comprehensive.py`: v80 cache bump; SW06 → v80',
     ]
     passed, failed, total = write_report(s, out, fixes=fixes)
     print(f'\n=== Done: {passed}/{total} passed, {failed} failed ===', flush=True)

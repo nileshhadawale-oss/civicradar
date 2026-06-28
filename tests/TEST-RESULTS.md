@@ -1,9 +1,9 @@
 # CivicRadar Test Results
 
-**Run:** 2026-06-23 23:45:08
+**Run:** 2026-06-28 11:53:10
 **Server:** http://localhost:9080/
 **Script:** `tests/e2e_comprehensive.py`
-**Total:** 278 | **Pass:** 278 | **Fail:** 0
+**Total:** 303 | **Pass:** 303 | **Fail:** 0
 
 ## Fixes applied this run
 
@@ -28,6 +28,13 @@
 - `tests/e2e_comprehensive.py`: ensure_server verifies CivicRadar content (not Windows-reserved 8095 listener); port fallbacks 8097–8787; RP05 waits for report modal open
 - `js/app.js` + `index.html`: second-pass review — contact-neutral coordinator access copy (phone-only path); admin OTP verify accepts super-admin role; magic-link callback errors via formatAuthError; claim-code copy toast fixed; bottom-nav ghost-tap guard during camera; Twitter share no duplicate hashtags
 - `sw.js` + `tests/e2e_comprehensive.py`: v77 cache bump; AR12 phone-only confirm copy; AU01 admin OTP role check; SW06 → v77
+- `tests/e2e_comprehensive.py`: ensure_server uses stdlib http.server + shorter probe timeout (fixes Windows 8095 HTTP.sys hang during test startup)
+- `js/app.js` + `index.html` + `css/styles.css`: warm kudos on EVERY report (rotating non-milestone copy) + new `#successProgress` progress-to-next-badge nudge; localized en/hi/mr/gu
+- `sw.js` + `tests/e2e_comprehensive.py`: v78 cache bump; RP13–RP15 kudos/progress tests; X29 progress element; SW06 → v78
+- `index.html` + `js/app.js` + `css/styles.css`: onboarding "How it works" why/3-step explainer + report-on-the-spot coach guidance (OB10–OB13, C09b); opt-in "report stagnant water nearby" reminder toggle in Profile with graceful Notification/iOS fallback + location-aware in-app nudge built on the existing reminder queue (RR01–RR07); localized en/hi/mr/gu
+- `sw.js` + `tests/e2e_comprehensive.py`: v79 cache bump; SW06 → v79
+- `index.html` + `js/app.js` + `css/styles.css`: first-run interactive coach-mark tour (v80) — skippable spotlight guided tour (Map → Report FAB → Me too → Profile) sequenced right after the v79 coachSpotTip explainer; shown once (`civicradar_tour_seen`), re-watchable via a "Replay app tour" entry in Profile; spotlight + bubble positioned from bounding rects, keyboard operable (Tab/Enter/Esc), focus-managed, backdrop/ESC dismiss, prefers-reduced-motion respected; suppressed for demo/referral/returning users; localized en/hi/mr/gu (TR01–TR09)
+- `sw.js` + `tests/e2e_comprehensive.py`: v80 cache bump; SW06 → v80
 
 ## Summary by category
 
@@ -37,8 +44,8 @@
 - **Analytics:** 5 pass / 0 fail
 - **Auth:** 10 pass / 0 fail
 - **BMC:** 9 pass / 0 fail
-- **Celebration:** 5 pass / 0 fail
-- **Citizen:** 42 pass / 0 fail
+- **Celebration:** 6 pass / 0 fail
+- **Citizen:** 43 pass / 0 fail
 - **Community:** 3 pass / 0 fail
 - **DeepLink:** 1 pass / 0 fail
 - **Demo:** 8 pass / 0 fail
@@ -52,16 +59,19 @@
 - **MultiCity:** 10 pass / 0 fail
 - **NGO:** 10 pass / 0 fail
 - **Negative:** 8 pass / 0 fail
+- **Onboarding:** 4 pass / 0 fail
 - **PWA:** 8 pass / 0 fail
 - **Partner:** 1 pass / 0 fail
 - **Persona:** 1 pass / 0 fail
 - **Pledge:** 1 pass / 0 fail
 - **Profile:** 4 pass / 0 fail
 - **Referral:** 4 pass / 0 fail
-- **Report:** 15 pass / 0 fail
+- **Reminder:** 7 pass / 0 fail
+- **Report:** 18 pass / 0 fail
 - **Share:** 1 pass / 0 fail
 - **Storage:** 2 pass / 0 fail
 - **Sync:** 1 pass / 0 fail
+- **Tour:** 9 pass / 0 fail
 - **UI:** 25 pass / 0 fail
 - **Viral:** 4 pass / 0 fail
 - **Volunteer:** 7 pass / 0 fail
@@ -95,6 +105,7 @@ _None_
 | C08 | Citizen | Valid ward onboarding | PASS |  |
 | C08b | Citizen | City saved on onboarding | PASS |  |
 | C09 | Citizen | XSS display name sanitized | PASS |  |
+| C09b | Citizen | Report-on-the-spot guidance shown at onboarding completion | PASS |  |
 | C34 | Citizen | Pune hides BMC partner card | PASS |  |
 | C34b | Citizen | Pune blocks BMC admin modal | PASS |  |
 | C34c | Citizen | Pune community subtitle uses PMC | PASS |  |
@@ -160,8 +171,8 @@ _None_
 | E15b | Edge | Map empty share hidden first visit | PASS |  |
 | E16 | Edge | Invalid ward cleared on load | PASS |  |
 | L01 | Load | 15 parallel report contexts | PASS | 15/15 |
-| L02 | Load | 200 reports refresh under 3s | PASS | 0.02s |
-| L03 | Load | 50x loadReports parse under 500ms | PASS | 9ms |
+| L02 | Load | 200 reports refresh under 3s | PASS | 0.01s |
+| L03 | Load | 50x loadReports parse under 500ms | PASS | 4ms |
 | L04 | Load | Rapid corroboration increments | PASS | n=5 |
 | L05 | Load | Analytics batch enqueue | PASS |  |
 | M01 | Map | Leaflet map container | PASS |  |
@@ -208,7 +219,12 @@ _None_
 | X27 | Volunteer | Skill checkbox compact width | PASS |  |
 | X24 | Escalation | Consent checkbox compact width | PASS |  |
 | X25 | Pledge | Sticky footer present | PASS |  |
+| OB10 | Onboarding | How-it-works explainer present | PASS |  |
+| OB11 | Onboarding | Explainer renders 3 how-it-works steps | PASS |  |
+| OB12 | Onboarding | Why line populated | PASS |  |
+| OB13 | Onboarding | Report-on-the-spot guidance present + populated | PASS |  |
 | X28 | Celebration | Success celebrate element present | PASS |  |
+| X29 | Celebration | Success progress nudge element present | PASS |  |
 | V40 | Viral | Referral welcome banner present + hidden by default | PASS |  |
 | V41 | Viral | Seasonal hook element present in community | PASS |  |
 | V42 | Viral | Ward weekly social proof line populated | PASS |  |
@@ -272,6 +288,9 @@ _None_
 | RP06 | Report | Close without submit saves nothing | PASS |  |
 | RP07 | Report | Report stored in localStorage | PASS |  |
 | RP08 | Report | Success overlay has celebrate el | PASS |  |
+| RP13 | Report | First report shows celebrate + progress | PASS | celebrate="You’re protecting your ward — " progress="Badge unlocked! 2 more to your" |
+| RP14 | Report | Non-milestone report shows rotating kudos | PASS | celebrate="Logged! Thanks for looking out for your " |
+| RP15 | Report | Non-milestone report shows progress-to-badge nudge | PASS | progress="Just 1 more report to your next badge." |
 | RP09 | Report | Near-duplicate triggers Me too | PASS |  |
 | RP10 | Report | Report notes maxlength enforced | PASS |  |
 | RP11 | Report | Photo accept stays on submit step | PASS |  |
@@ -349,6 +368,22 @@ _None_
 | FB05 | Feedback | Local submit stores feedback + closes modal | PASS |  |
 | FB06 | Feedback | Submit shows success/saved toast | PASS |  |
 | FB07 | Feedback | Feedback strings render (i18n, no key leak) | PASS |  |
+| TR01 | Tour | Tour overlay element present | PASS |  |
+| TR02 | Tour | Replay-tour entry present in Profile | PASS |  |
+| TR03 | Tour | Tour auto-shows after coach explainer on first run | PASS |  |
+| TR04 | Tour | Completing tour hides overlay + sets seen flag | PASS |  |
+| TR06 | Tour | Tour does not reappear on reload once seen | PASS |  |
+| TR05 | Tour | Skip hides tour + sets seen flag | PASS |  |
+| TR07 | Tour | Replay entry restarts tour on demand | PASS |  |
+| TR08 | Tour | Tour does NOT show in demo mode | PASS |  |
+| TR09 | Tour | Tour does NOT show for referral (?ref=) entry | PASS |  |
+| RR01 | Reminder | Report-reminder opt-in toggle present | PASS |  |
+| RR02 | Reminder | Enable persists opt-in with no Notification API (no error) | PASS |  |
+| RR03 | Reminder | Disable persists opt-out | PASS |  |
+| RR04 | Reminder | Opt-in reminder shows in-app card (no push backend) | PASS |  |
+| RR05 | Reminder | Reminder respects cadence (not re-shown same day) | PASS |  |
+| RR06 | Reminder | No location nudge when hazard is far away | PASS |  |
+| RR07 | Reminder | Nearby pending hazard triggers location nudge | PASS |  |
 | AR01 | Access | Request entry points present (Profile + Partner) | PASS |  |
 | AR02 | Access | Request modal opens with explainer | PASS |  |
 | AR03 | Access | Empty name blocked with inline error | PASS |  |

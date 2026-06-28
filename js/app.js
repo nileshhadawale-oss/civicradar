@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   /* ---------- Constants ---------- */
   // Build tag attached to feedback rows. Kept in step with the SW cache version.
-  const CIVIC_APP_VERSION = 'v77';
+  const CIVIC_APP_VERSION = 'v80';
   const PENDING_AUTH_FLOW_KEY = 'civicradar_pending_auth_flow';
   const PENDING_NGO_CODE_KEY = 'civicradar_pending_ngo_code';
 
@@ -33,6 +33,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const PLEDGES_KEY = 'mosquiTrackPledges';
   const POINTS_CACHE_KEY = 'mosquiTrackPoints';
   const COACH_KEY = 'civicradar_coach_seen';
+  const TOUR_KEY = 'civicradar_tour_seen';
   const LANG_KEY = 'civicradar_lang';
   const INTEREST_KEY = 'civicradar_interest';
   const CONFIRMED_KEY = 'civicradar_confirmed';
@@ -52,8 +53,16 @@ document.addEventListener('DOMContentLoaded', function () {
   const VOLUNTEER_SIGNUPS_KEY = 'civicradar_volunteer_signups';
   const VOLUNTEER_TASKS_KEY = 'civicradar_volunteer_tasks';
   const UNFILED_REMINDER_DAYS = [1, 3, 7];
-  const REMINDER_PRIORITY = { escalation: 1, corroboration: 2, staleCheck: 3, cleanup: 4, unfiled: 5 };
+  const REMINDER_PRIORITY = { escalation: 1, corroboration: 2, proximity: 3, staleCheck: 3, cleanup: 4, unfiled: 5 };
   const MAX_SESSION_REMINDERS = 2;
+  // Opt-in "report stagnant water when you encounter it" reminder (foreground-triggered;
+  // no background push — honest about platform limits). See maybeShowReportReminder().
+  const REPORT_REMINDER_OPTIN_KEY = 'civicradar_report_reminder_optin';
+  const REPORT_REMINDER_LAST_KEY = 'civicradar_report_reminder_last';
+  const REPORT_REMINDER_SNOOZE_KEY = 'civicradar_report_reminder_snooze';
+  const REPORT_REMINDER_DAYS = 2;
+  // Location-aware in-app nudge radius (foreground only; precise coords never persisted).
+  const PROXIMITY_NUDGE_M = 150;
   const HIDDEN_REPORTS_KEY = 'civicradar_hidden_reports';
   const WEEK_BONUS_KEY = 'civicradar_week_bonus';
   const FIRST_SHARE_KEY = 'civicradar_first_share_done';
@@ -441,7 +450,18 @@ document.addEventListener('DOMContentLoaded', function () {
       'location.enable': 'Turn on',
       'coach.step': '#MonsoonGuardian · 30 sec', 'coach.title': 'Dengue\'s enemy? Stagnant water!',
       'coach.body': 'Tap Report, snap a photo — we pin it on your ward map. Neighbours can say Me too. Share on WhatsApp so more eyes see it.',
+      'coach.spotTip': 'No need to report right now. When you pass stagnant water — a puddle, clogged drain, or open tank — open CivicRadar and pin it on the spot so the location is accurate.',
       'coach.got': 'Got it',
+      'tour.skip': 'Skip', 'tour.next': 'Next', 'tour.done': 'Got it',
+      'tour.replay': 'Replay app tour',
+      'tour.map.title': 'Your ward map',
+      'tour.map.body': 'This is your ward map. Hazards near you show up here as pins.',
+      'tour.report.title': 'Report in 30 seconds',
+      'tour.report.body': 'Tap here to report stagnant water — it takes about 30 seconds.',
+      'tour.metoo.title': 'Back your neighbours',
+      'tour.metoo.body': 'Already pinned nearby? Tap “Me too” on a hazard so {corp} sees the pressure building.',
+      'tour.profile.title': 'Civic Points & reports',
+      'tour.profile.body': 'Track your Civic Points and find your reports here in Profile.',
       'persona.citizen.idle': '🦟 Stagnant water = dengue risk. Tap Report — pin it on your ward map in 30 sec, then share on WhatsApp.',
       'persona.wardImpact': '{ward}: {n} monsoon reports — dengue starts in stagnant lanes. #MonsoonGuardian',
       'persona.unfiled': '{n} open on the ward map — share with neighbours or file officially from Profile.',
@@ -466,6 +486,12 @@ document.addEventListener('DOMContentLoaded', function () {
       'onboard.name': 'Display Name', 'onboard.namePh': 'What should neighbours call you?',
       'onboard.join': 'Join your ward',
       'onboard.wardError': 'Pick a ward from the list or allow location.',
+      'onboard.why': 'Stagnant water breeds dengue & malaria. Your report puts the spot on your ward map and into the BMC queue — and alerts neighbours.',
+      'onboard.howTitle': 'How it works',
+      'onboard.how1': 'Spot stagnant water or a civic hazard',
+      'onboard.how2': 'Pin it & snap a photo on the spot',
+      'onboard.how3': 'Submit — neighbours & BMC see it, you earn Civic Points',
+      'onboard.spotNote': 'Best reported on the spot, so the location is accurate.',
       'report.title': 'Report a hazard',
       'report.step.photo': 'Photo', 'report.step.details': 'Details', 'report.step.submit': 'Submit',
       'report.hazardType': 'Hazard Type', 'report.photoEvidence': 'Photo',
@@ -534,6 +560,15 @@ document.addEventListener('DOMContentLoaded', function () {
       'success.points': 'Civic Points earned', 'success.weekBonus': '+{n} first report this week!',
       'success.celebrateFirst': 'You’re protecting your ward — neighbours will thank you.',
       'success.celebrateMilestone': '{n} reports logged — your lane is safer because of you!',
+      'success.kudos1': 'Kudos! Another hazard on the radar.',
+      'success.kudos2': 'Nice work — your ward just got a little safer.',
+      'success.kudos3': 'Logged! Thanks for looking out for your neighbours.',
+      'success.kudos4': 'You showed up again — that’s how lanes get fixed.',
+      'success.kudos5': 'Another pin down — your street thanks you.',
+      'success.progressOne': 'Just 1 more report to your next badge.',
+      'success.progressMany': '{n} more reports to your next badge.',
+      'success.progressMilestone': 'Badge unlocked! {n} more to your next one.',
+      'success.progressGuardian': '{n} reports and counting — a true Monsoon Guardian.',
       'success.shareBrag': 'You just helped your ward — tell neighbours on WhatsApp!',
       'success.shareBragFirst': 'First pin on the map! Share now — Monsoon Guardian energy spreads fast.',
       'toast.badgeMonsoon': 'Welcome, Monsoon Guardian! 🛡️',
@@ -774,6 +809,16 @@ document.addEventListener('DOMContentLoaded', function () {
       'reminder.staleCheck': 'Spot near {ward} — still stagnant?',
       'reminder.stillThere': 'Still there',
       'reminder.looksFixed': 'Looks fixed',
+      'reminder.addPhoto': 'Add a photo',
+      'settings.title': 'Reminders',
+      'settings.reminder.label': 'Remind me to report stagnant water nearby',
+      'settings.reminder.sub': 'A gentle monsoon-season nudge when you open CivicRadar. No background tracking.',
+      'settings.reminder.on': 'Reminders on — we\'ll gently nudge you when you open CivicRadar.',
+      'settings.reminder.off': 'Reminders off.',
+      'settings.reminder.denied': 'Notifications are blocked — we\'ll show a gentle in-app reminder instead.',
+      'notify.report.title': 'Spotted stagnant water today?',
+      'notify.report.body': 'If you pass a puddle, clogged drain, or open tank, take 30 seconds to report it.',
+      'notify.report.cta': 'Report now',
       'profile.status.communityVerified': 'Community verified fixed',
       'profile.status.youMarkedFixed': 'You marked fixed',
       'profile.status.bmcResolved': 'BMC resolved',
@@ -1230,7 +1275,18 @@ document.addEventListener('DOMContentLoaded', function () {
       'location.enable': 'चालू करें',
       'coach.step': '#MonsoonGuardian · 30 सेक', 'coach.title': 'डेंगू का दुश्मन? रुका पानी!',
       'coach.body': 'रिपोर्ट दबाएँ, फ़ोटो लें — वार्ड नक्शे पर पिन। पड़ोसी Me too बोलेंगे, जल्दी ठीक होगा। WhatsApp पर शेयर करें!',
+      'coach.spotTip': 'अभी रिपोर्ट करना ज़रूरी नहीं। जब रुका पानी दिखे — पोखर, जाम नाली या खुली टंकी — CivicRadar खोलें और मौके पर ही पिन करें ताकि लोकेशन सही रहे।',
       'coach.got': 'चलो शुरू करें',
+      'tour.skip': 'छोड़ें', 'tour.next': 'आगे', 'tour.done': 'समझ गया',
+      'tour.replay': 'ऐप टूर फिर देखें',
+      'tour.map.title': 'आपका वार्ड नक्शा',
+      'tour.map.body': 'यह आपका वार्ड नक्शा है। आसपास के खतरे यहाँ पिन के रूप में दिखते हैं।',
+      'tour.report.title': '30 सेकंड में रिपोर्ट',
+      'tour.report.body': 'रुका पानी रिपोर्ट करने के लिए यहाँ दबाएँ — सिर्फ़ 30 सेकंड लगते हैं।',
+      'tour.metoo.title': 'पड़ोसियों का साथ दें',
+      'tour.metoo.body': 'पास में पहले से पिन है? किसी खतरे पर “Me too” दबाएँ ताकि {corp} को दबाव दिखे।',
+      'tour.profile.title': 'Civic Points और रिपोर्ट',
+      'tour.profile.body': 'अपने Civic Points और रिपोर्ट यहाँ प्रोफ़ाइल में देखें।',
       'persona.citizen.idle': '🦟 रुका पानी = डेंगू का खतरा। रिपोर्ट दबाएँ — 30 सेक में वार्ड नक्शे पर, WhatsApp पर शेयर करें।',
       'persona.wardImpact': '{ward}: {n} मानसून रिपोर्ट दर्ज — अपनी गली को डेंगू-मुक्त रखें।',
       'persona.unfiled': '{n} खुले खतरे वार्ड मानचित्र पर — पड़ोसियों के साथ साझा करें या प्रोफ़ाइल में आधिकारिक शिकायत दर्ज करें।',
@@ -1320,6 +1376,15 @@ document.addEventListener('DOMContentLoaded', function () {
       'success.points': 'सिविक अंक मिले', 'success.weekBonus': '+{n} इस सप्ताह की पहली रिपोर्ट!',
       'success.celebrateFirst': 'आप अपने वार्ड की रक्षा कर रहे हैं — पड़ोसी आभारी होंगे।',
       'success.celebrateMilestone': '{n} रिपोर्ट — आपकी गली आपकी वजह से सुरक्षित!',
+      'success.kudos1': 'शाबाश! एक और खतरा रडार पर।',
+      'success.kudos2': 'बढ़िया काम — आपका वार्ड थोड़ा और सुरक्षित हुआ।',
+      'success.kudos3': 'दर्ज हुआ! पड़ोसियों का ध्यान रखने के लिए धन्यवाद।',
+      'success.kudos4': 'आप फिर आगे आए — इसी तरह गलियाँ ठीक होती हैं।',
+      'success.kudos5': 'एक और पिन — आपकी गली आपका शुक्रिया कहती है।',
+      'success.progressOne': 'अगले बैज के लिए बस 1 और रिपोर्ट।',
+      'success.progressMany': 'अगले बैज के लिए {n} और रिपोर्ट।',
+      'success.progressMilestone': 'बैज मिला! अगले के लिए {n} और।',
+      'success.progressGuardian': '{n} रिपोर्ट और जारी — सच्चे Monsoon Guardian।',
       'success.shareBrag': 'आपने अपने वार्ड की मदद की — पड़ोसियों को WhatsApp पर बताएँ!',
       'success.shareBragFirst': 'नक्शे पर पहला पिन! अभी शेयर करें — Monsoon Guardian की ऊर्जा फैलती है।',
       'toast.badgeMonsoon': 'स्वागत है, Monsoon Guardian! 🛡️',
@@ -1467,6 +1532,16 @@ document.addEventListener('DOMContentLoaded', function () {
       'reminder.staleCheck': '{ward} के पास — अभी भी stagnant?',
       'reminder.stillThere': 'अभी भी है',
       'reminder.looksFixed': 'ठीक लगता है',
+      'reminder.addPhoto': 'फ़ोटो जोड़ें',
+      'settings.title': 'याद दिलाने वाले',
+      'settings.reminder.label': 'पास में रुका पानी रिपोर्ट करने की याद दिलाएँ',
+      'settings.reminder.sub': 'जब आप CivicRadar खोलें तो मानसून में हल्की याद। कोई बैकग्राउंड ट्रैकिंग नहीं।',
+      'settings.reminder.on': 'याद चालू — जब आप CivicRadar खोलेंगे, हम हल्के से याद दिलाएँगे।',
+      'settings.reminder.off': 'याद बंद।',
+      'settings.reminder.denied': 'सूचनाएँ ब्लॉक हैं — हम इसके बजाय ऐप में हल्की याद दिखाएँगे।',
+      'notify.report.title': 'आज रुका पानी दिखा?',
+      'notify.report.body': 'अगर पोखर, जाम नाली या खुली टंकी पास से गुज़रें, तो 30 सेकंड में रिपोर्ट करें।',
+      'notify.report.cta': 'अभी रिपोर्ट करें',
       'profile.status.communityVerified': 'समुदाय ने ठीक की पुष्टि',
       'profile.status.youMarkedFixed': 'आपने ठीक चिह्नित',
       'profile.status.bmcResolved': 'BMC ने हल किया',
@@ -1666,6 +1741,12 @@ document.addEventListener('DOMContentLoaded', function () {
       'map.legend.resolved': 'ठीक',
       'map.legend.you': 'आप',
       'onboard.wardError': 'सूची से वार्ड चुनें या लोकेशन अनुमति दें।',
+      'onboard.why': 'रुका पानी डेंगू और मलेरिया फैलाता है। आपकी रिपोर्ट उस जगह को वार्ड नक्शे और BMC कतार में डालती है — और पड़ोसियों को सचेत करती है।',
+      'onboard.howTitle': 'यह कैसे काम करता है',
+      'onboard.how1': 'रुका पानी या कोई नागरिक खतरा देखें',
+      'onboard.how2': 'मौके पर ही पिन करें और फ़ोटो लें',
+      'onboard.how3': 'सबमिट करें — पड़ोसी और BMC देखेंगे, आपको Civic Points मिलेंगे',
+      'onboard.spotNote': 'मौके पर रिपोर्ट करना सबसे अच्छा, ताकि लोकेशन सटीक रहे।',
       'persona.admin.exit': 'BMC मोड बंद',
       'persona.admin.header': 'BMC समीक्षा मोड',
       'persona.admin.idleEmpty': 'कोई लंबित रिपोर्ट नहीं। नए पिन यहाँ दिखेंगे।',
@@ -1958,7 +2039,18 @@ document.addEventListener('DOMContentLoaded', function () {
       'location.enable': 'चालू करा',
       'coach.step': '#MonsoonGuardian · 30 सेक', 'coach.title': 'डेंगूचा शत्रू? साचलेले पाणी!',
       'coach.body': 'तक्रार दाबा, फोटो काढा — वॉर्ड नकाशावर पिन. शेजारी Me too म्हणतील, लवकर सोडवले जाईल. WhatsApp वर शेअर करा!',
+      'coach.spotTip': 'आत्ताच नोंदवायची गरज नाही. जेव्हा साचलेले पाणी दिसेल — डबके, तुंबलेले गटार किंवा उघडी टाकी — CivicRadar उघडा आणि जागेवरच पिन करा जेणेकरून ठिकाण अचूक राहील.',
       'coach.got': 'चला सुरू करू',
+      'tour.skip': 'वगळा', 'tour.next': 'पुढे', 'tour.done': 'समजले',
+      'tour.replay': 'अ‍ॅप टूर पुन्हा पाहा',
+      'tour.map.title': 'तुमचा वॉर्ड नकाशा',
+      'tour.map.body': 'हा तुमचा वॉर्ड नकाशा आहे. जवळचे धोके इथे पिन म्हणून दिसतात.',
+      'tour.report.title': '30 सेकंदात तक्रार',
+      'tour.report.body': 'साचलेले पाणी नोंदवण्यासाठी इथे दाबा — फक्त 30 सेकंद लागतात.',
+      'tour.metoo.title': 'शेजाऱ्यांना साथ द्या',
+      'tour.metoo.body': 'जवळ आधीच पिन आहे? एखाद्या धोक्यावर “Me too” दाबा जेणेकरून {corp} ला दबाव दिसेल.',
+      'tour.profile.title': 'Civic Points आणि तक्रारी',
+      'tour.profile.body': 'तुमचे Civic Points आणि तक्रारी इथे प्रोफाइलमध्ये पाहा.',
       'persona.citizen.idle': '🦟 साचलेले पाणी = डेंगू धोका. तक्रार दाबा — 30 सेकंदात वॉर्ड नकाशावर, WhatsApp वर शेअर.',
       'persona.wardImpact': '{ward}: {n} पावसाळी तक्रारी — डेंगू साचलेल्या लेनमधून सुरू. #MonsoonGuardian',
       'persona.unfiled': '{n} खुले धोके वॉर्ड नकाशावर — शेजाऱ्यांसोबत शेअर करा किंवा प्रोफाइलमध्ये अधिकृत तक्रार नोंदवा.',
@@ -2048,6 +2140,15 @@ document.addEventListener('DOMContentLoaded', function () {
       'success.points': 'सिव्हिक गुण मिळाले', 'success.weekBonus': '+{n} या आठवड्याची पहिली तक्रार!',
       'success.celebrateFirst': 'तुम्ही वॉर्डचे रक्षण करत आहात — शेजारी आभारी असतील.',
       'success.celebrateMilestone': '{n} तक्रारी — तुमच्या मुळे लेन सुरक्षित!',
+      'success.kudos1': 'शाब्बास! आणखी एक धोका रडारवर.',
+      'success.kudos2': 'छान काम — तुमचा वॉर्ड थोडा अधिक सुरक्षित झाला.',
+      'success.kudos3': 'नोंदवले! शेजाऱ्यांची काळजी घेतल्याबद्दल धन्यवाद.',
+      'success.kudos4': 'तुम्ही पुन्हा पुढे आलात — अशाच लेन दुरुस्त होतात.',
+      'success.kudos5': 'आणखी एक पिन — तुमची गल्ली तुमचे आभार मानते.',
+      'success.progressOne': 'पुढच्या बॅजसाठी फक्त 1 आणखी तक्रार.',
+      'success.progressMany': 'पुढच्या बॅजसाठी {n} आणखी तक्रारी.',
+      'success.progressMilestone': 'बॅज मिळाला! पुढच्यासाठी {n} आणखी.',
+      'success.progressGuardian': '{n} तक्रारी आणि सुरू — खरे Monsoon Guardian.',
       'success.shareBrag': 'तुम्ही वॉर्डला मदत केली — शेजाऱ्यांना WhatsApp वर सांगा!',
       'success.shareBragFirst': 'नकाशावर पहिला पिन! आत्ताच शेअर करा — Monsoon Guardian ऊर्जा पसरते.',
       'toast.badgeMonsoon': 'स्वागत, Monsoon Guardian! 🛡️',
@@ -2190,6 +2291,16 @@ document.addEventListener('DOMContentLoaded', function () {
       'reminder.staleCheck': '{ward} जवळ — अजून stagnant?',
       'reminder.stillThere': 'अजून आहे',
       'reminder.looksFixed': 'ठीक दिसते',
+      'reminder.addPhoto': 'फोटो जोडा',
+      'settings.title': 'आठवणी',
+      'settings.reminder.label': 'जवळचे साचलेले पाणी नोंदवण्याची आठवण करा',
+      'settings.reminder.sub': 'CivicRadar उघडल्यावर पावसाळ्यात सौम्य आठवण. बॅकग्राउंड ट्रॅकिंग नाही.',
+      'settings.reminder.on': 'आठवणी सुरू — तुम्ही CivicRadar उघडाल तेव्हा आम्ही सौम्यपणे आठवण करू.',
+      'settings.reminder.off': 'आठवणी बंद.',
+      'settings.reminder.denied': 'सूचना ब्लॉक आहेत — त्याऐवजी आम्ही अॅपमध्ये सौम्य आठवण दाखवू.',
+      'notify.report.title': 'आज साचलेले पाणी दिसले का?',
+      'notify.report.body': 'डबके, तुंबलेले गटार किंवा उघडी टाकी जवळून गेलात, तर 30 सेकंदात नोंदवा.',
+      'notify.report.cta': 'आत्ता नोंदवा',
       'profile.status.communityVerified': 'समुदायाने ठीक पुष्टी',
       'profile.status.youMarkedFixed': 'तुम्ही ठीक चिन्हांकित',
       'profile.status.bmcResolved': 'BMC ने सोडवले',
@@ -2387,6 +2498,12 @@ document.addEventListener('DOMContentLoaded', function () {
       'map.legend.resolved': 'निराकरण',
       'map.legend.you': 'तुम्ही',
       'onboard.wardError': 'यादीतून वॉर्ड निवडा किंवा लोकेशन परवानगी द्या.',
+      'onboard.why': 'साचलेले पाणी डेंगू व मलेरिया पसरवते. तुमची तक्रार ती जागा वॉर्ड नकाशावर व BMC रांगेत आणते — आणि शेजाऱ्यांना सूचित करते.',
+      'onboard.howTitle': 'हे कसे चालते',
+      'onboard.how1': 'साचलेले पाणी किंवा नागरी धोका पहा',
+      'onboard.how2': 'जागेवरच पिन करा आणि फोटो काढा',
+      'onboard.how3': 'सबमिट करा — शेजारी व BMC पाहतील, तुम्हाला Civic Points मिळतील',
+      'onboard.spotNote': 'जागेवर नोंदवणे सर्वोत्तम, जेणेकरून ठिकाण अचूक राहते.',
       'persona.admin.exit': 'BMC मोड बंद',
       'persona.admin.header': 'BMC पुनरावलोकन मोड',
       'persona.admin.idleEmpty': 'प्रलंबित तक्रारी नाहीत. नवीन पिन येथे दिसतील.',
@@ -2682,7 +2799,18 @@ document.addEventListener('DOMContentLoaded', function () {
       'location.enable': 'ચાલુ કરો',
       'coach.step': '#MonsoonGuardian · 30 સેક', 'coach.title': 'ડેંગુનો દુશ્મન? ભરાયેલું પાણી!',
       'coach.body': 'ફરિયાદ દબાવો, ફોટો લો — વોર્ડ નકશા પર પિન. પડોશીઓ Me too કહેશે, ઝડપથી ઠીક થશે. WhatsApp પર શેર કરો!',
+      'coach.spotTip': 'અત્યારે જ ફરિયાદ કરવી જરૂરી નથી. જ્યારે ભરાયેલું પાણી જુઓ — ખાબોચિયું, ભરાયેલી ગટર કે ખુલ્લી ટાંકી — CivicRadar ખોલો અને જગ્યા પર જ પિન કરો જેથી સ્થાન સચોટ રહે.',
       'coach.got': 'ચાલો શરૂ કરીએ',
+      'tour.skip': 'છોડો', 'tour.next': 'આગળ', 'tour.done': 'સમજાઈ ગયું',
+      'tour.replay': 'એપ ટૂર ફરી જુઓ',
+      'tour.map.title': 'તમારો વોર્ડ નકશો',
+      'tour.map.body': 'આ તમારો વોર્ડ નકશો છે. નજીકના જોખમો અહીં પિન તરીકે દેખાય છે.',
+      'tour.report.title': '30 સેકન્ડમાં ફરિયાદ',
+      'tour.report.body': 'ભરાયેલું પાણી નોંધવા અહીં દબાવો — માત્ર 30 સેકન્ડ લાગે છે.',
+      'tour.metoo.title': 'પડોશીઓને ટેકો આપો',
+      'tour.metoo.body': 'નજીકમાં પહેલેથી પિન છે? કોઈ જોખમ પર “Me too” દબાવો જેથી {corp} ને દબાણ દેખાય.',
+      'tour.profile.title': 'Civic Points અને ફરિયાદ',
+      'tour.profile.body': 'તમારા Civic Points અને ફરિયાદ અહીં પ્રોફાઇલમાં જુઓ.',
       'persona.citizen.idle': '🦟 ભરાયેલું પાણી = ડેંગુ જોખમ. ફરિયાદ દબાવો — 30 સેકમાં વોર્ડ નકશા પર, WhatsApp પર શેર.',
       'persona.wardImpact': '{ward}: {n} ચોમાસુ ફરિયાદ — ડેંગુ સ્થિર ગલીઓમાંથી શરૂ. #MonsoonGuardian',
       'persona.unfiled': '{n} ખુલ્લા જોખમો વોર્ડ નકશા પર — પડોશીઓ સાથે શેર કરો અથવા પ્રોફાઇલમાં અધિકૃત ફરિયાદ નોંધાવો.',
@@ -2772,6 +2900,15 @@ document.addEventListener('DOMContentLoaded', function () {
       'success.points': 'સિવિક પોઈન્ટ મળ્યા', 'success.weekBonus': '+{n} આ અઠવાડિયાની પહેલી ફરિયાદ!',
       'success.celebrateFirst': 'તમે વોર્ડનું રક્ષણ કરો છો — પડોશીઓ આભારી રહેશે.',
       'success.celebrateMilestone': '{n} ફરિયાદો — તમારા કારણે લેન સુરક્ષિત!',
+      'success.kudos1': 'શાબાશ! વધુ એક ખતરો રડાર પર.',
+      'success.kudos2': 'સરસ કામ — તમારો વોર્ડ થોડો વધુ સુરક્ષિત થયો.',
+      'success.kudos3': 'નોંધાયું! પડોશીઓની કાળજી લેવા બદલ આભાર.',
+      'success.kudos4': 'તમે ફરી આગળ આવ્યા — આ રીતે લેન સુધરે છે.',
+      'success.kudos5': 'વધુ એક પિન — તમારી શેરી તમારો આભાર માને છે.',
+      'success.progressOne': 'આગલા બેજ માટે ફક્ત 1 વધુ ફરિયાદ.',
+      'success.progressMany': 'આગલા બેજ માટે {n} વધુ ફરિયાદો.',
+      'success.progressMilestone': 'બેજ મળ્યો! આગલા માટે {n} વધુ.',
+      'success.progressGuardian': '{n} ફરિયાદો અને ચાલુ — સાચા Monsoon Guardian.',
       'success.shareBrag': 'તમે વોર્ડને મદદ કરી — પડોશીઓને WhatsApp પર કહો!',
       'success.shareBragFirst': 'નકશા પર પહેલું પિન! હમણાં શેર કરો — Monsoon Guardian ઊર્જા ફેલાય.',
       'toast.badgeMonsoon': 'સ્વાગત, Monsoon Guardian! 🛡️',
@@ -2914,6 +3051,16 @@ document.addEventListener('DOMContentLoaded', function () {
       'reminder.staleCheck': '{ward} પાસે — હજુ stagnant?',
       'reminder.stillThere': 'હજુ છે',
       'reminder.looksFixed': 'ઠીક લાગે છે',
+      'reminder.addPhoto': 'ફોટો ઉમેરો',
+      'settings.title': 'યાદ અપાવનારા',
+      'settings.reminder.label': 'નજીકનું ભરાયેલું પાણી ફરિયાદ કરવા યાદ અપાવો',
+      'settings.reminder.sub': 'CivicRadar ખોલો ત્યારે ચોમાસામાં હળવી યાદ. કોઈ બેકગ્રાઉન્ડ ટ્રેકિંગ નહીં.',
+      'settings.reminder.on': 'યાદ ચાલુ — તમે CivicRadar ખોલશો ત્યારે અમે હળવેથી યાદ અપાવીશું.',
+      'settings.reminder.off': 'યાદ બંધ.',
+      'settings.reminder.denied': 'સૂચનાઓ બ્લોક છે — તેના બદલે અમે એપમાં હળવી યાદ બતાવીશું.',
+      'notify.report.title': 'આજે ભરાયેલું પાણી જોયું?',
+      'notify.report.body': 'ખાબોચિયું, ભરાયેલી ગટર કે ખુલ્લી ટાંકી પાસેથી પસાર થાઓ, તો 30 સેકન્ડમાં ફરિયાદ કરો.',
+      'notify.report.cta': 'હમણાં ફરિયાદ કરો',
       'profile.status.communityVerified': 'સમુદાયે ઠીકની પુષ્ટિ',
       'profile.status.youMarkedFixed': 'તમે ઠીક ચિહ્નિત',
       'profile.status.bmcResolved': 'BMC એ ઉકેલ્યું',
@@ -3109,6 +3256,12 @@ document.addEventListener('DOMContentLoaded', function () {
       'map.legend.resolved': 'ઉકેલાયા',
       'map.legend.you': 'તમે',
       'onboard.wardError': 'યાદીમાંથી વોર્ડ પસંદ કરો અથવા લોકેશન મંજૂરી આપો.',
+      'onboard.why': 'ભરાયેલું પાણી ડેંગુ અને મલેરિયા ફેલાવે છે. તમારી ફરિયાદ એ જગ્યાને વોર્ડ નકશા અને BMC કતારમાં મૂકે છે — અને પડોશીઓને જાણ કરે છે.',
+      'onboard.howTitle': 'આ કેવી રીતે કામ કરે છે',
+      'onboard.how1': 'ભરાયેલું પાણી કે નાગરિક જોખમ જુઓ',
+      'onboard.how2': 'જગ્યા પર જ પિન કરો અને ફોટો લો',
+      'onboard.how3': 'સબમિટ કરો — પડોશીઓ અને BMC જોશે, તમને Civic Points મળશે',
+      'onboard.spotNote': 'જગ્યા પર ફરિયાદ કરવી શ્રેષ્ઠ, જેથી સ્થાન સચોટ રહે.',
       'persona.admin.exit': 'BMC મોડ બંધ',
       'persona.admin.header': 'BMC સમીક્ષા મોડ',
       'persona.admin.idleEmpty': 'બાકી ફરિયાદો નથી. નવા પિન અહીં દેખાશે.',
@@ -4647,7 +4800,7 @@ document.addEventListener('DOMContentLoaded', function () {
       RESOLVED_SEEN_KEY, CONFIRMED_SEEN_KEY,
       REMINDER_STALE_SNOOZE_KEY,
       SUCCESS_STORIES_SEEN_KEY,
-      HIDDEN_REPORTS_KEY, WEEK_BONUS_KEY, INTEREST_KEY, COACH_KEY,
+      HIDDEN_REPORTS_KEY, WEEK_BONUS_KEY, INTEREST_KEY, COACH_KEY, TOUR_KEY,
       PLEDGE_STATUS_SNAPSHOT_KEY, PLEDGE_POINTS_CREDITED_KEY,
       REMINDER_NGO_PLEDGES_LAST_SEEN_KEY,
       VOLUNTEER_SIGNUPS_KEY, VOLUNTEER_TASKS_KEY,
@@ -5902,6 +6055,208 @@ document.addEventListener('DOMContentLoaded', function () {
     ]);
   }
 
+  /* ---------- Opt-in "report stagnant water nearby" reminder (Feature 2a) ----------
+     Honest about platform limits: NO background push / geofencing. Reminders fire
+     only while the app is open (load + visibilitychange). When the user opted in and
+     a reminder is "due", we prefer a real Notification (granted permission) and
+     otherwise fall back to the existing in-app reminder card. iOS / unsupported /
+     denied all degrade gracefully — the app never blocks or errors on this. */
+  function isReportReminderOptedIn() {
+    return localStorage.getItem(REPORT_REMINDER_OPTIN_KEY) === '1';
+  }
+
+  function notificationsSupported() {
+    return typeof window !== 'undefined' && 'Notification' in window;
+  }
+
+  function setReportReminderOptIn(enabled) {
+    try { localStorage.setItem(REPORT_REMINDER_OPTIN_KEY, enabled ? '1' : '0'); } catch {}
+    if (window.CivicAnalytics) {
+      CivicAnalytics.track('report_reminder_optin', { enabled: !!enabled }, user.ward);
+    }
+  }
+
+  function syncReportReminderToggle() {
+    const el = $('#reportReminderToggle');
+    if (el) el.checked = isReportReminderOptedIn();
+  }
+
+  // Wired from the Profile toggle. Requesting permission requires a user gesture,
+  // which the toggle click provides. Feature-detected so headless/iOS never hangs.
+  function handleReportReminderToggle(enabled) {
+    setReportReminderOptIn(enabled);
+    if (!enabled) {
+      showToast(t('settings.reminder.off'), 'info', 2600);
+      return;
+    }
+    if (!notificationsSupported()) {
+      showToast(t('settings.reminder.denied'), 'info', 4200);
+      return;
+    }
+    let perm = 'default';
+    try { perm = Notification.permission; } catch {}
+    if (perm === 'granted') {
+      showToast(t('settings.reminder.on'), 'success', 3600);
+      return;
+    }
+    if (perm === 'denied') {
+      showToast(t('settings.reminder.denied'), 'info', 4200);
+      return;
+    }
+    try {
+      const req = Notification.requestPermission();
+      if (req && typeof req.then === 'function') {
+        req.then((result) => {
+          showToast(
+            result === 'granted' ? t('settings.reminder.on') : t('settings.reminder.denied'),
+            result === 'granted' ? 'success' : 'info',
+            result === 'granted' ? 3600 : 4200
+          );
+        }).catch(() => showToast(t('settings.reminder.on'), 'success', 3600));
+      } else {
+        showToast(t('settings.reminder.on'), 'success', 3600);
+      }
+    } catch {
+      showToast(t('settings.reminder.on'), 'success', 3600);
+    }
+  }
+
+  function isReportReminderDue() {
+    if (isReminderSnoozed(REPORT_REMINDER_SNOOZE_KEY)) return false;
+    const last = localStorage.getItem(REPORT_REMINDER_LAST_KEY);
+    if (!last) return true;
+    return Date.now() - new Date(last).getTime() >= REPORT_REMINDER_DAYS * 86400000;
+  }
+
+  function markReportReminderShown() {
+    try { localStorage.setItem(REPORT_REMINDER_LAST_KEY, new Date().toISOString()); } catch {}
+  }
+
+  function showReportReminderInApp() {
+    if (!canShowSessionReminder()) return;
+    sessionReminderCount++;
+    trackReminderShown('report_reminder', { channel: 'in_app' });
+    showToast(t('notify.report.body'), 'info', 9000, {
+      label: t('notify.report.cta'),
+      onClick: () => window.openReportModal(true),
+      secondary: [{
+        label: t('reminder.snooze3d'),
+        onClick: () => snoozeReminder(REPORT_REMINDER_SNOOZE_KEY, 3, 'report_reminder'),
+      }],
+    });
+  }
+
+  function fireReportReminderNotification() {
+    // Prefer the SW registration (works when the page is backgrounded on supported
+    // browsers); fall back to a page Notification; finally fall back to in-app.
+    const title = t('notify.report.title');
+    const opts = { body: t('notify.report.body'), tag: 'civicradar-report-reminder', icon: 'assets/icon-192.png', badge: 'assets/favicon-32.png' };
+    try {
+      if (navigator.serviceWorker && navigator.serviceWorker.ready) {
+        navigator.serviceWorker.ready
+          .then((reg) => { if (reg && reg.showNotification) reg.showNotification(title, opts); else throw new Error('no showNotification'); })
+          .catch(() => { try { new Notification(title, opts); } catch { showReportReminderInApp(); } });
+        return true;
+      }
+      new Notification(title, opts);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  function maybeShowReportReminder() {
+    if (isAdmin || isLead) return;
+    if (!user.ward || !user.tosAccepted) return;
+    if (!isReportReminderOptedIn()) return;
+    if (!isReportReminderDue()) return;
+    markReportReminderShown();
+    if (window.CivicAnalytics) CivicAnalytics.track('report_reminder_due', {}, user.ward);
+    let perm = 'default';
+    if (notificationsSupported()) { try { perm = Notification.permission; } catch {} }
+    if (perm === 'granted') {
+      trackReminderShown('report_reminder', { channel: 'notification' });
+      if (fireReportReminderNotification()) return;
+    }
+    showReportReminderInApp();
+  }
+  window.maybeShowReportReminder = maybeShowReportReminder;
+
+  /* ---------- Location-aware in-app nudge (Feature 2b) ----------
+     Foreground only. Reuses the granted GPS position (never re-prompts) and the
+     existing haversine helper to see if the user is standing near a known PENDING
+     hazard. Surfaces through the SAME reminder queue (staleCheck priority), so it
+     respects MAX_SESSION_REMINDERS, snooze keys and priority ordering. Precise
+     coordinates are used transiently and never persisted. */
+  function collectProximityReminders(lat, lng) {
+    if (isAdmin || isLead || !user.ward) return [];
+    if (lat == null || lng == null) return [];
+    // One location prompt per session: if the 50m Me-too prompt already fired, skip.
+    if (sessionStorage.getItem('civicradar_nearby_prompt')) return [];
+    if (sessionStorage.getItem('civicradar_proximity_session')) return [];
+
+    let best = null;
+    let bestDist = PROXIMITY_NUDGE_M;
+    loadReports().forEach((r) => {
+      if (r.status !== 'pending' || r.lat == null || r.lng == null) return;
+      if (isStaleReportSnoozed(r.id)) return;
+      const owns = ownsReport(r);
+      if (!owns && hasConfirmed(r.id)) return;
+      const dist = getDistanceInMeters(lat, lng, r.lat, r.lng);
+      if (dist < bestDist) { bestDist = dist; best = { report: r, owns }; }
+    });
+    if (!best) return [];
+
+    const report = best.report;
+    const owns = best.owns;
+    const ward = wardShortForReminder(report.ward) || t('header.context');
+    return [{
+      priority: REMINDER_PRIORITY.proximity,
+      type: 'proximity_nudge',
+      meta: { reportId: String(report.id), owns },
+      show: () => {
+        sessionStorage.setItem('civicradar_proximity_session', '1');
+        snoozeStaleReport(report.id);
+        if (window.CivicAnalytics) {
+          CivicAnalytics.track('proximity_nudge_shown', { reportId: String(report.id), owns }, report.ward);
+        }
+        showToast(
+          t('reminder.staleCheck').replace('{ward}', ward),
+          'info',
+          9000,
+          {
+            label: t('reminder.addPhoto'),
+            onClick: () => window.openReportModal(true),
+            secondary: [{
+              label: t('reminder.stillThere'),
+              onClick: () => {
+                if (owns) snoozeStaleReport(report.id);
+                else confirmReport(report.id);
+              },
+            }],
+          }
+        );
+      },
+    }];
+  }
+
+  function maybeProximityNudge(lat, lng) {
+    if (!user.ward || !user.tosAccepted) return;
+    dispatchReminderQueue(collectProximityReminders(lat, lng));
+  }
+  window.maybeProximityNudge = maybeProximityNudge;
+
+  // Test-only: lets the E2E suite exercise the per-session reminder cap and the
+  // location-nudge flow deterministically. No-op effect on real users.
+  window.__civicResetReminderSession = function () {
+    sessionReminderCount = 0;
+    try {
+      sessionStorage.removeItem('civicradar_nearby_prompt');
+      sessionStorage.removeItem('civicradar_proximity_session');
+      sessionStorage.removeItem('civicradar_stale_check_session');
+    } catch {}
+  };
+
   function countNewNgoHazards() {
     const lastSeen = localStorage.getItem(REMINDER_NGO_LAST_SEEN_KEY);
     if (!lastSeen) return 0;
@@ -6545,7 +6900,171 @@ document.addEventListener('DOMContentLoaded', function () {
   function dismissCoachMark() {
     localStorage.setItem(COACH_KEY, '1');
     $('#coachMark').classList.add('hidden');
+    // Sequence the interactive tour right after the explainer so first-run users
+    // never see two stacked pop-ups (gated for demo/referral/returning users).
+    setTimeout(maybeStartTour, 350);
   }
+
+  /* ---------- Interactive guided tour (coach-mark spotlight) ---------- */
+  let tourState = null;
+
+  function isTourElementVisible(el) {
+    if (!el || (el.classList && el.classList.contains('hidden'))) return false;
+    const r = el.getBoundingClientRect();
+    if (r.width <= 0 || r.height <= 0) return false;
+    const cs = window.getComputedStyle(el);
+    return cs.display !== 'none' && cs.visibility !== 'hidden';
+  }
+
+  // Steps with target:null are explained generically (centred, no spotlight) so we
+  // never point at an element that may not exist on first run (e.g. no pins yet).
+  function getTourSteps() {
+    return [
+      { target: '#map', titleKey: 'tour.map.title', bodyKey: 'tour.map.body' },
+      { target: '#btnCamera', titleKey: 'tour.report.title', bodyKey: 'tour.report.body' },
+      { target: null, titleKey: 'tour.metoo.title', bodyKey: 'tour.metoo.body' },
+      { target: '#bottomNav .nav-tab[data-tab="profile"]', titleKey: 'tour.profile.title', bodyKey: 'tour.profile.body' },
+    ];
+  }
+
+  function startTour(opts = {}) {
+    if (tourState) return;
+    // Tour highlights the map shell + FAB + bottom-nav, so clear modals first.
+    closeAllModals();
+    setNavTab('map');
+    const steps = getTourSteps().filter((step) => {
+      if (!step.target) return true;
+      return isTourElementVisible($(step.target));
+    });
+    if (!steps.length) return;
+    tourState = { steps, index: 0, lastFocus: document.activeElement };
+    const overlay = $('#tourOverlay');
+    overlay.classList.remove('hidden');
+    document.addEventListener('keydown', onTourKeydown, true);
+    window.addEventListener('resize', positionTour);
+    window.addEventListener('scroll', positionTour, true);
+    renderTourStep();
+    if (window.CivicAnalytics) CivicAnalytics.track('tour_start', { replay: !!opts.replay });
+  }
+
+  function renderTourStep() {
+    if (!tourState) return;
+    const { steps, index } = tourState;
+    const step = steps[index];
+    const last = index === steps.length - 1;
+    $('#tourStep').textContent = `${index + 1} / ${steps.length}`;
+    $('#tourTitle').textContent = t(step.titleKey);
+    $('#tourBody').textContent = corpCopy(step.bodyKey);
+    $('#btnTourNext').textContent = last ? t('tour.done') : t('tour.next');
+    positionTour();
+    const bubble = $('#tourBubble');
+    if (bubble && !prefersReducedMotion()) bubble.focus();
+    else if (bubble) { try { bubble.focus({ preventScroll: true }); } catch { bubble.focus(); } }
+  }
+
+  function positionTour() {
+    if (!tourState) return;
+    const step = tourState.steps[tourState.index];
+    const overlay = $('#tourOverlay');
+    const spot = $('#tourSpotlight');
+    const bubble = $('#tourBubble');
+    const el = step.target ? $(step.target) : null;
+    if (!el || !isTourElementVisible(el)) {
+      overlay.classList.add('tour--centered');
+      bubble.style.top = '';
+      bubble.style.left = '';
+      return;
+    }
+    overlay.classList.remove('tour--centered');
+    const r = el.getBoundingClientRect();
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const pad = 8;
+    spot.style.top = `${r.top - pad}px`;
+    spot.style.left = `${r.left - pad}px`;
+    spot.style.width = `${r.width + pad * 2}px`;
+    spot.style.height = `${r.height + pad * 2}px`;
+    const bw = bubble.offsetWidth || 320;
+    const bh = bubble.offsetHeight || 160;
+    let top = r.bottom + 14;
+    if (top + bh > vh - 12) top = r.top - bh - 14;
+    if (top < 12) top = Math.min(12, Math.max(12, vh - bh - 12));
+    let left = r.left + r.width / 2 - bw / 2;
+    left = Math.max(12, Math.min(left, vw - bw - 12));
+    bubble.style.top = `${top}px`;
+    bubble.style.left = `${left}px`;
+  }
+
+  function nextTourStep() {
+    if (!tourState) return;
+    if (tourState.index >= tourState.steps.length - 1) {
+      endTour(true);
+      return;
+    }
+    tourState.index += 1;
+    renderTourStep();
+  }
+
+  function endTour(completed) {
+    if (!tourState) return;
+    localStorage.setItem(TOUR_KEY, '1');
+    const overlay = $('#tourOverlay');
+    overlay.classList.add('hidden');
+    overlay.classList.remove('tour--centered');
+    document.removeEventListener('keydown', onTourKeydown, true);
+    window.removeEventListener('resize', positionTour);
+    window.removeEventListener('scroll', positionTour, true);
+    const lastFocus = tourState.lastFocus;
+    tourState = null;
+    if (lastFocus && typeof lastFocus.focus === 'function') {
+      try { lastFocus.focus(); } catch { /* ignore */ }
+    }
+    if (window.CivicAnalytics) CivicAnalytics.track(completed ? 'tour_complete' : 'tour_skip');
+  }
+
+  function onTourKeydown(e) {
+    if (!tourState) return;
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      e.stopPropagation();
+      endTour(false);
+    } else if (e.key === 'Enter') {
+      // Let a focused button activate natively; advance only from the bubble itself.
+      if (e.target && e.target.tagName === 'BUTTON') return;
+      e.preventDefault();
+      nextTourStep();
+    } else if (e.key === 'Tab') {
+      // Keep keyboard focus trapped between Skip and Next.
+      const focusables = [$('#btnTourSkip'), $('#btnTourNext')].filter(Boolean);
+      if (focusables.length < 2) return;
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      const active = document.activeElement;
+      if (e.shiftKey && (active === first || active === $('#tourBubble'))) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && active === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    }
+  }
+
+  // Auto-show path: once only, never for demo/referral entries or coordinators.
+  function maybeStartTour() {
+    if (localStorage.getItem(TOUR_KEY)) return;
+    let demo = null;
+    let ref = null;
+    try {
+      const params = new URLSearchParams(location.search);
+      demo = params.get('demo');
+      ref = params.get('ref');
+    } catch { /* ignore */ }
+    if (demo || ref) return;
+    if (isAdmin || isLead) return;
+    startTour();
+  }
+  window.startCivicTour = (opts) => startTour(opts || {});
 
   function setNavTab(tab) {
     $$('#bottomNav .nav-tab').forEach((t) => {
@@ -7300,6 +7819,12 @@ document.addEventListener('DOMContentLoaded', function () {
   updatePartnerPortalUi();
   updatePersonaUI();
   runBootSequence();
+  // Foreground-triggered opt-in reminder: re-check when the user returns to the tab.
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      setTimeout(maybeShowReportReminder, 400);
+    }
+  });
   registerServiceWorker();
   setupInstallPrompt();
   warnIfShareUrlNotProduction();
@@ -7361,6 +7886,7 @@ document.addEventListener('DOMContentLoaded', function () {
       setTimeout(showCoachMark, 600);
       setTimeout(() => { checkResolvedWins(); checkConfirmedResolved(); updateCommunityWinBadge(); }, 1200);
       setTimeout(processBootReminders, 1800);
+      setTimeout(maybeShowReportReminder, 2400);
       updateMapEmptyCta();
       handleReportDeepLink();
       if (window.CivicAnalytics) CivicAnalytics.track('tab_view', { tab: 'map', initial: true });
@@ -7461,6 +7987,7 @@ document.addEventListener('DOMContentLoaded', function () {
           fillOpacity: 0.9,
         }).addTo(map).bindPopup('You are here');
         setTimeout(() => promptNearbyCorroboration(currentLat, currentLng), 800);
+        setTimeout(() => maybeProximityNudge(currentLat, currentLng), 1300);
       },
       () => {
         showLocationBanner('Enable location to report hazards and see nearby issues.');
@@ -7689,11 +8216,37 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     }
 
+    const reportReminderToggle = $('#reportReminderToggle');
+    if (reportReminderToggle) {
+      reportReminderToggle.addEventListener('change', (e) => {
+        handleReportReminderToggle(e.target.checked);
+      });
+    }
+
     $('#btnDismissCoach').addEventListener('click', dismissCoachMark);
     const coachMark = $('#coachMark');
     if (coachMark) {
       coachMark.addEventListener('click', (e) => {
         if (e.target === coachMark) dismissCoachMark();
+      });
+    }
+
+    const btnTourNext = $('#btnTourNext');
+    if (btnTourNext) btnTourNext.addEventListener('click', nextTourStep);
+    const btnTourSkip = $('#btnTourSkip');
+    if (btnTourSkip) btnTourSkip.addEventListener('click', () => endTour(false));
+    const tourOverlay = $('#tourOverlay');
+    if (tourOverlay) {
+      tourOverlay.addEventListener('click', (e) => {
+        // Backdrop tap (anywhere outside the bubble) skips the tour.
+        if (e.target === tourOverlay || e.target === $('#tourSpotlight')) endTour(false);
+      });
+    }
+    const btnReplayTour = $('#btnReplayTour');
+    if (btnReplayTour) {
+      btnReplayTour.addEventListener('click', () => {
+        closeModal('profile');
+        setTimeout(() => startTour({ replay: true }), 250);
       });
     }
     $('#btnPartnerAccess').addEventListener('click', window.openPartnerPortal);
@@ -8529,6 +9082,34 @@ document.addEventListener('DOMContentLoaded', function () {
     );
   }
 
+  // Rotating warm kudos for every non-special report so it never feels repetitive.
+  function getRotatingKudos(reportCount) {
+    const keys = [
+      'success.kudos1', 'success.kudos2', 'success.kudos3', 'success.kudos4', 'success.kudos5',
+    ];
+    const n = Number(reportCount) || 0;
+    const idx = ((n % keys.length) + keys.length) % keys.length;
+    return t(keys[idx]);
+  }
+
+  // Short nudge telling the user how close they are to their next milestone/badge.
+  function buildSuccessProgress(reportCount) {
+    const n = Number(reportCount) || 0;
+    const top = REPORT_CELEBRATION_MILESTONES[REPORT_CELEBRATION_MILESTONES.length - 1];
+    if (n >= top) {
+      return t('success.progressGuardian').replace('{n}', String(n));
+    }
+    const next = REPORT_CELEBRATION_MILESTONES.find((m) => m > n);
+    if (!next) return '';
+    const remaining = next - n;
+    if (REPORT_CELEBRATION_MILESTONES.includes(n)) {
+      return t('success.progressMilestone').replace('{n}', String(remaining));
+    }
+    return remaining === 1
+      ? t('success.progressOne')
+      : t('success.progressMany').replace('{n}', String(remaining));
+  }
+
   function showSuccessModal(weekBonus = 0) {
     const thumb = $('#successThumbnail');
     if (lastReportDataUrl) {
@@ -8552,14 +9133,18 @@ document.addEventListener('DOMContentLoaded', function () {
     if (celebrateEl) {
       if (reportCount === 1) {
         celebrateEl.textContent = t('success.celebrateFirst');
-        celebrateEl.classList.remove('hidden');
       } else if (REPORT_CELEBRATION_MILESTONES.includes(reportCount) && reportCount > 1) {
         celebrateEl.textContent = t('success.celebrateMilestone').replace('{n}', String(reportCount));
-        celebrateEl.classList.remove('hidden');
       } else {
-        celebrateEl.textContent = '';
-        celebrateEl.classList.add('hidden');
+        celebrateEl.textContent = getRotatingKudos(reportCount);
       }
+      celebrateEl.classList.remove('hidden');
+    }
+    const progressEl = $('#successProgress');
+    if (progressEl) {
+      const progressMsg = buildSuccessProgress(reportCount);
+      progressEl.textContent = progressMsg;
+      progressEl.classList.toggle('hidden', !progressMsg);
     }
     const sharePromptEl = document.querySelector('#successModal .success-share-prompt');
     if (sharePromptEl) {
@@ -11038,6 +11623,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   /* ---------- Profile Stats Calculator ---------- */
   function updateProfileUI() {
+    syncReportReminderToggle();
     const reports = getUserReports();
     const resolved = reports.filter((r) => r.status === 'resolved');
     const pending = reports.filter((r) => r.status === 'pending');

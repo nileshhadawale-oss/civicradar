@@ -10,6 +10,59 @@ Release process and environment details live in [`RELEASE.md`](./RELEASE.md).
 ## [Unreleased]
 
 ### Added
+- **First-run interactive guided tour** — after the onboarding explainer/coach tip,
+  brand-new citizens get a short, skippable coach-mark spotlight tour that teaches
+  the key navigation by highlighting the real UI: **Map = your ward** → **Report**
+  (the camera FAB) → **Me too** (explained generically so it never points at a
+  missing pin) → **Profile / Civic Points** (bottom-nav). It is sequenced right
+  after the existing v79 `coachSpotTip` so users never see two stacked first-run
+  pop-ups. The spotlight and tooltip are positioned from live bounding rects (mobile
+  viewport safe), every step has visible **Skip** + **Next/Got it** controls, and
+  **Esc**/backdrop tap dismiss it. Fully keyboard operable (Tab is trapped, Enter
+  advances), focus is managed (and restored on exit), `aria` dialog semantics, and
+  it respects `prefers-reduced-motion`. Shown **once** (`civicradar_tour_seen`) and
+  never auto-shown for demo (`?demo=`), referral (`?ref=`), or returning users. A
+  **"Replay app tour"** entry in Profile restarts it on demand. All copy localized
+  in en/hi/mr/gu (`tour.*`). Cache bumped to v80.
+- **Clearer onboarding — "what / why / how"** — the first-run onboarding modal now
+  carries a compact explainer above the city/ward fields: a one-line *why*
+  ("Stagnant water breeds dengue & malaria. Your report puts the spot on your ward
+  map and into the BMC queue — and alerts neighbours."), a numbered 3-step *how it
+  works* (Spot → Pin & snap on the spot → Submit & earn Civic Points), and a short
+  "best reported on the spot" note. The first-run coach mark adds an explicit
+  report-on-the-spot guidance line ("No need to report right now. When you pass
+  stagnant water… open CivicRadar and pin it on the spot so the location is
+  accurate."). All copy localized in en/hi/mr/gu; respects reduced-motion.
+- **Opt-in "report stagnant water nearby" reminders** — a new Profile toggle
+  ("Remind me to report stagnant water nearby") lets users opt into a gentle
+  monsoon-season nudge. Enabling it requests notification permission; when granted,
+  a foreground-triggered reminder (on load / tab focus, on a ~2-day cadence with
+  snooze) is delivered via the service-worker registration or a page `Notification`.
+  **Honest about platform limits:** there is *no* background push or geofencing —
+  reminders fire only while the app is open. On iOS, unsupported browsers, or when
+  permission is denied, it degrades gracefully to the existing in-app reminder card
+  and never errors (feature-detected). Stored under
+  `civicradar_report_reminder_optin`; easy to turn off.
+- **Location-aware in-app nudge** — when the app is open and GPS is already granted,
+  CivicRadar reuses the current position (never re-prompting, never persisting
+  coordinates) to check proximity to known *pending* hazards via the existing
+  haversine helper. Within ~150 m of a pending spot it surfaces the existing
+  staleCheck reminder ("Spot near {ward} — still stagnant?") with "Still there" /
+  "Add a photo" actions, routed through the same reminder queue so it respects
+  `MAX_SESSION_REMINDERS`, snooze keys, and priority ordering. Foreground only.
+  All new copy localized in en/hi/mr/gu. Cache bumped to v79.
+- **Warmer post-report success experience** — every successful report now shows
+  an encouraging line in the success modal, not just on milestone reports.
+  Non-milestone reports rotate through a small set of warm "kudos" messages
+  (deterministic by report count) so the praise never feels repetitive, while the
+  special first-report and milestone messages still take priority. A new compact
+  progress-to-next-badge nudge (`#successProgress`) tells the user how close they
+  are to their next milestone (e.g. "Just 1 more report to your next badge"),
+  switches to a celebratory "Badge unlocked!" variant right after a milestone, and
+  becomes a sustained "{n} reports and counting — a true Monsoon Guardian" line
+  once they pass the top milestone. All new copy localized in en/hi/mr/gu; points
+  animation, confetti, badge toasts, and the share block are unchanged. Cache
+  bumped to v78.
 - **Coordinator access requests + approval workflow** — BMC officials and
   NGO/community coordinators can now request elevated access in-app (entry points
   in Profile, the partner portal, and the About modal). A low-friction request
