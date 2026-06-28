@@ -88,6 +88,9 @@ create table if not exists public.profiles (
 
 alter table public.profiles add column if not exists coordinator_scope text check (coordinator_scope in ('ward', 'neighbourhood'));
 alter table public.profiles add column if not exists neighbourhood_label text;
+alter table public.profiles add column if not exists society text;
+alter table public.reports add column if not exists society text;
+alter table public.reports add column if not exists neighbourhood text;
 
 alter table public.profiles enable row level security;
 

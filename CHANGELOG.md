@@ -10,6 +10,47 @@ Release process and environment details live in [`RELEASE.md`](./RELEASE.md).
 ## [Unreleased]
 
 ### Added
+- **Society / neighbourhood layer (MVP, v86)** — optional society/neighbourhood on onboarding
+  (after ward) and Profile: searchable text + datalist from config suggestions + free-text
+  fallback. Stored on user profile (`society`) and attached to new reports; shown on map
+  popup when set. Profile link-out to National Cooperative Database (Maharashtra state list).
+  Schema: additive `society` on `profiles` and `reports`. Localized en/hi/mr/gu. E2E SO01–SO04.
+- **i18n audit complete (v86)** — `rerenderDynamicViews()` re-localizes open modals in place
+  (success, community, profile, about, tour); `refreshSuccessModalStrings()` for success modal;
+  map "You are here" localized. E2E I06–I08 (child screens in mr/hi).
+- **Official grievance channel integration (Tier 1–3)** — city-aware panels linking to
+  verified government resources without API partnerships: **MyBMC MARG**, **PMC CARE**,
+  **Swachhata-MoHUA**, and **Aaple Sarkar** (plus existing BMC 1916/WhatsApp/portal and
+  TMC helpline). Surfaces: report success modal (“Also file officially”), Community and
+  Profile “Official grievance channels”, escalation extras (Swachhata + category hints), and
+  escalation-ladder quick links. Smart routing by city + hazard (garbage → Swachhata;
+  stagnant water → corp pest-control/drainage hints). One-tap open copies a structured
+  summary (ward, hazard, CivicRadar report ID, category hint, photo guidance) to clipboard.
+  Complaint-number save (Tier 3) unchanged. Analytics: `official_channel_open`. Config in
+  `js/config.js` → `officialChannels`. Localized en/hi/mr/gu. Cache bumped to v84
+  (E2E OC01–OC05).
+- **Launch differentiation vs helpline routers (Majha Ward positioning)** — hero, empty-map CTA,
+  and About modal now lead with community ward map + Me too corroboration + optional official filing,
+  not "anonymous complaint to helpline." New **"What makes CivicRadar different"** section (4 bullets)
+  in About, localized en/hi/mr/gu (`about.different*`). Hero reframed as "Community ward map" with
+  trust strip "Add to Home Screen · 4 languages." Cache bumped to v84 (E2E DF01–DF02, RP16–RP18).
+- **Four hazard types live at launch** — garbage/solid waste, potholes, and broken streetlights join
+  stagnant water. All tiles selectable (no "Coming soon" locks). Share templates, copy1916 categories,
+  map markers, and report flow handle all four. E2E RP01/RP02 updated for multi-hazard launch.
+- **Dismissible location banner with a compact "Locate me" affordance** — the
+  "Turn on location" map banner now has an accessible **×** dismiss control. Closing
+  it **snoozes** the banner for 7 days (`civicradar_locbanner_snooze`) and collapses
+  it into a small, unobtrusive **"Locate me"** pill on the map. While snoozed the
+  full banner no longer reappears on every map load; the pill lets users re-enable
+  location in one tap (which bypasses the snooze and re-runs the enable-location
+  flow). Granting location, or any explicit tap, clears the snooze and hides both
+  the banner and the pill. All banner copy is now localized via `t()`
+  (`location.banner` / `location.bannerNearby` / `location.unavailable` /
+  `location.withdrawn` / `location.dismiss` / `location.locate` /
+  `location.locateAria`) in en/hi/mr/gu — replacing the previously hardcoded English
+  strings. The snooze key is cleared on "delete my data". Keyboard operable,
+  `focus-visible` rings, role/aria preserved, and motion respects
+  `prefers-reduced-motion`. Cache bumped to v81 (E2E LB01–LB06).
 - **First-run interactive guided tour** — after the onboarding explainer/coach tip,
   brand-new citizens get a short, skippable coach-mark spotlight tour that teaches
   the key navigation by highlighting the real UI: **Map = your ward** → **Report**

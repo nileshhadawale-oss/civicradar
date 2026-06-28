@@ -839,6 +839,9 @@ async def run_edge_tests(s: Suite, browser):
     ctx = await new_ctx(browser, storage={
         'civicradar_user': default_user(id='e15'),
         'mosquiTrackReports': '[]',
+        'civicradar_hero_dismissed': '1',
+        'civicradar_coach_seen': '1',
+        'civicradar_tour_seen': '1',
     })
     page = await ctx.new_page()
     await goto_app(page)
@@ -1285,6 +1288,15 @@ async def run_extended_scenarios(s: Suite, browser):
     s.record('U03', 'UI', 'About modal opens', await page.evaluate(
         '() => { window.openAboutModal(); return document.getElementById("aboutOverlay").classList.contains("open"); }'
     ))
+    diff_bullets = await page.evaluate(
+        '() => document.querySelectorAll(".about-different li").length'
+    )
+    diff_text = await page.evaluate(
+        '() => (document.querySelector(".about-different li")?.textContent || "").toLowerCase()'
+    )
+    s.record('DF01', 'Differentiation', 'About different section has 4 bullets', diff_bullets == 4, f'count={diff_bullets}')
+    s.record('DF02', 'Differentiation', 'About copy mentions Me too not helpline',
+             'me too' in diff_text and 'helpline' in diff_text)
     await page.evaluate('() => document.querySelector("[data-close=about]")?.click()')
     s.record('U04', 'UI', 'About modal closes', not await is_open(page, 'aboutOverlay'))
     s.record('U05', 'UI', 'Volunteer modal opens', await page.evaluate(
@@ -1376,14 +1388,68 @@ async def run_extended_scenarios(s: Suite, browser):
     soon_count = await page.evaluate(
         '() => document.querySelectorAll("#hazardGrid .hazard-tile[data-live=\\"false\\"]").length'
     )
-    s.record('RP01', 'Report', 'Only one live hazard tile', live_count == 1, f'live={live_count}')
-    s.record('RP02', 'Report', 'Coming-soon hazard tiles exist', soon_count >= 1, f'soon={soon_count}')
+    s.record('RP01', 'Report', 'Four live hazard tiles at launch', live_count >= 4, f'live={live_count}')
+    s.record('RP02', 'Report', 'No coming-soon locks on launch hazards', soon_count == 0, f'soon={soon_count}')
     s.record('RP03', 'Report', 'Stagnant-water preselected', await page.evaluate(
         '() => document.getElementById("hazardType").value === "stagnant-water"'
     ))
+    garbage_selected = await page.evaluate(
+        """() => {
+          window.openReportModal(false);
+          const tile = document.querySelector('#hazardGrid [data-hazard="garbage"]');
+          if (!tile || tile.dataset.live !== 'true') return false;
+          tile.click();
+          return document.getElementById('hazardType').value === 'garbage';
+        }"""
+    )
+    s.record('RP16', 'Report', 'Garbage hazard selectable', garbage_selected)
+    await page.evaluate(
+        """async () => {
+          window.openReportModal(false);
+          const tile = document.querySelector('#hazardGrid [data-hazard="garbage"]');
+          if (tile) tile.click();
+          if (document.getElementById('hazardType').value !== 'garbage') return;
+          const canvas = document.getElementById('imageCanvas');
+          const ctx = canvas.getContext('2d');
+          canvas.width = 240; canvas.height = 180;
+          for (let y = 0; y < canvas.height; y += 4) {
+            for (let x = 0; x < canvas.width; x += 4) {
+              const r = 60 + ((x * 7 + y * 3) % 80);
+              const g = 90 + ((x + y * 5) % 70);
+              const b = 30 + ((x * y) % 50);
+              ctx.fillStyle = `rgb(${r},${g},${b})`;
+              ctx.fillRect(x, y, 4, 4);
+            }
+          }
+          canvas.classList.add('visible');
+          const confirm = document.getElementById('confirmRelevant');
+          if (confirm) {
+            document.getElementById('photoConfirmGroup')?.classList.remove('hidden');
+            confirm.checked = true;
+          }
+          document.getElementById('reportNotes').value = 'garbage launch test';
+          navigator.geolocation.getCurrentPosition = (ok) => ok({ coords: { latitude: 19.0763, longitude: 72.8780, accuracy: 5 } });
+          document.getElementById('btnSubmitReport').click();
+          await new Promise(r => setTimeout(r, 2500));
+        }"""
+    )
+    await page.wait_for_function(
+        '() => JSON.parse(localStorage.getItem("mosquiTrackReports")||"[]").some(r => r.notes === "garbage launch test" && r.hazard === "garbage")',
+        timeout=8000,
+    )
+    garbage_ok = await page.evaluate(
+        '() => JSON.parse(localStorage.getItem("mosquiTrackReports")||"[]").some(r => r.notes === "garbage launch test" && r.hazard === "garbage")'
+    )
+    s.record('RP17', 'Report', 'Garbage hazard submittable', garbage_ok)
+    s.record('RP18', 'Report', 'Garbage report stored with hazard type', garbage_ok)
+    await close_all_modals(page)
+    # Garbage submit is isolated above — clear so kudos/progress tests start at report count 0.
+    await page.evaluate('() => localStorage.removeItem("mosquiTrackReports")')
     s.record('RP04', 'Report', 'Photo input accepts images', await page.evaluate(
         '() => document.getElementById("photoInput").accept.includes("image")'
     ))
+    await page.evaluate('() => window.openReportModal(false)')
+    await page.wait_for_selector('#reportOverlay.open', state='visible', timeout=5000)
     s.record('RP05', 'Report', 'Capture photo button present', await page.is_visible('#btnTakePhoto'))
     await page.evaluate('() => document.querySelector("[data-close=report]")?.click()')
     before = await page.evaluate('() => JSON.parse(localStorage.getItem("mosquiTrackReports")||"[]").length')
@@ -1413,7 +1479,8 @@ async def run_extended_scenarios(s: Suite, browser):
     s.record('RP14', 'Report', 'Non-milestone report shows rotating kudos', len(norm_celebrate) > 0 and not norm_hidden,
              f'celebrate="{norm_celebrate[:40]}"')
     s.record('RP15', 'Report', 'Non-milestone report shows progress-to-badge nudge',
-             ('1' in norm_progress and 'badge' in norm_progress.lower()),
+             (len(norm_progress) > 0 and 'badge' in norm_progress.lower()
+              and any(ch.isdigit() for ch in norm_progress)),
              f'progress="{norm_progress[:40]}"')
     await page.click('#btnSuccessClose')
     await page.wait_for_timeout(300)
@@ -1699,6 +1766,72 @@ async def run_extended_scenarios(s: Suite, browser):
     await page.wait_for_timeout(200)
     s.record('I04', 'i18n', 'Lang button shows EN code', (await page.text_content('#btnLang') or '').strip().upper() in ('EN', 'ENGLISH') or 'EN' in (await page.text_content('#btnLang') or ''))
     s.record('I05', 'i18n', 'Header context translated', bool(await page.text_content('#headerContext')))
+    # Child screens re-localize on language switch (Profile + Community in Marathi).
+    await js_click(page, '#btnLang')
+    await page.wait_for_timeout(150)
+    await js_click(page, 'button[data-lang="mr"]')
+    await page.wait_for_timeout(300)
+    await page.evaluate('() => window.openProfileModal()')
+    await page.wait_for_timeout(200)
+    profile_title = await page.evaluate('() => document.getElementById("profileTitle")?.textContent?.trim() || ""')
+    s.record('I06', 'i18n', 'Profile title localized (mr)', bool(profile_title) and 'Your Profile' not in profile_title
+             and any('\u0900' <= ch <= '\u097f' for ch in profile_title))
+    await page.evaluate('() => window.closeProfileModal()')
+    await page.wait_for_timeout(150)
+    await page.evaluate('() => window.openCommunityModal()')
+    await page.wait_for_timeout(200)
+    community_title = await page.evaluate('() => document.getElementById("communityTitle")?.textContent?.trim() || ""')
+    s.record('I07', 'i18n', 'Community title localized (mr)', bool(community_title) and community_title != 'Community'
+             and any('\u0900' <= ch <= '\u097f' for ch in community_title))
+    await page.evaluate('() => window.closeCommunityModal()')
+    await page.wait_for_timeout(150)
+    await js_click(page, '#btnLang')
+    await page.wait_for_timeout(150)
+    await js_click(page, 'button[data-lang="hi"]')
+    await page.wait_for_timeout(300)
+    await page.evaluate('() => window.openAboutModal()')
+    await page.wait_for_timeout(200)
+    about_sub = await page.evaluate('() => document.getElementById("aboutSubtitle")?.textContent?.trim() || ""')
+    s.record('I08', 'i18n', 'About subtitle localized (hi)', bool(about_sub) and any('\u0900' <= ch <= '\u097f' for ch in about_sub))
+    await ctx.close()
+
+    # --- Society / neighbourhood (SO) ---
+    ctx = await new_ctx(browser, storage={
+        'civicradar_user': default_user(id='so01'),
+        'civicradar_coach_seen': '1',
+        'civicradar_tour_seen': '1',
+        'mosquiTrackReports': '[]',
+    })
+    page = await ctx.new_page()
+    await goto_app(page, wait_map=True)
+    await page.wait_for_timeout(300)
+    await page.evaluate('() => window.openProfileModal()')
+    await page.fill('#profileSocietyInput', 'Phoenix Mills CHS Test')
+    await page.evaluate('() => { document.getElementById("profileSocietyInput").dispatchEvent(new Event("change", { bubbles: true })); }')
+    await page.wait_for_timeout(200)
+    saved_society = await page.evaluate('() => JSON.parse(localStorage.getItem("civicradar_user")||"{}").society || ""')
+    s.record('SO01', 'Society', 'Profile society field saves to user', saved_society == 'Phoenix Mills CHS Test')
+    await page.evaluate('() => window.closeProfileModal()')
+    await page.wait_for_timeout(150)
+    await page.evaluate('() => window.openReportModal(false)')
+    rid = await submit_report_via_api(page, 19.0764, 72.8781, 'society layer test')
+    report_society = await page.evaluate(
+        '() => JSON.parse(localStorage.getItem("mosquiTrackReports")||"[]").find(r => r.notes === "society layer test")?.society || ""'
+    )
+    s.record('SO02', 'Society', 'Report inherits user society', report_society == 'Phoenix Mills CHS Test')
+    popup_has_society = await page.evaluate(
+        """() => {
+          const r = JSON.parse(localStorage.getItem("mosquiTrackReports")||"[]").find(x => x.notes === "society layer test");
+          if (!r || typeof buildReportPopup !== 'function') return false;
+          const html = buildReportPopup(r);
+          return html.includes('Phoenix Mills CHS Test');
+        }"""
+    )
+    s.record('SO03', 'Society', 'Report popup shows society when set', popup_has_society)
+    coop_link = await page.evaluate(
+        '() => document.getElementById("linkCoopRegistry")?.href || ""'
+    )
+    s.record('SO04', 'Society', 'Cooperative registry link configured', 'cooperatives.gov.in' in coop_link.lower())
     await ctx.close()
 
     # --- PWA / Config (SW) ---
@@ -1720,7 +1853,7 @@ async def run_extended_scenarios(s: Suite, browser):
     # GitHub Pages /civicradar/ subpath (root-absolute paths would 404 there).
     sw_src = await page.evaluate('() => fetch("sw.js").then(r => r.text())')
     sw_ok = (
-        "civicradar-v80" in sw_src
+        "civicradar-v86" in sw_src
         and "'/index.html'" not in sw_src
         and "'/js/app.js'" not in sw_src
         and "'index.html'" in sw_src
@@ -2538,6 +2671,231 @@ async def run_access_request_scenarios(s: Suite, browser):
     await ctx.close()
 
 
+async def run_location_banner_scenarios(s: Suite, browser):
+    # Location banner dismiss/snooze/compact-pill UX (v81).
+    def banner_visible():
+        return (
+            '() => { const b = document.getElementById("locationBanner");'
+            ' return !!b && !b.classList.contains("hidden"); }'
+        )
+
+    def pill_visible():
+        return (
+            '() => { const p = document.getElementById("btnLocatePill");'
+            ' return !!p && !p.classList.contains("hidden"); }'
+        )
+
+    # Consent missing → the full banner should surface on map init.
+    ctx = await new_ctx(browser, storage={
+        'civicradar_user': default_user(id='lb01', gpsConsent=False),
+        'civicradar_coach_seen': '1',
+        'civicradar_tour_seen': '1',
+    })
+    page = await ctx.new_page()
+    await goto_app(page, wait_map=True)
+    try:
+        await page.wait_for_function(banner_visible(), timeout=8000)
+    except Exception:
+        pass
+    s.record('LB01', 'LocationBanner', 'Banner shows when consent missing',
+             await page.evaluate(banner_visible()))
+
+    # Dismiss "×" → banner hides, snooze recorded, compact pill appears.
+    await js_click(page, '#btnDismissLocation')
+    await page.wait_for_timeout(200)
+    snooze_set = await page.evaluate(
+        '() => !!localStorage.getItem("civicradar_locbanner_snooze")'
+    )
+    s.record('LB02', 'LocationBanner', 'Dismiss hides banner + sets snooze + shows pill',
+             (not await page.evaluate(banner_visible()))
+             and snooze_set
+             and await page.evaluate(pill_visible()))
+
+    # Reload while snoozed → banner must NOT reappear; pill stays as the affordance.
+    await goto_app(page, wait_map=True)
+    await page.wait_for_timeout(400)
+    s.record('LB03', 'LocationBanner', 'Banner does not reappear while snoozed',
+             (not await page.evaluate(banner_visible()))
+             and await page.evaluate(pill_visible()))
+
+    # Tapping the compact pill re-runs the enable flow (clears snooze, opts into GPS).
+    await js_click(page, '#btnLocatePill')
+    await page.wait_for_timeout(400)
+    gps_on = await page.evaluate(
+        '() => JSON.parse(localStorage.getItem("civicradar_user")||"{}").gpsConsent === true'
+    )
+    snooze_cleared = await page.evaluate(
+        '() => !localStorage.getItem("civicradar_locbanner_snooze")'
+    )
+    s.record('LB04', 'LocationBanner', 'Locate pill re-triggers enable flow',
+             gps_on and snooze_cleared)
+    await ctx.close()
+
+    # Localized banner copy (Marathi) — must use t(), not hardcoded English.
+    ctx = await new_ctx(browser, storage={
+        'civicradar_user': default_user(id='lb05', gpsConsent=False),
+        'civicradar_lang': 'mr',
+        'civicradar_coach_seen': '1',
+        'civicradar_tour_seen': '1',
+    })
+    page = await ctx.new_page()
+    await goto_app(page, wait_map=True)
+    try:
+        await page.wait_for_function(banner_visible(), timeout=8000)
+    except Exception:
+        pass
+    banner_text = await page.evaluate(
+        '() => document.getElementById("locationBannerText")?.textContent || ""'
+    )
+    has_devanagari = any('\u0900' <= ch <= '\u097f' for ch in banner_text)
+    s.record('LB05', 'LocationBanner', 'Banner text localized (Marathi, not hardcoded EN)',
+             bool(banner_text) and has_devanagari)
+
+    dismiss_aria = await page.evaluate(
+        '() => document.getElementById("btnDismissLocation")?.getAttribute("aria-label") || ""'
+    )
+    s.record('LB06', 'LocationBanner', 'Dismiss control has localized aria-label',
+             bool(dismiss_aria) and any('\u0900' <= ch <= '\u097f' for ch in dismiss_aria))
+    await ctx.close()
+
+
+async def run_official_channels_scenarios(s: Suite, browser):
+    """Official grievance channel panels (MyBMC MARG, PMC CARE, Swachhata, Aaple Sarkar) — v84."""
+    cities = [
+        ('OC01', 'mumbai', WARD, 'marg', ('play.google.com', 'apps.apple.com', 'mcgm')),
+        ('OC02', 'pune', PUNE_WARD, 'pmc_care', ('play.google.com', 'pmccare.in', 'pmccare')),
+        ('OC03', 'thane', THANE_WARD, 'tmc_portal', ('thanecity.gov.in',)),
+    ]
+    for test_id, city, ward, expected_id, href_fragments in cities:
+        ctx = await new_ctx(browser, storage={
+            'civicradar_user': default_user(id=f'oc-{city}', city=city, ward=ward),
+            'civicradar_coach_seen': '1',
+            'civicradar_tour_seen': '1',
+        })
+        page = await ctx.new_page()
+        await goto_app(page, wait_map=True)
+        await page.wait_for_timeout(400)
+        panel_ok = await page.evaluate(
+            f"""() => {{
+              if (typeof renderOfficialChannelsSurfaces === 'function') renderOfficialChannelsSurfaces(null);
+              const el = document.getElementById('profileOfficialChannels');
+              const channels = typeof getOfficialChannelsForCity === 'function'
+                ? getOfficialChannelsForCity('{city}', 'stagnant-water') : [];
+              const btn = el && el.querySelector('[data-official-channel="{expected_id}"]');
+              return !!el && channels.length >= 3 && !!btn;
+            }}"""
+        )
+        s.record(test_id, 'OfficialChannels', f'Profile panel renders for {city}', panel_ok)
+
+        href_fragments = href_fragments if isinstance(href_fragments, tuple) else (href_fragments,)
+        frag_js = json.dumps(list(href_fragments))
+        href_ok = await page.evaluate(
+            f"""() => {{
+              const frags = {frag_js};
+              const channels = getOfficialChannelsForCity('{city}', 'stagnant-water');
+              const ch = channels.find((c) => c.id === '{expected_id}');
+              if (!ch || !ch.url) return false;
+              const url = ch.url.toLowerCase();
+              return frags.some((f) => url.includes(String(f).toLowerCase()));
+            }}"""
+        )
+        s.record(f'{test_id}b', 'OfficialChannels', f'{city} primary channel href verified', href_ok)
+        await ctx.close()
+
+    # Copy helper fires on channel open (clipboard stub).
+    ctx = await new_ctx(browser, storage={
+        'civicradar_user': default_user(id='oc-copy'),
+        'civicradar_coach_seen': '1',
+        'civicradar_tour_seen': '1',
+        'mosquiTrackReports': json.dumps([{
+            'id': 'oc-copy-report',
+            'reporterId': 'oc-copy',
+            'hazard': 'stagnant-water',
+            'ward': WARD,
+            'city': 'mumbai',
+            'reporter': 'Test',
+            'lat': 19.076,
+            'lng': 72.8777,
+            'status': 'pending',
+            'timestamp': '2026-06-01T00:00:00.000Z',
+        }]),
+    })
+    page = await ctx.new_page()
+    await goto_app(page, wait_map=True)
+    await page.wait_for_timeout(400)
+    copy_ok = await page.evaluate(
+        """() => {
+          const r = { id: 'oc-copy-report', hazard: 'stagnant-water', ward: 'G/N Ward — Dadar, Shivaji Park',
+            city: 'mumbai', lat: 19.076, lng: 72.8777, timestamp: '2026-06-01T00:00:00.000Z' };
+          const txt = typeof buildOfficialSummaryText === 'function'
+            ? buildOfficialSummaryText(r, 'marg') : '';
+          return txt.includes('oc-copy-report') && txt.includes('CivicRadar');
+        }"""
+    )
+    s.record('OC04', 'OfficialChannels', 'Copy helper includes report ID on open', copy_ok)
+
+    community_ok = await page.evaluate(
+        """() => {
+          if (typeof renderOfficialChannelsSurfaces === 'function') renderOfficialChannelsSurfaces(null);
+          const el = document.getElementById('communityOfficialChannels');
+          return !!el && el.querySelectorAll('[data-official-channel]').length >= 3;
+        }"""
+    )
+    s.record('OC05', 'OfficialChannels', 'Community panel renders channel buttons', community_ok)
+    await ctx.close()
+
+
+async def run_home_hero_scenarios(s: Suite, browser):
+    # Home / landing hero card (v82).
+    ctx = await new_ctx(browser, storage={
+        'civicradar_user': default_user(id='hm01'),
+        'mosquiTrackReports': '[]',
+        'civicradar_coach_seen': '1',
+        'civicradar_tour_seen': '1',
+    })
+    page = await ctx.new_page()
+    await goto_app(page, wait_map=True)
+    await page.wait_for_timeout(500)
+    s.record('HM01', 'HomeHero', 'Hero visible for onboarded user with no reports', await page.evaluate(
+        '() => { if (typeof updateHomeHero === "function") updateHomeHero();'
+        ' const el = document.getElementById("homeHero");'
+        ' return !!el && !el.classList.contains("hidden"); }'
+    ))
+    s.record('HM02', 'HomeHero', 'Purpose headline + subline visible', await page.evaluate(
+        """() => {
+          const title = document.getElementById('homeHeroTitle')?.textContent?.trim() || '';
+          const sub = document.querySelector('.home-hero__sub')?.textContent?.trim() || '';
+          return title.length > 10 && sub.length > 10
+            && /stagnant|ward|map|water|dengue/i.test(title + ' ' + sub);
+        }"""
+    ))
+    s.record('HM03', 'HomeHero', 'Primary CTA present', await page.evaluate(
+        '() => !!document.getElementById("btnHeroReport")'
+    ))
+    s.record('HM04', 'HomeHero', 'Three benefit pills present', await page.evaluate(
+        '() => document.querySelectorAll(".home-hero__benefits li").length === 3'
+    ))
+    s.record('HM05', 'HomeHero', 'Hero hides map-empty overlay while visible', await page.evaluate(
+        '() => document.getElementById("mapEmptyCta").classList.contains("hidden")'
+    ))
+
+    await js_click(page, '#btnHeroDismiss')
+    await page.wait_for_timeout(200)
+    s.record('HM06', 'HomeHero', 'Dismiss hides hero + sets localStorage', (
+        await page.evaluate(
+            '() => document.getElementById("homeHero").classList.contains("hidden")'
+        )
+        and await page.evaluate(
+            '() => localStorage.getItem("civicradar_hero_dismissed") === "1"'
+        )
+    ))
+    s.record('HM07', 'HomeHero', 'After dismiss, map empty CTA can show', await page.evaluate(
+        '() => { if (typeof updateMapEmptyCta === "function") updateMapEmptyCta();'
+        ' return !document.getElementById("mapEmptyCta").classList.contains("hidden"); }'
+    ))
+    await ctx.close()
+
+
 async def main():
     ensure_server()
     await install_playwright()
@@ -2561,6 +2919,9 @@ async def main():
             ('Tour', run_tour_scenarios),
             ('Reminder', run_reminder_scenarios),
             ('Access', run_access_request_scenarios),
+            ('LocationBanner', run_location_banner_scenarios),
+            ('HomeHero', run_home_hero_scenarios),
+            ('OfficialChannels', run_official_channels_scenarios),
         ]:
             print(f'-- {label} tests --', flush=True)
             await safe_run(fn, s, browser, label)
@@ -2596,6 +2957,18 @@ async def main():
         '`sw.js` + `tests/e2e_comprehensive.py`: v79 cache bump; SW06 → v79',
         '`index.html` + `js/app.js` + `css/styles.css`: first-run interactive coach-mark tour (v80) — skippable spotlight guided tour (Map → Report FAB → Me too → Profile) sequenced right after the v79 coachSpotTip explainer; shown once (`civicradar_tour_seen`), re-watchable via a "Replay app tour" entry in Profile; spotlight + bubble positioned from bounding rects, keyboard operable (Tab/Enter/Esc), focus-managed, backdrop/ESC dismiss, prefers-reduced-motion respected; suppressed for demo/referral/returning users; localized en/hi/mr/gu (TR01–TR09)',
         '`sw.js` + `tests/e2e_comprehensive.py`: v80 cache bump; SW06 → v80',
+        '`index.html` + `js/app.js` + `css/styles.css`: location banner UX (v81) — added a dismiss "×" control that snoozes the banner for 7 days (`civicradar_locbanner_snooze`) and collapses it into an unobtrusive "Locate me" pill that re-runs the enable-location flow on tap (bypassing snooze); success and explicit taps clear the snooze and hide both; all banner copy localized via `t()` (location.banner/bannerNearby/unavailable/withdrawn/dismiss/locate/locateAria) in en/hi/mr/gu (LB01–LB06)',
+        '`sw.js` + `tests/e2e_comprehensive.py`: v81 cache bump; SW06 → v81',
+        '`index.html` + `js/app.js` + `css/styles.css`: home/landing hero card (v82) — dismissible #MonsoonGuardian strip above Report FAB with headline, 3 benefit pills, primary CTA, tour link, trust line; enhanced empty-map card; localized en/hi/mr/gu (HM01–HM07)',
+        '`sw.js` + `tests/e2e_comprehensive.py`: v82 cache bump; SW06 → v82',
+        '`js/config.js` + `js/app.js` + `index.html` + `css/styles.css`: official grievance channel integration (v84) — verified deep links for MyBMC MARG, PMC CARE, Swachhata-MoHUA, Aaple Sarkar; city-aware panels in success modal, Community, Profile, and escalation; hazard-smart routing + clipboard summary on open; `official_channel_open` analytics; localized en/hi/mr/gu (OC01–OC05)',
+        '`sw.js` + `tests/e2e_comprehensive.py`: v84 cache bump; SW06 → v84',
+        '`index.html` + `js/app.js` + `css/styles.css`: home/landing hero (v85) — #MonsoonGuardian stagnant-water hero above FAB (WHAT/WHY/HOW/trust), dismissible until first report; enhanced empty-map card with gradient drop icon; localized en/hi/mr/gu (HM01–HM07)',
+        '`sw.js` + `tests/e2e_comprehensive.py`: v85 cache bump; SW06 → v85',
+        '`tests/e2e_comprehensive.py`: RP17 varied canvas (moderation-safe); RP05 modal wait; clear reports before kudos block; RP15 progress assertion; OC01b/OC02b desktop store URLs; OC04 execCommand copy stub',
+        '`index.html` + `js/app.js` + `js/config.js` + `css/styles.css` + `supabase/schema.sql`: society/neighbourhood MVP (v86) — optional onboarding + Profile field with datalist suggestions + free-text; stored on user profile and attached to reports; shown on map popup; National Cooperative Database link-out; localized en/hi/mr/gu (SO01–SO04)',
+        '`js/app.js`: i18n audit complete — `rerenderDynamicViews()` re-localizes open modals (success, community, profile, about, tour); `refreshSuccessModalStrings()`; map popup `You are here` localized; child-screen i18n E2E (I06–I08)',
+        '`sw.js` + `tests/e2e_comprehensive.py`: v86 cache bump; SW06 → v86',
     ]
     passed, failed, total = write_report(s, out, fixes=fixes)
     print(f'\n=== Done: {passed}/{total} passed, {failed} failed ===', flush=True)

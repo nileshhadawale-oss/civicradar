@@ -1,9 +1,9 @@
 # CivicRadar Test Results
 
-**Run:** 2026-06-28 11:53:10
+**Run:** 2026-06-28 16:13:47
 **Server:** http://localhost:9080/
 **Script:** `tests/e2e_comprehensive.py`
-**Total:** 303 | **Pass:** 303 | **Fail:** 0
+**Total:** 336 | **Pass:** 336 | **Fail:** 0
 
 ## Fixes applied this run
 
@@ -35,6 +35,18 @@
 - `sw.js` + `tests/e2e_comprehensive.py`: v79 cache bump; SW06 → v79
 - `index.html` + `js/app.js` + `css/styles.css`: first-run interactive coach-mark tour (v80) — skippable spotlight guided tour (Map → Report FAB → Me too → Profile) sequenced right after the v79 coachSpotTip explainer; shown once (`civicradar_tour_seen`), re-watchable via a "Replay app tour" entry in Profile; spotlight + bubble positioned from bounding rects, keyboard operable (Tab/Enter/Esc), focus-managed, backdrop/ESC dismiss, prefers-reduced-motion respected; suppressed for demo/referral/returning users; localized en/hi/mr/gu (TR01–TR09)
 - `sw.js` + `tests/e2e_comprehensive.py`: v80 cache bump; SW06 → v80
+- `index.html` + `js/app.js` + `css/styles.css`: location banner UX (v81) — added a dismiss "×" control that snoozes the banner for 7 days (`civicradar_locbanner_snooze`) and collapses it into an unobtrusive "Locate me" pill that re-runs the enable-location flow on tap (bypassing snooze); success and explicit taps clear the snooze and hide both; all banner copy localized via `t()` (location.banner/bannerNearby/unavailable/withdrawn/dismiss/locate/locateAria) in en/hi/mr/gu (LB01–LB06)
+- `sw.js` + `tests/e2e_comprehensive.py`: v81 cache bump; SW06 → v81
+- `index.html` + `js/app.js` + `css/styles.css`: home/landing hero card (v82) — dismissible #MonsoonGuardian strip above Report FAB with headline, 3 benefit pills, primary CTA, tour link, trust line; enhanced empty-map card; localized en/hi/mr/gu (HM01–HM07)
+- `sw.js` + `tests/e2e_comprehensive.py`: v82 cache bump; SW06 → v82
+- `js/config.js` + `js/app.js` + `index.html` + `css/styles.css`: official grievance channel integration (v84) — verified deep links for MyBMC MARG, PMC CARE, Swachhata-MoHUA, Aaple Sarkar; city-aware panels in success modal, Community, Profile, and escalation; hazard-smart routing + clipboard summary on open; `official_channel_open` analytics; localized en/hi/mr/gu (OC01–OC05)
+- `sw.js` + `tests/e2e_comprehensive.py`: v84 cache bump; SW06 → v84
+- `index.html` + `js/app.js` + `css/styles.css`: home/landing hero (v85) — #MonsoonGuardian stagnant-water hero above FAB (WHAT/WHY/HOW/trust), dismissible until first report; enhanced empty-map card with gradient drop icon; localized en/hi/mr/gu (HM01–HM07)
+- `sw.js` + `tests/e2e_comprehensive.py`: v85 cache bump; SW06 → v85
+- `tests/e2e_comprehensive.py`: RP17 varied canvas (moderation-safe); RP05 modal wait; clear reports before kudos block; RP15 progress assertion; OC01b/OC02b desktop store URLs; OC04 execCommand copy stub
+- `index.html` + `js/app.js` + `js/config.js` + `css/styles.css` + `supabase/schema.sql`: society/neighbourhood MVP (v86) — optional onboarding + Profile field with datalist suggestions + free-text; stored on user profile and attached to reports; shown on map popup; National Cooperative Database link-out; localized en/hi/mr/gu (SO01–SO04)
+- `js/app.js`: i18n audit complete — `rerenderDynamicViews()` re-localizes open modals (success, community, profile, about, tour); `refreshSuccessModalStrings()`; map popup `You are here` localized; child-screen i18n E2E (I06–I08)
+- `sw.js` + `tests/e2e_comprehensive.py`: v86 cache bump; SW06 → v86
 
 ## Summary by category
 
@@ -49,16 +61,20 @@
 - **Community:** 3 pass / 0 fail
 - **DeepLink:** 1 pass / 0 fail
 - **Demo:** 8 pass / 0 fail
+- **Differentiation:** 2 pass / 0 fail
 - **Edge:** 17 pass / 0 fail
 - **Escalation:** 6 pass / 0 fail
 - **Feedback:** 7 pass / 0 fail
+- **HomeHero:** 7 pass / 0 fail
 - **ImageSafety:** 8 pass / 0 fail
 - **Legal:** 6 pass / 0 fail
 - **Load:** 5 pass / 0 fail
+- **LocationBanner:** 6 pass / 0 fail
 - **Map:** 5 pass / 0 fail
 - **MultiCity:** 10 pass / 0 fail
 - **NGO:** 10 pass / 0 fail
 - **Negative:** 8 pass / 0 fail
+- **OfficialChannels:** 8 pass / 0 fail
 - **Onboarding:** 4 pass / 0 fail
 - **PWA:** 8 pass / 0 fail
 - **Partner:** 1 pass / 0 fail
@@ -67,8 +83,9 @@
 - **Profile:** 4 pass / 0 fail
 - **Referral:** 4 pass / 0 fail
 - **Reminder:** 7 pass / 0 fail
-- **Report:** 18 pass / 0 fail
+- **Report:** 21 pass / 0 fail
 - **Share:** 1 pass / 0 fail
+- **Society:** 4 pass / 0 fail
 - **Storage:** 2 pass / 0 fail
 - **Sync:** 1 pass / 0 fail
 - **Tour:** 9 pass / 0 fail
@@ -76,7 +93,7 @@
 - **Viral:** 4 pass / 0 fail
 - **Volunteer:** 7 pass / 0 fail
 - **Ward:** 8 pass / 0 fail
-- **i18n:** 6 pass / 0 fail
+- **i18n:** 9 pass / 0 fail
 
 ## Failures
 
@@ -171,8 +188,8 @@ _None_
 | E15b | Edge | Map empty share hidden first visit | PASS |  |
 | E16 | Edge | Invalid ward cleared on load | PASS |  |
 | L01 | Load | 15 parallel report contexts | PASS | 15/15 |
-| L02 | Load | 200 reports refresh under 3s | PASS | 0.01s |
-| L03 | Load | 50x loadReports parse under 500ms | PASS | 4ms |
+| L02 | Load | 200 reports refresh under 3s | PASS | 0.00s |
+| L03 | Load | 50x loadReports parse under 500ms | PASS | 3ms |
 | L04 | Load | Rapid corroboration increments | PASS | n=5 |
 | L05 | Load | Analytics batch enqueue | PASS |  |
 | M01 | Map | Leaflet map container | PASS |  |
@@ -259,6 +276,8 @@ _None_
 | U01 | UI | Language overlay opens | PASS |  |
 | U02 | UI | Language overlay closes | PASS |  |
 | U03 | UI | About modal opens | PASS |  |
+| DF01 | Differentiation | About different section has 4 bullets | PASS | count=4 |
+| DF02 | Differentiation | About copy mentions Me too not helpline | PASS |  |
 | U04 | UI | About modal closes | PASS |  |
 | U05 | UI | Volunteer modal opens | PASS |  |
 | U06 | UI | Volunteer modal closes | PASS |  |
@@ -280,9 +299,12 @@ _None_
 | U18 | UI | PWA nudge dismiss button | PASS |  |
 | U19 | UI | PWA nudge dismiss hides | PASS |  |
 | U20 | UI | Flow steps in report modal | PASS |  |
-| RP01 | Report | Only one live hazard tile | PASS | live=1 |
-| RP02 | Report | Coming-soon hazard tiles exist | PASS | soon=3 |
+| RP01 | Report | Four live hazard tiles at launch | PASS | live=4 |
+| RP02 | Report | No coming-soon locks on launch hazards | PASS | soon=0 |
 | RP03 | Report | Stagnant-water preselected | PASS |  |
+| RP16 | Report | Garbage hazard selectable | PASS |  |
+| RP17 | Report | Garbage hazard submittable | PASS |  |
+| RP18 | Report | Garbage report stored with hazard type | PASS |  |
 | RP04 | Report | Photo input accepts images | PASS |  |
 | RP05 | Report | Capture photo button present | PASS |  |
 | RP06 | Report | Close without submit saves nothing | PASS |  |
@@ -328,6 +350,13 @@ _None_
 | I03 | i18n | FAB label non-English (gu) | PASS |  |
 | I04 | i18n | Lang button shows EN code | PASS |  |
 | I05 | i18n | Header context translated | PASS |  |
+| I06 | i18n | Profile title localized (mr) | PASS |  |
+| I07 | i18n | Community title localized (mr) | PASS |  |
+| I08 | i18n | About subtitle localized (hi) | PASS |  |
+| SO01 | Society | Profile society field saves to user | PASS |  |
+| SO02 | Society | Report inherits user society | PASS |  |
+| SO03 | Society | Report popup shows society when set | PASS |  |
+| SO04 | Society | Cooperative registry link configured | PASS |  |
 | SW01 | PWA | CIVICRADAR_CONFIG loaded | PASS |  |
 | SW02 | PWA | Config has cities object | PASS |  |
 | SW03 | PWA | Manifest href valid | PASS |  |
@@ -396,3 +425,24 @@ _None_
 | AR10 | Access | Claim code unlocks NGO coordinator role | PASS |  |
 | AR11 | Access | Invalid claim code rejected | PASS |  |
 | AR12 | Access | Phone-only confirm uses contact-neutral copy | PASS |  |
+| LB01 | LocationBanner | Banner shows when consent missing | PASS |  |
+| LB02 | LocationBanner | Dismiss hides banner + sets snooze + shows pill | PASS |  |
+| LB03 | LocationBanner | Banner does not reappear while snoozed | PASS |  |
+| LB04 | LocationBanner | Locate pill re-triggers enable flow | PASS |  |
+| LB05 | LocationBanner | Banner text localized (Marathi, not hardcoded EN) | PASS |  |
+| LB06 | LocationBanner | Dismiss control has localized aria-label | PASS |  |
+| HM01 | HomeHero | Hero visible for onboarded user with no reports | PASS |  |
+| HM02 | HomeHero | Purpose headline + subline visible | PASS |  |
+| HM03 | HomeHero | Primary CTA present | PASS |  |
+| HM04 | HomeHero | Three benefit pills present | PASS |  |
+| HM05 | HomeHero | Hero hides map-empty overlay while visible | PASS |  |
+| HM06 | HomeHero | Dismiss hides hero + sets localStorage | PASS |  |
+| HM07 | HomeHero | After dismiss, map empty CTA can show | PASS |  |
+| OC01 | OfficialChannels | Profile panel renders for mumbai | PASS |  |
+| OC01b | OfficialChannels | mumbai primary channel href verified | PASS |  |
+| OC02 | OfficialChannels | Profile panel renders for pune | PASS |  |
+| OC02b | OfficialChannels | pune primary channel href verified | PASS |  |
+| OC03 | OfficialChannels | Profile panel renders for thane | PASS |  |
+| OC03b | OfficialChannels | thane primary channel href verified | PASS |  |
+| OC04 | OfficialChannels | Copy helper includes report ID on open | PASS |  |
+| OC05 | OfficialChannels | Community panel renders channel buttons | PASS |  |

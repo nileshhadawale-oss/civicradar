@@ -130,6 +130,7 @@
         appStoreUrl: 'https://apps.apple.com/in/app/pmc-care/id1330880892',
         playStoreSearchUrl: 'https://play.google.com/store/search?q=PMC+CARE&c=apps',
         aapleSarkarUrl: 'https://grievances.maharashtra.gov.in/en',
+        aapleSarkarPlayStoreUrl: 'https://play.google.com/store/apps/details?id=com.aaplesarkar',
       },
     },
     thane: {
@@ -145,6 +146,7 @@
         grievanceUrl: 'https://thanecity.gov.in/',
         // Maharashtra Aaple Sarkar (IGRS) — select TMC as local body when filing
         aapleSarkarUrl: 'https://grievances.maharashtra.gov.in/en',
+        aapleSarkarPlayStoreUrl: 'https://play.google.com/store/apps/details?id=com.aaplesarkar',
         helplines: ['02225331590', '02225331211'],
         helplineDisplay: '022-25331590 · 022-25331211',
         citizenCallCenter: '155300',
@@ -170,6 +172,33 @@
     margPlayStoreSearchUrl: 'https://play.google.com/store/search?q=MyBMC+MARG&c=apps',
   },
 
+  /* ----- Official grievance resources (verified links — no API partnerships) ----- */
+  officialChannels: {
+    swachhata: {
+      id: 'swachhata',
+      playStoreUrl: 'https://play.google.com/store/apps/details?id=com.ichangemycity.swachhbharat',
+      appStoreUrl: 'https://apps.apple.com/in/app/swachhata-mohua/id1124033628',
+      infoUrl: 'https://sbm.gov.in/sbmicc/ICT-platform',
+      helpline: '1969',
+    },
+    aapleSarkar: {
+      id: 'aaple_sarkar',
+      portalUrl: 'https://grievances.maharashtra.gov.in/en',
+      legacyPortalUrl: 'https://aaplesarkar.mahaonline.gov.in/',
+      playStoreUrl: 'https://play.google.com/store/apps/details?id=com.aaplesarkar',
+    },
+    // Per-city channel order (city corp primary, Swachhata + Aaple Sarkar as cross-cutting).
+    cityOrder: {
+      mumbai: ['marg', 'bmc_whatsapp', 'bmc_portal', 'swachhata', 'aaple_sarkar'],
+      pune: ['pmc_care', 'pmc_wa', 'swachhata', 'aaple_sarkar'],
+      thane: ['tmc_portal', 'tmc_call', 'swachhata', 'aaple_sarkar'],
+    },
+    hazardPrefer: {
+      garbage: { swachhata: 20, marg: 8, pmc_care: 8, tmc_portal: 8 },
+      'stagnant-water': { marg: 20, pmc_care: 20, tmc_portal: 20, bmc_whatsapp: 15, pmc_wa: 15, swachhata: 5 },
+    },
+  },
+
   /* ----- Legal & store compliance ----- */
   legal: {
     privacyUrl: 'privacy.html',
@@ -191,16 +220,16 @@
     // **[YOU]** Legal/hosting contact (privacy.html / terms.html fallback)
     operatorEmail: 'civicradarnh@gmail.com',
     operatorRelation: '',
-    tagline: 'Community hazard map for Mumbai, Pune & Thane monsoon civic reporting.',
-    story: 'CivicRadar helps neighbours in Mumbai, Pune, and Thane see and report stagnant-water hazards each monsoon. It is a free community app: ward map pins, Me too corroboration, and volunteer cleanup logging. Official corporation filing (BMC, PMC, or TMC) is an optional next step when you want the government clock — not a government product.',
+    tagline: 'Community-powered ward hazard map — not an anonymous helpline router.',
+    story: 'CivicRadar is a free community app for Mumbai, Pune, and Thane. Pin civic hazards on a live ward map, rally neighbours with Me too corroboration, and optionally file with BMC, PMC, or TMC when you choose. It is not a government product and not another helpline router.',
     highlights: [
-      'Built for Mumbai, Pune, and Thane wards facing dengue from stagnant water each monsoon',
-      'Community-first ward map with Me too corroboration and volunteer cleanup logging',
-      'Optional corporation filing when you choose (BMC 1916/MyBMC, PMC CARE, TMC portal) — with complaint number tracking',
-      '4-language UI (English, Hindi, Marathi, Gujarati) for inclusive access',
-      'PWA with offline support — works on basic phones without an app store',
+      'Live ward map with photo pins — neighbours corroborate with Me too, not anonymous helpline drops',
+      'Dual path: pin on CivicRadar first, then one-tap official filing (BMC 1916/MyBMC, PMC CARE, TMC)',
+      'Four launch hazard types: stagnant water, garbage, potholes, broken streetlights',
+      '4-language PWA with offline support — install to Home Screen, no login required',
+      'Escalation timeline + complaint number tracking until spots are fixed',
       'NGO coordinator hub for pledges, volunteer hours, and community cleanup dispatch',
-      'Municipal queue for invited BMC officials — contact us to participate',
+      'Civic Points gamification and community wins when hazards get cleaned',
     ],
   },
 
@@ -247,6 +276,20 @@
     fixConfirmThreshold: 2,     // neighbours saying "looks fixed" before community auto-resolve
     staleCheckDays: 7,          // prompt reporter to re-check old pending spots
   },
+
+  /* ----- Society / neighbourhood suggestions (free-text fallback; not a full registry) ----- */
+  cooperativeRegistryUrl: 'https://cooperatives.gov.in/en/state-dashboard/cooperative-list-reports/state/27',
+  societySuggestions: [
+    'Worli West — Phoenix Mills area',
+    'Hill Road — St Andrews area',
+    'Shivaji Park — Cadell Road',
+    'Dadar West — Hindu Colony',
+    'Bandra West — Pali Hill',
+    'Kurla — Sakinaka CHS',
+    'Powai — Hiranandani Gardens',
+    'Thane West — Ghodbunder Road',
+    'Pune — Koregaon Park',
+  ],
 
   /* ----- Demo NGO invite codes (local testing — production codes live in Supabase) ----- */
   demoNgoCodes: [

@@ -98,9 +98,31 @@
   <!-- Map -->
   <div id="map"></div>
 
+  <!-- Home hero — purpose + CTA for first-time mappers (dismissible) -->
+  <section id="homeHero" class="home-hero hidden" role="region" aria-labelledby="homeHeroTitle">
+    <button type="button" class="home-hero__dismiss" id="btnHeroDismiss" data-i18n-aria="home.hero.dismiss" aria-label="Dismiss">&times;</button>
+    <div class="home-hero__badge">
+      <i class="ph ph-shield-check" aria-hidden="true"></i>
+      <span data-i18n="home.hero.badge">#MonsoonGuardian</span>
+    </div>
+    <h2 class="home-hero__title" id="homeHeroTitle" data-i18n="home.hero.headline">Report stagnant water on your ward map</h2>
+    <p class="home-hero__sub" data-i18n="home.hero.subline">Stop dengue — alert neighbours &amp; BMC, track fixes together.</p>
+    <ul class="home-hero__benefits">
+      <li><i class="ph ph-timer" aria-hidden="true"></i><span data-i18n="home.hero.benefit1">30-sec report</span></li>
+      <li><i class="ph ph-users-three" aria-hidden="true"></i><span data-i18n="home.hero.benefit2">Neighbours alerted</span></li>
+      <li><i class="ph ph-list-checks" aria-hidden="true"></i><span data-i18n="home.hero.benefit3">BMC queue</span></li>
+    </ul>
+    <button type="button" class="btn btn--primary btn--full home-hero__cta" id="btnHeroReport" data-i18n="home.hero.cta">Report stagnant water</button>
+    <button type="button" class="home-hero__tour" id="btnHeroTour" data-i18n="home.hero.tour">See how it works</button>
+    <p class="home-hero__trust" data-i18n="home.hero.trust">Free · No login · Works offline · Mumbai, Pune &amp; Thane</p>
+  </section>
+
   <div id="mapEmptyCta" class="map-empty-cta hidden" role="status">
-    <i class="ph ph-drop"></i>
-    <p id="mapEmptyText" data-i18n="map.empty">No stagnant-water pins on your map yet.</p>
+    <div class="map-empty-cta__icon-wrap" aria-hidden="true">
+      <i class="ph ph-drop"></i>
+    </div>
+    <p class="map-empty-cta__title" id="mapEmptyText" data-i18n="map.empty">No stagnant-water pins on your map yet.</p>
+    <p class="map-empty-cta__hint" data-i18n="map.emptyHint">Pin on the spot → snap a photo → submit in ~30 seconds.</p>
     <button type="button" class="btn btn--primary btn--sm" id="btnMapEmptyReport" data-i18n="map.emptyAction">Report the first one</button>
     <button type="button" class="btn btn--whatsapp btn--sm map-empty-cta__share hidden" id="btnMapEmptyShare">
       <i class="ph ph-whatsapp-logo"></i> <span data-i18n="map.emptyShare">Invite neighbours on WhatsApp</span>
@@ -118,7 +140,13 @@
     <i class="ph ph-map-pin"></i>
     <span id="locationBannerText" data-i18n="location.banner">Turn on location to pin hazards accurately.</span>
     <button type="button" class="location-banner__btn" id="btnEnableLocation" data-i18n="location.enable">Turn on</button>
+    <button type="button" class="location-banner__close" id="btnDismissLocation" data-i18n-aria="location.dismiss" aria-label="Dismiss">&times;</button>
   </div>
+
+  <button type="button" id="btnLocatePill" class="map-locate-pill hidden" data-i18n-aria="location.locateAria" aria-label="Turn on location">
+    <i class="ph ph-map-pin"></i>
+    <span data-i18n="location.locate">Locate me</span>
+  </button>
 
   <button type="button" id="btnRecenter" class="map-recenter" data-i18n-aria="aria.recenter" aria-label="Recenter map on your location">
     <i class="ph ph-crosshair"></i>
@@ -201,6 +229,7 @@
   <datalist id="mumbaiCommunities"></datalist>
   <datalist id="puneCommunities"></datalist>
   <datalist id="thaneCommunities"></datalist>
+  <datalist id="societySuggestions"></datalist>
 
   <!-- ========== MODALS ========== -->
 
@@ -310,6 +339,11 @@
         <p class="field-error hidden" id="wardError" role="alert" data-i18n="onboard.wardError">Pick a ward from the list or allow location.</p>
       </div>
       <div class="form-group">
+        <label for="onboardSociety" data-i18n="onboard.society">Society / neighbourhood (optional)</label>
+        <input type="text" id="onboardSociety" list="societySuggestions" maxlength="120" placeholder="e.g. Phoenix Mills CHS, Worli" data-i18n-ph="onboard.societyPh" autocomplete="off">
+        <p class="field-hint" data-i18n="onboard.societyHint">Your housing society, RWA, or lane — helps group reports nearby.</p>
+      </div>
+      <div class="form-group">
         <label for="displayName" data-i18n="onboard.name">Display Name</label>
         <input type="text" id="displayName" placeholder="How should we call you?" data-i18n-ph="onboard.namePh" maxlength="30">
       </div>
@@ -400,6 +434,11 @@
         <button type="button" class="btn btn--outline btn--full" id="btnSuccessFile">
           <i class="ph ph-megaphone"></i> <span data-i18n="success.file">File official complaint (optional)</span>
         </button>
+        <div class="official-channels-block" id="successOfficialBlock">
+          <p class="official-channels-block__title" data-i18n="success.alsoOfficial">Also file officially</p>
+          <p class="field-hint" data-i18n="official.subtitle">Verified government apps and portals — CivicRadar does not file on your behalf.</p>
+          <div class="esc-channels official-channels" id="successOfficialChannels" data-official-context="success"></div>
+        </div>
         <div class="share-buttons">
           <button type="button" class="btn btn--dark btn--full" id="btnShareTwitter">
             <i class="ph ph-x-logo"></i> <span data-i18n="success.tag">Tag @mybmc</span>
@@ -514,6 +553,12 @@
           <p data-i18n="community.supportBody">Pledge supplies for cleanup crews tackling stagnant water in your ward.</p>
         </div>
         <button type="button" class="btn btn--secondary btn--sm" id="btnOpenPledge" data-i18n="community.pledge">Pledge</button>
+      </div>
+
+      <div class="official-channels-block" id="communityOfficialBlock">
+        <h3 class="section-title" data-i18n="official.title">Official grievance channels</h3>
+        <p class="field-hint" data-i18n="official.subtitle">Verified government apps and portals — CivicRadar does not file on your behalf.</p>
+        <div class="esc-channels official-channels" id="communityOfficialChannels" data-official-context="community"></div>
       </div>
 
       <!-- Ward-local sponsored offers (config-driven — see js/config.js) -->
@@ -636,11 +681,24 @@
         <p class="profile-card__hint" id="profilePointsHint">50 pts per report · +200 when volunteer hours verified</p>
       </div>
 
+      <div class="profile-society form-group">
+        <label for="profileSocietyInput" data-i18n="profile.society">Society / neighbourhood (optional)</label>
+        <input type="text" id="profileSocietyInput" list="societySuggestions" maxlength="120" placeholder="e.g. Phoenix Mills CHS, Worli" data-i18n-ph="profile.societyPh" autocomplete="off">
+        <p class="field-hint" data-i18n="profile.societyHint">Helps neighbours and RWA leads group reports in your lane.</p>
+        <a id="linkCoopRegistry" href="https://cooperatives.gov.in/" target="_blank" rel="noopener noreferrer" class="profile-society__link" data-i18n="profile.societyRegistry">Find your registered cooperative society</a>
+      </div>
+
       <h3 class="section-title" data-i18n="profile.volunteer">My volunteer signup</h3>
       <div class="profile-volunteer" id="profileVolunteer"></div>
 
       <h3 class="section-title" data-i18n="profile.pledges">My pledges</h3>
       <div class="profile-pledge-list" id="profilePledgeList"></div>
+
+      <div class="official-channels-block" id="profileOfficialBlock">
+        <h3 class="section-title" data-i18n="official.title">Official grievance channels</h3>
+        <p class="field-hint" data-i18n="official.subtitle">Verified government apps and portals — CivicRadar does not file on your behalf.</p>
+        <div class="esc-channels official-channels" id="profileOfficialChannels" data-official-context="profile"></div>
+      </div>
 
       <h3 class="section-title" data-i18n="profile.reports">Your Reports</h3>
       <div class="report-list" id="reportList">
@@ -1030,6 +1088,9 @@
         </button>
       </div>
 
+      <p class="field-hint hidden" id="escOfficialCategoryHint"></p>
+      <div class="esc-channels official-channels hidden" id="escOfficialExtras" data-official-context="escalation"></div>
+
       <div class="esc-copy-block">
         <label for="escComplaintText" class="esc-copy-block__label" id="escCopyBlockLabel" data-i18n="esc.copyBlock">Details for 1916 / portal / app</label>
         <textarea id="escComplaintText" class="esc-copy-block__text" rows="7" readonly aria-readonly="true"></textarea>
@@ -1079,7 +1140,7 @@
       <div class="modal__handle"></div>
       <button type="button" class="modal__close" data-close="about" aria-label="Close">&times;</button>
       <h2 id="aboutTitle"><i class="ph ph-radar"></i> <span data-i18n="about.title">About CivicRadar</span></h2>
-      <p class="modal__subtitle" id="aboutSubtitle" data-i18n="about.subtitle">Built for monsoon civic reporting in Mumbai, Pune &amp; Thane. Free for citizens.</p>
+      <p class="modal__subtitle" id="aboutSubtitle" data-i18n="about.subtitle">Community-powered ward map for Mumbai, Pune &amp; Thane — not an anonymous helpline router.</p>
 
       <div class="founder-card" id="founderCard">
         <div class="founder-card__avatar"><i class="ph ph-radar"></i></div>
@@ -1107,6 +1168,14 @@
           <i class="ph ph-copy"></i> <span data-i18n="about.copyPitch">Copy WhatsApp pitch</span>
         </button>
       </div>
+
+      <h3 class="section-title" data-i18n="about.differentTitle">What makes CivicRadar different</h3>
+      <ul class="about-different">
+        <li data-i18n="about.different1">Live ward map with photo pins — neighbours tap Me too to corroborate, not anonymous helpline drops</li>
+        <li data-i18n="about.different2">Dual path: pin on CivicRadar first, then one-tap official filing (BMC 1916/MyBMC, PMC CARE, TMC) when you choose</li>
+        <li data-i18n="about.different3">Works offline — install to Home Screen, no login, 4 languages across Mumbai, Pune &amp; Thane</li>
+        <li data-i18n="about.different4">Track until fixed — escalation timeline, Civic Points, and community wins when spots get cleaned</li>
+      </ul>
 
       <h3 class="section-title" data-i18n="about.builtTitle">What we built</h3>
       <ul class="about-highlights" id="founderHighlights"></ul>
