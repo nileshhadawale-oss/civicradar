@@ -1,6 +1,6 @@
 # CivicRadar Test Results
 
-**Run:** 2026-06-23 23:15:26
+**Run:** 2026-06-23 23:45:08
 **Server:** http://localhost:9080/
 **Script:** `tests/e2e_comprehensive.py`
 **Total:** 278 | **Pass:** 278 | **Fail:** 0
@@ -28,7 +28,6 @@
 - `tests/e2e_comprehensive.py`: ensure_server verifies CivicRadar content (not Windows-reserved 8095 listener); port fallbacks 8097–8787; RP05 waits for report modal open
 - `js/app.js` + `index.html`: second-pass review — contact-neutral coordinator access copy (phone-only path); admin OTP verify accepts super-admin role; magic-link callback errors via formatAuthError; claim-code copy toast fixed; bottom-nav ghost-tap guard during camera; Twitter share no duplicate hashtags
 - `sw.js` + `tests/e2e_comprehensive.py`: v77 cache bump; AR12 phone-only confirm copy; AU01 admin OTP role check; SW06 → v77
-- `tests/e2e_comprehensive.py`: ensure_server uses stdlib http.server + shorter probe timeout (fixes Windows 8095 HTTP.sys hang during test startup)
 
 ## Summary by category
 
@@ -161,7 +160,7 @@ _None_
 | E15b | Edge | Map empty share hidden first visit | PASS |  |
 | E16 | Edge | Invalid ward cleared on load | PASS |  |
 | L01 | Load | 15 parallel report contexts | PASS | 15/15 |
-| L02 | Load | 200 reports refresh under 3s | PASS | 0.01s |
+| L02 | Load | 200 reports refresh under 3s | PASS | 0.02s |
 | L03 | Load | 50x loadReports parse under 500ms | PASS | 9ms |
 | L04 | Load | Rapid corroboration increments | PASS | n=5 |
 | L05 | Load | Analytics batch enqueue | PASS |  |
