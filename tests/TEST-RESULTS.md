@@ -1,9 +1,9 @@
 # CivicRadar Test Results
 
-**Run:** 2026-06-28 18:36:01
-**Server:** http://localhost:8097/
+**Run:** 2026-06-29 00:07:58
+**Server:** http://localhost:9080/
 **Script:** `tests/e2e_comprehensive.py`
-**Total:** 356 | **Pass:** 356 | **Fail:** 0
+**Total:** 366 | **Pass:** 363 | **Fail:** 3
 
 ## Fixes applied this run
 
@@ -51,6 +51,8 @@
 - `js/app.js` + `index.html`: active monsoon messaging (v90) + report photo reset on reopen (IS03); hero spot-guidance subline; cache v90
 - `sw.js` + `tests/e2e_comprehensive.py`: v90 cache bump; OB10–OB13 hero-based (post v89 explainer trim); SW06 → v90; browser restart before late suites
 - `supabase/schema.sql` + `js/analytics.js` + `js/app.js` + `index.html` + `css/styles.css`: analytics & tracking dashboard (v93) — `get_tracking_dashboard` RPC, role-gated UI, PWA install instrumentation, localized en/hi/mr/gu; TK01–TK05; SW06 → v93
+- `index.html` + `js/app.js`: neighbourhood datalist autopopulate (v96) — volunteer + lead nomination fields share ward-filtered `societySuggestions` with free-text override and custom cache; localized en/hi/mr/gu; NB01–NB04; SW06 → v96
+- `index.html` + `js/app.js` + `sw.js` + `supabase/schema.sql`: neighbourhood report alerts (v97) — Profile "Neighbourhood updates" with new-report + resolved FYI sub-toggles; shared rate limit; resolved digest; Web Notification + in-app toast; Supabase profile prefs + sync; local queue for E2E; localized en/hi/mr/gu; NA01–NA06; SW06 → v97
 
 ## Summary by category
 
@@ -79,6 +81,7 @@
 - **MultiCity:** 10 pass / 0 fail
 - **NGO:** 10 pass / 0 fail
 - **Negative:** 8 pass / 0 fail
+- **Neighbourhood:** 10 pass / 0 fail
 - **OfficialChannels:** 8 pass / 0 fail
 - **Onboarding:** 4 pass / 0 fail
 - **PWA:** 8 pass / 0 fail
@@ -94,7 +97,7 @@
 - **Society:** 8 pass / 0 fail
 - **Storage:** 2 pass / 0 fail
 - **Sync:** 1 pass / 0 fail
-- **Tour:** 9 pass / 0 fail
+- **Tour:** 6 pass / 3 fail
 - **Tracking:** 5 pass / 0 fail
 - **UI:** 25 pass / 0 fail
 - **Viral:** 4 pass / 0 fail
@@ -104,7 +107,9 @@
 
 ## Failures
 
-_None_
+- `TR03` **Tour auto-shows after coach explainer on first run** — failed
+- `TR04` **Completing tour hides overlay + sets seen flag** — failed
+- `TR05` **Skip hides tour + sets seen flag** — failed
 
 ## Limitations
 
@@ -195,8 +200,8 @@ _None_
 | E15b | Edge | Map empty share hidden first visit | PASS |  |
 | E16 | Edge | Invalid ward cleared on load | PASS |  |
 | L01 | Load | 15 parallel report contexts | PASS | 15/15 |
-| L02 | Load | 200 reports refresh under 3s | PASS | 0.01s |
-| L03 | Load | 50x loadReports parse under 500ms | PASS | 6ms |
+| L02 | Load | 200 reports refresh under 3s | PASS | 0.02s |
+| L03 | Load | 50x loadReports parse under 500ms | PASS | 10ms |
 | L04 | Load | Rapid corroboration increments | PASS | n=5 |
 | L05 | Load | Analytics batch enqueue | PASS |  |
 | M01 | Map | Leaflet map container | PASS |  |
@@ -319,7 +324,7 @@ _None_
 | RP06 | Report | Close without submit saves nothing | PASS |  |
 | RP07 | Report | Report stored in localStorage | PASS |  |
 | RP08 | Report | Success overlay has celebrate el | PASS |  |
-| RP13 | Report | First report shows celebrate + progress | PASS | celebrate="Youï¿½re protecting your ward " progress="Badge unlocked! 2 more to your" |
+| RP13 | Report | First report shows celebrate + progress | PASS | celebrate="You—re protecting your ward — " progress="Badge unlocked! 2 more to your" |
 | RP14 | Report | Non-milestone report shows rotating kudos | PASS | celebrate="Logged! Thanks for looking out for your " |
 | RP15 | Report | Non-milestone report shows progress-to-badge nudge | PASS | progress="Just 1 more report to your next badge." |
 | RW01 | Rewards | Second report shows week streak callout | PASS |  |
@@ -377,6 +382,10 @@ _None_
 | SO06 | Society | Datalist differs by ward | PASS |  |
 | SO07 | Society | Custom society cached by city+ward | PASS |  |
 | SO08 | Society | Ward-filter hint populated | PASS |  |
+| NB01 | Neighbourhood | Volunteer field wired to societySuggestions datalist | PASS |  |
+| NB02 | Neighbourhood | Ward-filtered neighbourhood options (10+) | PASS |  |
+| NB03 | Neighbourhood | Custom neighbourhood cached by city+ward | PASS |  |
+| NB04 | Neighbourhood | Volunteer ward-filter hint populated | PASS |  |
 | SW01 | PWA | CIVICRADAR_CONFIG loaded | PASS |  |
 | SW02 | PWA | Config has cities object | PASS |  |
 | SW03 | PWA | Manifest href valid | PASS |  |
@@ -418,10 +427,10 @@ _None_
 | FB07 | Feedback | Feedback strings render (i18n, no key leak) | PASS |  |
 | TR01 | Tour | Tour overlay element present | PASS |  |
 | TR02 | Tour | Replay-tour entry present in Profile | PASS |  |
-| TR03 | Tour | Tour auto-shows after coach explainer on first run | PASS |  |
-| TR04 | Tour | Completing tour hides overlay + sets seen flag | PASS |  |
+| TR03 | Tour | Tour auto-shows after coach explainer on first run | **FAIL** |  |
+| TR04 | Tour | Completing tour hides overlay + sets seen flag | **FAIL** |  |
 | TR06 | Tour | Tour does not reappear on reload once seen | PASS |  |
-| TR05 | Tour | Skip hides tour + sets seen flag | PASS |  |
+| TR05 | Tour | Skip hides tour + sets seen flag | **FAIL** |  |
 | TR07 | Tour | Replay entry restarts tour on demand | PASS |  |
 | TR08 | Tour | Tour does NOT show in demo mode | PASS |  |
 | TR09 | Tour | Tour does NOT show for referral (?ref=) entry | PASS |  |
@@ -432,6 +441,12 @@ _None_
 | RR05 | Reminder | Reminder respects cadence (not re-shown same day) | PASS |  |
 | RR06 | Reminder | No location nudge when hazard is far away | PASS |  |
 | RR07 | Reminder | Nearby pending hazard triggers location nudge | PASS |  |
+| NA01 | Neighbourhood | Neighbourhood alert toggles present | PASS |  |
+| NA02 | Neighbourhood | Alert preferences persist in localStorage | PASS |  |
+| NA03 | Neighbourhood | No new-report alert when toggle off | PASS |  |
+| NA04 | Neighbourhood | Resolved alert fires for matching neighbourhood user | PASS |  |
+| NA05 | Neighbourhood | No resolved alert when toggle off | PASS |  |
+| NA06 | Neighbourhood | Rate limit prevents burst (max 3 / 24h) | PASS |  |
 | AR01 | Access | Lead + BMC entry points present | PASS |  |
 | AR02 | Access | BMC request modal opens with explainer | PASS |  |
 | AR03 | Access | Empty name blocked with inline error | PASS |  |

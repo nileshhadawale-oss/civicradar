@@ -90,7 +90,7 @@
   <div id="personaBar" class="persona-bar persona-bar--citizen" role="status">
     <div class="persona-bar__main">
       <i class="ph ph-info persona-bar__icon" id="personaBarIcon"></i>
-      <p id="personaBarText" data-i18n="persona.citizen.idle">Monsoon standing water = dengue. Report now — pin your ward map in 30 sec.</p>
+      <p id="personaBarText" data-i18n="persona.citizen.idle">Stagnant water = dengue risk. Tap Report — pin it on your ward map in 30 sec, then share on WhatsApp.</p>
     </div>
     <button type="button" class="persona-bar__action hidden" id="personaBarAction"></button>
   </div>
@@ -105,16 +105,16 @@
       <i class="ph ph-shield-check" aria-hidden="true"></i>
       <span data-i18n="home.hero.badge">#MonsoonGuardian</span>
     </div>
-    <h2 class="home-hero__title" id="homeHeroTitle" data-i18n="home.hero.headline">Report stagnant water on your ward map</h2>
-    <p class="home-hero__sub" data-i18n="home.hero.subline">Monsoon is here — pin stagnant water on the spot: snap a photo, neighbours Me too.</p>
+    <h2 class="home-hero__title" id="homeHeroTitle" data-i18n="home.hero.headline">Map it · Snap it · Report it</h2>
+    <p class="home-hero__sub" data-i18n="home.hero.subline">Three taps — your ward, a photo, neighbours alerted.</p>
     <ul class="home-hero__benefits">
-      <li><i class="ph ph-timer" aria-hidden="true"></i><span data-i18n="home.hero.benefit1">30-sec report</span></li>
-      <li><i class="ph ph-users-three" aria-hidden="true"></i><span data-i18n="home.hero.benefit2">Neighbours alerted</span></li>
-      <li><i class="ph ph-list-checks" aria-hidden="true"></i><span data-i18n="home.hero.benefit3">BMC queue</span></li>
+      <li><i class="ph ph-map-trifold" aria-hidden="true"></i><span data-i18n="home.hero.benefit1">Map it</span></li>
+      <li><i class="ph ph-camera" aria-hidden="true"></i><span data-i18n="home.hero.benefit2">Snap it</span></li>
+      <li><i class="ph ph-megaphone-simple" aria-hidden="true"></i><span data-i18n="home.hero.benefit3">Report it</span></li>
     </ul>
-    <button type="button" class="btn btn--primary btn--full home-hero__cta" id="btnHeroReport" data-i18n="home.hero.cta">Report stagnant water</button>
-    <button type="button" class="home-hero__tour" id="btnHeroTour" data-i18n="home.hero.tour">See how it works</button>
-    <p class="home-hero__trust" data-i18n="home.hero.trust">Free · No login · Works offline · Mumbai, Pune &amp; Thane</p>
+    <button type="button" class="btn btn--primary btn--full home-hero__cta" id="btnHeroReport" data-i18n="home.hero.cta">Report now</button>
+    <button type="button" class="home-hero__tour" id="btnHeroTour" data-i18n="home.hero.tour">Quick tour</button>
+    <p class="home-hero__trust" data-i18n="home.hero.trust">Free · offline · 3 cities · 4 langs</p>
   </section>
 
   <div id="mapEmptyCta" class="map-empty-cta hidden" role="status">
@@ -123,7 +123,7 @@
     </div>
     <p class="map-empty-cta__title" id="mapEmptyText" data-i18n="map.empty">No pins in your ward yet.</p>
     <p class="map-empty-cta__encourage" data-i18n="map.emptyEncourage">Every pin helps your ward beat dengue this monsoon.</p>
-    <p class="map-empty-cta__hint" data-i18n="map.emptyHint">Photo on the spot · ~30 sec</p>
+    <p class="map-empty-cta__hint" data-i18n="map.emptyHint">Map it · Snap it · Report it</p>
     <button type="button" class="btn btn--primary btn--sm" id="btnMapEmptyReport" data-i18n="map.emptyAction">Report the first one</button>
     <button type="button" class="btn btn--whatsapp btn--sm map-empty-cta__share hidden" id="btnMapEmptyShare">
       <i class="ph ph-whatsapp-logo"></i> <span data-i18n="map.emptyShare">Invite neighbours on WhatsApp</span>
@@ -177,8 +177,8 @@
   <div id="coachMark" class="coach-mark hidden" role="dialog" aria-modal="true" aria-labelledby="coachTitle">
     <div class="coach-mark__card">
       <span class="coach-mark__step" data-i18n="coach.step">#MonsoonGuardian · 30 sec</span>
-      <h3 id="coachTitle" data-i18n="coach.title">Standing water nearby? Pin it now.</h3>
-      <p data-i18n="coach.body">Tap Report, snap a photo — we pin your ward map.</p>
+      <h3 id="coachTitle" data-i18n="coach.title">Map it · Snap it · Report it</h3>
+      <p data-i18n="coach.body">Three taps — your ward, a photo, neighbours alerted.</p>
       <button type="button" class="btn btn--primary btn--full" id="btnDismissCoach" data-i18n="coach.got">Got it</button>
     </div>
   </div>
@@ -188,8 +188,8 @@
     <div class="tour__spotlight" id="tourSpotlight" aria-hidden="true"></div>
     <div class="tour__bubble" id="tourBubble" tabindex="-1">
       <span class="tour__step" id="tourStep">1 / 3</span>
-      <h3 class="tour__title" id="tourTitle" data-i18n="tour.map.title">Your ward map</h3>
-      <p class="tour__body" id="tourBody" data-i18n="tour.map.body">This is your ward map. Hazards near you show up here as pins.</p>
+      <h3 class="tour__title" id="tourTitle" data-i18n="tour.map.title">Map it</h3>
+      <p class="tour__body" id="tourBody" data-i18n="tour.map.body">Your ward map — hazard pins and Me too show here.</p>
       <div class="tour__actions">
         <button type="button" class="tour__skip" id="btnTourSkip" data-i18n="tour.skip">Skip</button>
         <button type="button" class="btn btn--primary tour__next" id="btnTourNext" data-i18n="tour.next">Next</button>
@@ -284,7 +284,7 @@
         <span class="flow-step" data-i18n="flow.ward">Ward</span>
         <span class="flow-step" data-i18n="flow.ready">Ready</span>
       </div>
-      <p class="modal__subtitle" data-i18n="onboard.subtitle">Pin hazards on your ward map in 30 sec.</p>
+      <p class="modal__subtitle" data-i18n="onboard.subtitle">Three taps — your ward, a photo, neighbours alerted.</p>
       <div class="form-group" id="onboardCityGroup">
         <label for="onboardCity" data-i18n="onboard.city">Your city</label>
         <select id="onboardCity" aria-describedby="onboardCityHint">
@@ -333,17 +333,19 @@
     <div class="modal modal--tall" id="reportModal" role="dialog" aria-labelledby="reportTitle">
       <div class="modal__handle"></div>
       <h2 id="reportTitle" data-i18n="report.title">Report a Hazard</h2>
-      <div class="flow-steps" id="reportFlowSteps" aria-label="Report progress">
-        <span class="flow-step is-active" data-step="photo" data-i18n="report.step.photo">Photo</span>
-        <span class="flow-step" data-step="details" data-i18n="report.step.details">Details</span>
-        <span class="flow-step" data-step="submit" data-i18n="report.step.submit">Submit</span>
+      <div class="flow-steps" id="reportFlowSteps" role="list" aria-label="Report progress">
+        <span class="flow-step is-active" role="listitem" data-step="photo" data-i18n="report.step.photo">Photo</span>
+        <span class="flow-step" role="listitem" data-step="details" data-i18n="report.step.details">Details</span>
+        <span class="flow-step" role="listitem" data-step="submit" data-i18n="report.step.submit">Submit</span>
       </div>
-      <div class="form-group">
-        <label data-i18n="report.hazardType">Hazard Type</label>
+      <div class="form-group hazard-picker-group">
+        <label id="hazardTypeLabel" data-i18n="report.hazardType">Hazard Type</label>
+        <p class="hazard-picker__hint" id="hazardPickerHint" data-i18n="report.hazardHint">Tap the hazard you're reporting</p>
         <input type="hidden" id="hazardType" value="stagnant-water">
-        <div class="hazard-grid" id="hazardGrid" role="radiogroup" aria-label="Hazard type"></div>
+        <div class="hazard-grid" id="hazardGrid" role="radiogroup" aria-labelledby="hazardTypeLabel"></div>
+        <p class="hazard-selected-cue hidden" id="hazardSelectedCue" role="status" aria-live="polite"></p>
       </div>
-      <div class="form-group">
+      <div class="form-group report-photo-section" id="reportPhotoSection">
         <label data-i18n="report.photoEvidence">Photo Evidence</label>
         <p class="photo-guidelines" id="photoGuidelines" data-i18n="moderation.guidelines">Only upload a clear onsite photo of the hazard. No selfies, IDs, documents, or unrelated images — location metadata is stripped for privacy.</p>
         <div class="camera-area">
@@ -386,7 +388,7 @@
       <p class="success-celebrate hidden" id="successCelebrate" aria-live="polite"></p>
       <p class="success-progress hidden" id="successProgress" aria-live="polite"></p>
       <h2 id="successTitle" data-i18n="success.title">Report Logged</h2>
-      <p class="success-tagline" id="successTagline" data-i18n="success.tagline">Pinned on your ward map</p>
+      <p class="success-tagline" id="successTagline" data-i18n="success.tagline">Report it — pinned on your ward map</p>
       <p class="accountability-clock accountability-clock--warn" id="successClock"></p>
       <div class="success-preview">
         <img id="successThumbnail" alt="Report preview" hidden>
@@ -569,8 +571,8 @@
       </div>
       <div class="form-group">
         <label for="volunteerNeighbourhood" data-i18n="volunteer.neighbourhood">Neighbourhood / society / lane</label>
-        <input type="text" id="volunteerNeighbourhood" maxlength="120" placeholder="e.g. Phoenix Mills lane, Building 7 Worli" data-i18n-ph="volunteer.neighbourhoodPh">
-        <p class="field-hint" data-i18n="volunteer.neighbourhoodHint">Your RWA, society, or lane — helps neighbourhood leads match you to nearby spots.</p>
+        <input type="text" id="volunteerNeighbourhood" list="societySuggestions" maxlength="120" placeholder="e.g. Phoenix Mills lane, Building 7 Worli" data-i18n-ph="volunteer.neighbourhoodPh" autocomplete="off" aria-describedby="volunteerNeighbourhoodHint">
+        <p class="field-hint" id="volunteerNeighbourhoodHint" data-i18n="volunteer.neighbourhoodHintNoWard">Pick your ward first for local suggestions.</p>
       </div>
       <div class="form-group">
         <label data-i18n="volunteer.hours">Hours available this monsoon</label>
@@ -700,6 +702,27 @@
       <h3 class="section-title" data-i18n="profile.reports">Your Reports</h3>
       <div class="report-list" id="reportList">
         <p class="empty-state" data-i18n="profile.emptyList">No reports yet. Tap Report to pin stagnant water near you.</p>
+      </div>
+
+      <h3 class="section-title" data-i18n="settings.nbh.title">Neighbourhood updates</h3>
+      <p class="field-hint profile-settings-hint" data-i18n="settings.nbh.sub">When neighbours in your society report or resolve hazards.</p>
+      <div class="profile-settings">
+        <label class="toggle-row" for="nbhNewAlertToggle">
+          <span class="toggle-row__text">
+            <span class="toggle-row__label" data-i18n="settings.nbh.new.label">New reports nearby</span>
+            <span class="toggle-row__sub" data-i18n="settings.nbh.new.sub">Nudge when someone pins a hazard in your society or ward.</span>
+          </span>
+          <input type="checkbox" id="nbhNewAlertToggle" class="toggle-row__input">
+          <span class="toggle-row__switch" aria-hidden="true"></span>
+        </label>
+        <label class="toggle-row" for="nbhResolvedAlertToggle">
+          <span class="toggle-row__text">
+            <span class="toggle-row__label" data-i18n="settings.nbh.resolved.label">Resolved nearby</span>
+            <span class="toggle-row__sub" data-i18n="settings.nbh.resolved.sub">Good news when a hazard near you is marked resolved.</span>
+          </span>
+          <input type="checkbox" id="nbhResolvedAlertToggle" class="toggle-row__input">
+          <span class="toggle-row__switch" aria-hidden="true"></span>
+        </label>
       </div>
 
       <h3 class="section-title" data-i18n="settings.title">Reminders</h3>
@@ -1151,7 +1174,7 @@
       <div class="modal__handle"></div>
       <button type="button" class="modal__close" data-close="about" aria-label="Close">&times;</button>
       <h2 id="aboutTitle"><i class="ph ph-radar"></i> <span data-i18n="about.title">About CivicRadar</span></h2>
-      <p class="modal__subtitle" id="aboutSubtitle" data-i18n="about.subtitle">Community-powered ward map for Mumbai, Pune &amp; Thane — not an anonymous helpline router.</p>
+      <p class="modal__subtitle" id="aboutSubtitle" data-i18n="about.subtitle">Map it · Snap it · Report it — community ward map for Mumbai, Pune &amp; Thane.</p>
 
       <div class="founder-card" id="founderCard">
         <div class="founder-card__avatar"><i class="ph ph-radar"></i></div>
@@ -1456,7 +1479,8 @@
 
           <div class="form-group hidden" id="leadNomNeighbourhoodGroup">
             <label class="form-label" for="leadNomNeighbourhood" data-i18n="lead.neighbourhoodLabel">Neighbourhood / society / lane</label>
-            <input type="text" id="leadNomNeighbourhood" maxlength="120" data-i18n-ph="volunteer.neighbourhoodPh" placeholder="e.g. Phoenix Mills lane">
+            <input type="text" id="leadNomNeighbourhood" list="societySuggestions" maxlength="120" data-i18n-ph="volunteer.neighbourhoodPh" placeholder="e.g. Phoenix Mills lane" autocomplete="off" aria-describedby="leadNomNeighbourhoodHint">
+            <p class="field-hint" id="leadNomNeighbourhoodHint" data-i18n="lead.neighbourhoodHintNoWard">Pick your ward first for local suggestions.</p>
           </div>
 
           <div class="form-group">

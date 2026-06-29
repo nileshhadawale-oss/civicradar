@@ -1,4 +1,4 @@
-const CACHE = 'civicradar-v93';
+const CACHE = 'civicradar-v98';
 // Runtime config — never precache; always fetch fresh (see network-first below).
 const NETWORK_FIRST = ['/js/config.js'];
 // Relative paths resolve against the SW scope, so precache works both at the
@@ -89,6 +89,25 @@ self.addEventListener('fetch', (e) => {
         }
         return Response.error();
       });
+    })
+  );
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const data = (event.notification && event.notification.data) || {};
+  const reportId = data.reportId || '';
+  const target = data.url || './';
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        if ('focus' in client) {
+          client.postMessage({ type: 'nbh-alert-focus', reportId });
+          return client.focus();
+        }
+      }
+      const url = reportId ? `${target}${target.includes('?') ? '&' : '?'}report=${encodeURIComponent(reportId)}` : target;
+      return self.clients.openWindow(url);
     })
   );
 });

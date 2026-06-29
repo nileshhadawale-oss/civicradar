@@ -249,11 +249,14 @@ html, body {
 
 .modal { position: relative; }
 
-/* Flow steps */
+/* Flow steps — unified stepper: one hue family; active = accent, done = check + muted */
 .flow-steps {
   display: flex;
-  gap: 6px;
+  gap: 4px;
   margin-bottom: 16px;
+  padding: 4px;
+  background: rgba(148, 163, 184, 0.1);
+  border-radius: 10px;
 }
 
 .flow-steps--compact {
@@ -265,25 +268,36 @@ html, body {
   flex: 1;
   min-width: 0;
   text-align: center;
-  padding: 8px 4px;
+  padding: 8px 6px;
   border-radius: 8px;
   font-size: 0.6875rem;
   font-weight: 600;
   line-height: 1.25;
   color: var(--text-muted);
-  background: var(--bg-main);
+  background: transparent;
+  border: 1.5px solid transparent;
   word-break: break-word;
   hyphens: auto;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .flow-step.is-active {
-  background: rgba(99, 102, 241, 0.12);
+  background: var(--surface, #fff);
   color: var(--primary);
+  border-color: rgba(99, 102, 241, 0.35);
+  box-shadow: 0 1px 4px rgba(99, 102, 241, 0.12);
 }
 
 .flow-step.is-done {
-  background: rgba(16, 185, 129, 0.12);
-  color: var(--success);
+  background: transparent;
+  color: var(--text-muted);
+  border-color: transparent;
+}
+
+.flow-step.is-done::before {
+  content: '✓\00a0';
+  color: var(--primary);
+  font-weight: 700;
 }
 
 .field-hint {
@@ -4146,32 +4160,96 @@ body.persona-lead .ref-welcome { display: none; }
 .status-badge--overdue { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
 
 /* ---------- Hazard category picker ---------- */
+.hazard-picker__hint {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  margin: 4px 0 10px;
+  line-height: 1.35;
+}
+.hazard-selected-cue {
+  margin: 10px 0 0;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  background: rgba(99, 102, 241, 0.08);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  color: var(--primary);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.35;
+  animation: hazard-cue-in 0.28s ease both;
+}
+.hazard-selected-cue.hidden { display: none; }
+@keyframes hazard-cue-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.report-photo-section--cue {
+  outline: 2px solid rgba(99, 102, 241, 0.45);
+  outline-offset: 4px;
+  border-radius: var(--radius);
+  transition: outline-color 0.2s ease;
+}
+.btn--pulse-once {
+  animation: btn-pulse-once 0.55s ease;
+}
+@keyframes btn-pulse-once {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.03); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25); }
+}
 .hazard-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
+  gap: 10px;
 }
 .hazard-tile {
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 6px;
-  padding: 14px 8px;
-  border: 1.5px solid var(--border);
+  min-height: 72px;
+  min-width: 44px;
+  padding: 14px 10px;
+  border: 2px solid var(--border);
   border-radius: var(--radius);
   background: #fff;
   cursor: pointer;
   font-family: var(--font);
-  transition: border-color 0.15s, background 0.15s;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s, transform 0.12s;
+}
+.hazard-tile:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
 }
 .hazard-tile i { font-size: 1.5rem; color: var(--secondary); }
 .hazard-tile__label { font-size: 0.8125rem; font-weight: 600; text-align: center; line-height: 1.25; word-break: break-word; hyphens: auto; }
-.hazard-tile--active {
-  border-color: var(--secondary);
-  background: rgba(37, 99, 235, 0.06);
+.hazard-tile__check {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  font-size: 1rem;
+  color: var(--primary);
+  opacity: 0;
+  transform: scale(0.85);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  line-height: 1;
 }
-.hazard-tile--soon { opacity: 0.85; }
+.hazard-tile--active {
+  border-color: var(--primary);
+  background: rgba(99, 102, 241, 0.08);
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.15);
+}
+.hazard-tile--active .hazard-tile__check {
+  opacity: 1;
+  transform: scale(1);
+}
+.hazard-tile--soon {
+  opacity: 0.72;
+  cursor: not-allowed;
+  pointer-events: none;
+  background: var(--bg-main);
+}
 .hazard-tile--soon i { color: var(--text-muted, #94a3b8); }
 .hazard-tile__soon {
   position: absolute;

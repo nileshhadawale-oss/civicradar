@@ -1,0 +1,699 @@
+{
+  "total_issues": 86,
+  "by_lang": {
+    "en": 0,
+    "hi": 22,
+    "mr": 35,
+    "gu": 29
+  },
+  "issues": [
+    {
+      "lang": "hi",
+      "key": "home.hero.badge",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "#MonsoonGuardian"
+    },
+    {
+      "lang": "hi",
+      "key": "esc.participate.btn",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "Participate Mumbai"
+    },
+    {
+      "lang": "hi",
+      "key": "esc.tmc.tier.openAaple",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "Aaple Sarkar"
+    },
+    {
+      "lang": "hi",
+      "key": "esc.pmc.channelWa",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "PMC CARE WhatsApp"
+    },
+    {
+      "lang": "hi",
+      "key": "esc.pmc.tier.openAaple",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "Aaple Sarkar"
+    },
+    {
+      "lang": "hi",
+      "key": "copy1916.gpsLabel",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "GPS"
+    },
+    {
+      "lang": "hi",
+      "key": "copy1916.mapsLabel",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "Maps"
+    },
+    {
+      "lang": "hi",
+      "key": "official.marg.label",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "MyBMC MARG"
+    },
+    {
+      "lang": "hi",
+      "key": "official.swachhata.label",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "Swachhata-MoHUA"
+    },
+    {
+      "lang": "hi",
+      "key": "official.aaple.label",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "Aaple Sarkar"
+    },
+    {
+      "lang": "hi",
+      "key": "official.pmc.label",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "PMC CARE"
+    },
+    {
+      "lang": "hi",
+      "key": "official.tmc.small",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "thanecity.gov.in"
+    },
+    {
+      "lang": "hi",
+      "key": "official.bmcWa.label",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "MyBMC WhatsApp"
+    },
+    {
+      "lang": "hi",
+      "key": "official.bmcPortal.small",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "portal.mcgm.gov.in"
+    },
+    {
+      "lang": "hi",
+      "key": "official.hint.pmc.stagnant-water",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "Health / mosquito breeding / stagnant water"
+    },
+    {
+      "lang": "hi",
+      "key": "admin.meta.lat",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "Lat"
+    },
+    {
+      "lang": "hi",
+      "key": "admin.meta.lng",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "Lng"
+    },
+    {
+      "lang": "hi",
+      "key": "tracking.pwaInstalls",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "PWA installs"
+    },
+    {
+      "lang": "hi",
+      "key": "tracking.meToo",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "Me too"
+    },
+    {
+      "lang": "hi",
+      "key": "access.emailPh",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "you@example.com"
+    },
+    {
+      "lang": "hi",
+      "key": "access.claimPh",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "CR-XXXXXX"
+    },
+    {
+      "lang": "hi",
+      "key": "lead.support",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "Support"
+    },
+    {
+      "lang": "mr",
+      "key": "home.hero.badge",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "#MonsoonGuardian"
+    },
+    {
+      "lang": "mr",
+      "key": "esc.participate.btn",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "Participate Mumbai"
+    },
+    {
+      "lang": "mr",
+      "key": "esc.tmc.tier.openAaple",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "Aaple Sarkar"
+    },
+    {
+      "lang": "mr",
+      "key": "esc.pmc.channelWa",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "PMC CARE WhatsApp"
+    },
+    {
+      "lang": "mr",
+      "key": "esc.pmc.tier.openAaple",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "Aaple Sarkar"
+    },
+    {
+      "lang": "mr",
+      "key": "copy1916.gpsLabel",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "GPS"
+    },
+    {
+      "lang": "mr",
+      "key": "copy1916.mapsLabel",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "Maps"
+    },
+    {
+      "lang": "mr",
+      "key": "official.marg.label",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "MyBMC MARG"
+    },
+    {
+      "lang": "mr",
+      "key": "official.swachhata.label",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "Swachhata-MoHUA"
+    },
+    {
+      "lang": "mr",
+      "key": "official.aaple.label",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "Aaple Sarkar"
+    },
+    {
+      "lang": "mr",
+      "key": "official.pmc.label",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "PMC CARE"
+    },
+    {
+      "lang": "mr",
+      "key": "official.tmc.small",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "thanecity.gov.in"
+    },
+    {
+      "lang": "mr",
+      "key": "official.bmcWa.label",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "MyBMC WhatsApp"
+    },
+    {
+      "lang": "mr",
+      "key": "official.bmcPortal.small",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "portal.mcgm.gov.in"
+    },
+    {
+      "lang": "mr",
+      "key": "official.hint.pmc.stagnant-water",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "Health / mosquito breeding / stagnant water"
+    },
+    {
+      "lang": "mr",
+      "key": "profile.persona.admin",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "BMC Admin"
+    },
+    {
+      "lang": "mr",
+      "key": "admin.title",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "BMC Admin"
+    },
+    {
+      "lang": "mr",
+      "key": "badge.admin",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "BMC Admin"
+    },
+    {
+      "lang": "mr",
+      "key": "admin.meta.lat",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "Lat"
+    },
+    {
+      "lang": "mr",
+      "key": "admin.meta.lng",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "Lng"
+    },
+    {
+      "lang": "mr",
+      "key": "tracking.sessions",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "Visits"
+    },
+    {
+      "lang": "mr",
+      "key": "tracking.pwaInstalls",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "PWA installs"
+    },
+    {
+      "lang": "mr",
+      "key": "tracking.sourceLocal",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "Device + local reports (demo / offline)"
+    },
+    {
+      "lang": "mr",
+      "key": "tracking.escalations",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "Official channel opens"
+    },
+    {
+      "lang": "mr",
+      "key": "tracking.reporters",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "Active reporters"
+    },
+    {
+      "lang": "mr",
+      "key": "tracking.meToo",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "Me too"
+    },
+    {
+      "lang": "mr",
+      "key": "tracking.filed",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "Official filings"
+    },
+    {
+      "lang": "mr",
+      "key": "tracking.leads",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "Neighbourhood leads"
+    },
+    {
+      "lang": "mr",
+      "key": "tracking.pending",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "open"
+    },
+    {
+      "lang": "mr",
+      "key": "access.emailPh",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "you@example.com"
+    },
+    {
+      "lang": "mr",
+      "key": "access.claimPh",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "CR-XXXXXX"
+    },
+    {
+      "lang": "mr",
+      "key": "lead.roleNbh",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "Neighbourhood lead"
+    },
+    {
+      "lang": "mr",
+      "key": "lead.neighbourhoodLabel",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "Neighbourhood / society / lane"
+    },
+    {
+      "lang": "mr",
+      "key": "lead.tagWard",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "Ward lead"
+    },
+    {
+      "lang": "mr",
+      "key": "lead.tagNbh",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "Neighbourhood"
+    },
+    {
+      "lang": "gu",
+      "key": "home.hero.badge",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "#MonsoonGuardian"
+    },
+    {
+      "lang": "gu",
+      "key": "esc.participate.btn",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "Participate Mumbai"
+    },
+    {
+      "lang": "gu",
+      "key": "esc.tmc.tier.openAaple",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "Aaple Sarkar"
+    },
+    {
+      "lang": "gu",
+      "key": "esc.pmc.channelWa",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "PMC CARE WhatsApp"
+    },
+    {
+      "lang": "gu",
+      "key": "esc.pmc.tier.openAaple",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "Aaple Sarkar"
+    },
+    {
+      "lang": "gu",
+      "key": "copy1916.gpsLabel",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "GPS"
+    },
+    {
+      "lang": "gu",
+      "key": "copy1916.mapsLabel",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "Maps"
+    },
+    {
+      "lang": "gu",
+      "key": "official.marg.label",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "MyBMC MARG"
+    },
+    {
+      "lang": "gu",
+      "key": "official.swachhata.label",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "Swachhata-MoHUA"
+    },
+    {
+      "lang": "gu",
+      "key": "official.aaple.label",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "Aaple Sarkar"
+    },
+    {
+      "lang": "gu",
+      "key": "official.pmc.label",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "PMC CARE"
+    },
+    {
+      "lang": "gu",
+      "key": "official.tmc.small",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "thanecity.gov.in"
+    },
+    {
+      "lang": "gu",
+      "key": "official.bmcWa.label",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "MyBMC WhatsApp"
+    },
+    {
+      "lang": "gu",
+      "key": "official.bmcPortal.small",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "portal.mcgm.gov.in"
+    },
+    {
+      "lang": "gu",
+      "key": "official.hint.pmc.stagnant-water",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "Health / mosquito breeding / stagnant water"
+    },
+    {
+      "lang": "gu",
+      "key": "profile.persona.admin",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "BMC Admin"
+    },
+    {
+      "lang": "gu",
+      "key": "admin.title",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "BMC Admin"
+    },
+    {
+      "lang": "gu",
+      "key": "badge.admin",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "BMC Admin"
+    },
+    {
+      "lang": "gu",
+      "key": "admin.meta.lat",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "Lat"
+    },
+    {
+      "lang": "gu",
+      "key": "admin.meta.lng",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "Lng"
+    },
+    {
+      "lang": "gu",
+      "key": "tracking.pwaInstalls",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "PWA installs"
+    },
+    {
+      "lang": "gu",
+      "key": "tracking.meToo",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "Me too"
+    },
+    {
+      "lang": "gu",
+      "key": "tracking.leads",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "Neighbourhood leads"
+    },
+    {
+      "lang": "gu",
+      "key": "access.emailPh",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "you@example.com"
+    },
+    {
+      "lang": "gu",
+      "key": "access.claimPh",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "CR-XXXXXX"
+    },
+    {
+      "lang": "gu",
+      "key": "lead.roleNbh",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "Neighbourhood lead"
+    },
+    {
+      "lang": "gu",
+      "key": "lead.neighbourhoodLabel",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "Neighbourhood / society / lane"
+    },
+    {
+      "lang": "gu",
+      "key": "lead.tagWard",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "Ward lead"
+    },
+    {
+      "lang": "gu",
+      "key": "lead.tagNbh",
+      "flags": [
+        "same-as-en"
+      ],
+      "val": "Neighbourhood"
+    }
+  ]
+}

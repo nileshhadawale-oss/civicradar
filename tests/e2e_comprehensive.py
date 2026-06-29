@@ -3857,6 +3857,76 @@ async def run_extended_scenarios(s: Suite, browser):
 
     s.record('SO08', 'Society', 'Ward-filter hint populated', hint_ok)
 
+    # --- Neighbourhood datalist (NB) — volunteer + lead nomination ---
+
+    vol_list = await page.evaluate(
+
+        '() => document.getElementById("volunteerNeighbourhood")?.getAttribute("list") || ""'
+
+    )
+
+    s.record('NB01', 'Neighbourhood', 'Volunteer field wired to societySuggestions datalist', vol_list == 'societySuggestions')
+
+    await page.evaluate(
+
+        f"""() => {{
+
+          window.refreshNeighbourhoodDatalist('mumbai', {json.dumps(ward_a)});
+
+        }}"""
+
+    )
+
+    nb_opts = await page.evaluate(
+
+        '() => Array.from(document.querySelectorAll("#societySuggestions option")).map(o => o.value)'
+
+    )
+
+    s.record('NB02', 'Neighbourhood', 'Ward-filtered neighbourhood options (10+)', len(nb_opts) >= 10)
+
+    custom_nb = 'Custom Neighbourhood Lane NB03'
+
+    await page.evaluate(
+
+        f"""() => {{
+
+          window.cacheSocietyIfCustom('mumbai', {json.dumps(ward_a)}, {json.dumps(custom_nb)});
+
+        }}"""
+
+    )
+
+    nb_cached = await page.evaluate(
+
+        f"""() => {{
+
+          const store = JSON.parse(localStorage.getItem('civicradar_custom_societies') || '{{}}');
+
+          const list = store.mumbai && store.mumbai[{json.dumps(ward_a)}];
+
+          return Array.isArray(list) && list.includes({json.dumps(custom_nb)});
+
+        }}"""
+
+    )
+
+    s.record('NB03', 'Neighbourhood', 'Custom neighbourhood cached by city+ward', nb_cached)
+
+    nb_hint_ok = await page.evaluate(
+
+        """() => {
+
+          const h = document.getElementById('volunteerNeighbourhoodHint');
+
+          return h && h.textContent.length > 10 && !/Pick your ward first/i.test(h.textContent);
+
+        }"""
+
+    )
+
+    s.record('NB04', 'Neighbourhood', 'Volunteer ward-filter hint populated', nb_hint_ok)
+
     await ctx.close()
 
 
@@ -3899,7 +3969,7 @@ async def run_extended_scenarios(s: Suite, browser):
 
     sw_ok = (
 
-        "civicradar-v93" in sw_src
+        "civicradar-v98" in sw_src
 
         and "'/index.html'" not in sw_src
 
@@ -4569,17 +4639,19 @@ async def run_tour_scenarios(s: Suite, browser):
 
     await page.wait_for_timeout(900)
 
-    coach_shown = not await page.evaluate(
-
-        '() => document.getElementById("coachMark").classList.contains("hidden")'
-
+    hero_shown = not await page.evaluate(
+        '() => !document.getElementById("homeHero").classList.contains("hidden")'
     )
-
-    if coach_shown:
-
-        await page.click('#btnDismissCoach')
-
-    await page.wait_for_timeout(700)
+    if hero_shown:
+        await page.click('#btnHeroDismiss')
+        await page.wait_for_timeout(1200)
+    else:
+        coach_shown = not await page.evaluate(
+            '() => document.getElementById("coachMark").classList.contains("hidden")'
+        )
+        if coach_shown:
+            await page.click('#btnDismissCoach')
+        await page.wait_for_timeout(1200)
 
     tour_open = not await page.evaluate(
 
@@ -4653,11 +4725,12 @@ async def run_tour_scenarios(s: Suite, browser):
 
     await page.wait_for_timeout(900)
 
-    if not await page.evaluate('() => document.getElementById("coachMark").classList.contains("hidden")'):
-
+    hero_up = not await page.evaluate('() => !document.getElementById("homeHero").classList.contains("hidden")')
+    if hero_up:
+        await page.click('#btnHeroDismiss')
+    elif not await page.evaluate('() => document.getElementById("coachMark").classList.contains("hidden")'):
         await page.click('#btnDismissCoach')
-
-    await page.wait_for_timeout(700)
+    await page.wait_for_timeout(1200)
 
     skipped = False
 
@@ -4962,6 +5035,266 @@ async def run_reminder_scenarios(s: Suite, browser):
     near = (await toast_text(page)).lower()
 
     s.record('RR07', 'Reminder', 'Nearby pending hazard triggers location nudge', 'stagnant' in near)
+
+
+
+    await ctx.close()
+
+
+
+
+
+async def run_nbh_alert_scenarios(s: Suite, browser):
+
+    # Neighbourhood new-report + resolved FYI alerts (local mode; NA01–NA06).
+
+    SOCIETY = 'Phoenix Mills CHS'
+
+    ctx = await new_ctx(browser, storage={
+
+        'civicradar_user': default_user(id='na-user', society=SOCIETY),
+
+        'civicradar_coach_seen': '1',
+
+        'civicradar_nbh_alert_new': '1',
+
+        'civicradar_nbh_alert_resolved': '1',
+
+    })
+
+    page = await ctx.new_page()
+
+    await goto_app(page, wait_map=True)
+
+
+
+    s.record('NA01', 'Neighbourhood', 'Neighbourhood alert toggles present',
+
+             await page.evaluate('() => !!document.getElementById("nbhNewAlertToggle") && !!document.getElementById("nbhResolvedAlertToggle")'))
+
+
+
+    persist = await page.evaluate(
+
+        """() => {
+
+          const n = document.getElementById('nbhNewAlertToggle');
+
+          const r = document.getElementById('nbhResolvedAlertToggle');
+
+          n.checked = false;
+
+          n.dispatchEvent(new Event('change', { bubbles: true }));
+
+          r.checked = true;
+
+          r.dispatchEvent(new Event('change', { bubbles: true }));
+
+          return {
+
+            new: localStorage.getItem('civicradar_nbh_alert_new'),
+
+            resolved: localStorage.getItem('civicradar_nbh_alert_resolved'),
+
+          };
+
+        }"""
+
+    )
+
+    s.record('NA02', 'Neighbourhood', 'Alert preferences persist in localStorage',
+
+             persist.get('new') == '0' and persist.get('resolved') == '1')
+
+
+
+    await page.evaluate(
+
+        """() => {
+
+          localStorage.setItem('civicradar_nbh_alert_new', '0');
+
+          localStorage.setItem('civicradar_nbh_alert_resolved', '1');
+
+          if (window.__civicResetNbhAlertLimits) window.__civicResetNbhAlertLimits();
+
+          document.getElementById('toastContainer').innerHTML = '';
+
+          window.__civicNbhAlertLast = '';
+
+          window.__civicSimulateNbhNewReport({
+
+            id: 'na-new-off',
+
+            hazard: 'stagnant-water',
+
+            society: '""" + SOCIETY + """',
+
+            ward: '""" + WARD.replace("'", "\\'") + """',
+
+            city: 'mumbai',
+
+            reporterId: 'other-reporter',
+
+            status: 'pending',
+
+          });
+
+        }"""
+
+    )
+
+    await page.wait_for_timeout(500)
+
+    no_new = await page.evaluate('() => window.__civicNbhAlertLast || ""')
+
+    s.record('NA03', 'Neighbourhood', 'No new-report alert when toggle off', no_new.strip() == '')
+
+
+
+    await page.evaluate(
+
+        """() => {
+
+          localStorage.setItem('civicradar_nbh_alert_new', '0');
+
+          localStorage.setItem('civicradar_nbh_alert_resolved', '1');
+
+          if (window.__civicResetNbhAlertLimits) window.__civicResetNbhAlertLimits();
+
+          document.getElementById('toastContainer').innerHTML = '';
+
+          window.__civicNbhAlertLast = '';
+
+          window.__civicSimulateNbhResolved({
+
+            id: 'na-res-1',
+
+            hazard: 'stagnant-water',
+
+            society: '""" + SOCIETY + """',
+
+            ward: '""" + WARD.replace("'", "\\'") + """',
+
+            city: 'mumbai',
+
+            reporterId: 'other-reporter',
+
+            status: 'resolved',
+
+          });
+
+          if (window.flushNbhResolveDigest) window.flushNbhResolveDigest();
+
+        }"""
+
+    )
+
+    await page.wait_for_timeout(200)
+
+    resolved_alert = await page.evaluate('() => window.__civicNbhAlertLast || ""')
+
+    s.record('NA04', 'Neighbourhood', 'Resolved alert fires for matching neighbourhood user',
+
+             'resolved' in resolved_alert.lower() or 'good news' in resolved_alert.lower() or 'stagnant' in resolved_alert.lower())
+
+
+
+    await page.evaluate(
+
+        """() => {
+
+          localStorage.setItem('civicradar_nbh_alert_resolved', '0');
+
+          if (window.__civicResetNbhAlertLimits) window.__civicResetNbhAlertLimits();
+
+          document.getElementById('toastContainer').innerHTML = '';
+
+          window.__civicNbhAlertLast = '';
+
+          window.__civicSimulateNbhResolved({
+
+            id: 'na-res-off',
+
+            hazard: 'stagnant-water',
+
+            society: '""" + SOCIETY + """',
+
+            ward: '""" + WARD.replace("'", "\\'") + """',
+
+            city: 'mumbai',
+
+            reporterId: 'other-reporter',
+
+            status: 'resolved',
+
+          });
+
+        }"""
+
+    )
+
+    await page.wait_for_timeout(700)
+
+    off_alert = await page.evaluate('() => window.__civicNbhAlertLast || ""')
+
+    s.record('NA05', 'Neighbourhood', 'No resolved alert when toggle off', off_alert.strip() == '')
+
+
+
+    await page.evaluate(
+
+        """() => {
+
+          localStorage.setItem('civicradar_nbh_alert_new', '1');
+
+          localStorage.setItem('civicradar_nbh_alert_resolved', '0');
+
+          if (window.__civicResetNbhAlertLimits) window.__civicResetNbhAlertLimits();
+
+          const now = Date.now();
+
+          localStorage.setItem('civicradar_nbh_alert_log', JSON.stringify({ timestamps: [now - 1000, now - 2000, now - 3000] }));
+
+          document.getElementById('toastContainer').innerHTML = '';
+
+          window.__civicNbhAlertLast = '';
+
+        }"""
+
+    )
+
+    await page.evaluate(
+
+        """() => {
+
+          window.__civicSimulateNbhNewReport({
+
+            id: 'na-burst',
+
+            hazard: 'garbage',
+
+            society: '""" + SOCIETY + """',
+
+            ward: '""" + WARD.replace("'", "\\'") + """',
+
+            city: 'mumbai',
+
+            reporterId: 'other-reporter',
+
+            status: 'pending',
+
+          });
+
+        }"""
+
+    )
+
+    await page.wait_for_timeout(400)
+
+    burst_blocked = await page.evaluate('() => window.__civicNbhAlertLast || ""')
+
+    s.record('NA06', 'Neighbourhood', 'Rate limit prevents burst (max 3 / 24h)', burst_blocked.strip() == '')
 
 
 
@@ -5829,6 +6162,10 @@ async def run_location_banner_scenarios(s: Suite, browser):
 
         'civicradar_tour_seen': '1',
 
+        'civicradar_first_report_done': '1',
+
+        'civicradar_visit_count': '2',
+
     })
 
     page = await ctx.new_page()
@@ -6285,6 +6622,8 @@ async def main():
 
             ('Reminder', run_reminder_scenarios),
 
+            ('NeighbourhoodAlerts', run_nbh_alert_scenarios),
+
             ('Access', run_access_request_scenarios),
 
             ('LeadVote', run_lead_vote_scenarios),
@@ -6406,6 +6745,10 @@ async def main():
         '`sw.js` + `tests/e2e_comprehensive.py`: v90 cache bump; OB10–OB13 hero-based (post v89 explainer trim); SW06 → v90; browser restart before late suites',
 
         '`supabase/schema.sql` + `js/analytics.js` + `js/app.js` + `index.html` + `css/styles.css`: analytics & tracking dashboard (v93) — `get_tracking_dashboard` RPC, role-gated UI, PWA install instrumentation, localized en/hi/mr/gu; TK01–TK05; SW06 → v93',
+
+        '`index.html` + `js/app.js`: neighbourhood datalist autopopulate (v96) — volunteer + lead nomination fields share ward-filtered `societySuggestions` with free-text override and custom cache; localized en/hi/mr/gu; NB01–NB04; SW06 → v96',
+
+        '`index.html` + `js/app.js` + `sw.js` + `supabase/schema.sql`: neighbourhood report alerts (v97) — Profile "Neighbourhood updates" with new-report + resolved FYI sub-toggles; shared rate limit; resolved digest; Web Notification + in-app toast; Supabase profile prefs + sync; local queue for E2E; localized en/hi/mr/gu; NA01–NA06; SW06 → v97',
 
     ]
 

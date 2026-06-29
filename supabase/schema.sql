@@ -1430,3 +1430,17 @@ language sql stable security definer set search_path = public as $$
   from public.analytics_events
   where created_at >= now() - (greatest(1, least(coalesce(p_days, 7), 90)) || ' days')::interval;
 $$;
+
+-- =====================================================================
+-- Neighbourhood alert preferences (v97)
+-- NULL = derive default client-side (ON when profile.society set).
+-- =====================================================================
+alter table public.profiles add column if not exists neighbourhood_new_alerts_enabled boolean;
+alter table public.profiles add column if not exists neighbourhood_resolved_alerts_enabled boolean;
+
+drop policy if exists "profiles_update_own" on public.profiles;
+create policy "profiles_update_own"
+  on public.profiles for update
+  to authenticated
+  using (auth.uid() = id)
+  with check (auth.uid() = id);

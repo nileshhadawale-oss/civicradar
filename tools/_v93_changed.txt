@@ -1,0 +1,185 @@
+coach.body
+  NEW: Tap Report, snap a photo ï¿½ we pin your ward map.
+  OLD: Tap Report, snap a photo — we pin it on your ward map. Neighbours can say Me too. Share on WhatsApp so more eyes see it.
+
+coach.step
+  NEW: #MonsoonGuardian ï¿½ 30 sec
+  OLD: #MonsoonGuardian · 30 sec
+
+coach.title
+  NEW: Spot stagnant water? Pin it.
+  OLD: Dengue's enemy? Stagnant water!
+
+header.context
+  NEW: Monsoon hazard map ï¿½ Mumbai, Pune & Thane
+  OLD: Monsoon hazard map — Mumbai, Pune & Thane
+
+home.hero.benefit1
+  NEW: 30 sec
+  OLD: 30-sec report
+
+home.hero.benefit2
+  NEW: Me too
+  OLD: Neighbours alerted
+
+home.hero.benefit3
+  NEW: Track fixes
+  OLD: BMC queue
+
+home.hero.cta
+  NEW: Report now
+  OLD: Report stagnant water
+
+home.hero.headline
+  NEW: Pin stagnant water on your ward map
+  OLD: Report stagnant water on your ward map
+
+home.hero.subline
+  NEW: Monsoon is here â pin stagnant water on the spot: snap a photo, neighbours Me too.
+  OLD: Stop dengue — alert neighbours & BMC, track fixes together.
+
+home.hero.tour
+  NEW: Quick tour
+  OLD: See how it works
+
+home.hero.trust
+  NEW: Free ï¿½ offline ï¿½ 3 cities ï¿½ 4 langs
+  OLD: Free · No login · Works offline · Mumbai, Pune & Thane
+
+map.empty
+  NEW: No pins in {ward} yet ï¿½ be first!
+  OLD: Clean map in {ward} — be the #MonsoonGuardian! Report stagnant water before dengue spreads.
+
+map.emptyAction
+  NEW: Report now
+  OLD: Report first hazard
+
+map.emptyHint
+  NEW: Photo on the spot ï¿½ ~30 sec
+  OLD: Pin on the spot → snap a photo → submit in ~30 seconds.
+
+map.emptyRival
+  NEW: {ward} vs {rival} ï¿½ {pending} open spots. Report or rally!
+  OLD: {ward} vs {rival} — they have {pending} open spots. Report or rally neighbours!
+
+persona.admin.idlePending
+  NEW: {n} pending ï¿½ open the queue or tap red pins.
+  OLD: {n} pending — open the queue or tap red pins.
+
+persona.admin.overdue
+  NEW: {overdue} overdue ï¿½ {pending} pending ï¿½ tap to open queue
+  OLD: {overdue} overdue · {pending} pending — tap to open queue
+
+persona.citizen.idle
+  NEW: ?? Stagnant water = dengue risk. Tap Report ï¿½ pin it on your ward map in 30 sec, then share on WhatsApp.
+  OLD: 🦟 Stagnant water = dengue risk. Tap Report — pin it on your ward map in 30 sec, then share on WhatsApp.
+
+persona.ngo.pledges
+  NEW: {deliver} to deliver ï¿½ {verify} to verify
+  OLD: {deliver} to deliver · {verify} to verify
+
+persona.pendingFiled
+  NEW: {n} open on the ward map ï¿½ check Profile if overdue.
+  OLD: {n} open on the ward map — check Profile if overdue.
+
+persona.unfiled
+  NEW: {n} open on the ward map ï¿½ share with neighbours or file officially from Profile.
+  OLD: {n} open on the ward map — share with neighbours or file officially from Profile.
+
+persona.wardImpact
+  NEW: {ward}: {n} monsoon reports ï¿½ dengue starts in stagnant lanes. #MonsoonGuardian
+  OLD: {ward}: {n} monsoon reports — dengue starts in stagnant lanes. #MonsoonGuardian
+
+success.celebrateFirst
+  NEW: Youï¿½re protecting your ward ï¿½ neighbours will thank you.
+  OLD: You’re protecting your ward — neighbours will thank you.
+
+success.celebrateMilestone
+  NEW: {n} reports logged ï¿½ your lane is safer because of you!
+  OLD: {n} reports logged — your lane is safer because of you!
+
+success.clock
+  NEW: On the community map ï¿½ not filed with {corp} yet.
+  OLD: On the community map — not filed with {corp} yet.
+
+success.done
+  NEW: Back to map
+  OLD: Done
+
+success.kudos2
+  NEW: Nice work ï¿½ your ward just got a little safer.
+  OLD: Nice work — your ward just got a little safer.
+
+success.kudos4
+  NEW: You showed up again ï¿½ thatï¿½s how lanes get fixed.
+  OLD: You showed up again — that’s how lanes get fixed.
+
+success.kudos5
+  NEW: Another pin down ï¿½ your street thanks you.
+  OLD: Another pin down — your street thanks you.
+
+success.progressGuardian
+  NEW: {n} reports and counting ï¿½ a true Monsoon Guardian.
+  OLD: {n} reports and counting — a true Monsoon Guardian.
+
+success.shareBrag
+  NEW: You just helped your ward ï¿½ tell neighbours on WhatsApp!
+  OLD: You just helped your ward — tell neighbours on WhatsApp!
+
+success.shareBragFirst
+  NEW: First pin on the map! Share now ï¿½ Monsoon Guardian energy spreads fast.
+  OLD: First pin on the map! Share now — Monsoon Guardian energy spreads fast.
+
+success.shareMsg
+  NEW: ?? {hazard} in {ward} ï¿½ dengue risk! Pinned on CivicRadar ward map.
+Tap Me too and report hazards in your lane:
+{link}
+{hashtags}
+  OLD: 🦟 {hazard} in {ward} — dengue risk! Pinned on CivicRadar ward map.
+Tap Me too and report hazards in your lane:
+{link}
+{hashtags}
+
+success.shareNudge
+  NEW: Neighbours may not know yet ï¿½ share on WhatsApp so the ward map gets more eyes.
+  OLD: Neighbours may not know yet — share on WhatsApp so the ward map gets more eyes.
+
+success.sharePrompt
+  NEW: Share on WhatsApp ï¿½ more eyes, faster fixes.
+  OLD: Share on WhatsApp now — more neighbours on the ward map helps pressure for a fix.
+
+success.step3
+  NEW: Volunteers or {corp} can confirm when fixed ï¿½ earn Civic Points
+  OLD: Volunteers or {corp} can confirm when fixed — earn Civic Points
+
+success.taglineNeighbours
+  NEW: {n} neighbour(s) already backing nearby spots ï¿½ yours is on the ward map too!
+  OLD: {n} neighbour(s) already backing nearby spots — yours is on the ward map too!
+
+tour.map.body
+  NEW: Hazard pins show here ï¿½ tap Me too to back neighbours.
+  OLD: This is your ward map. Hazards near you show up here as pins.
+
+tour.profile.body
+  NEW: Civic Points and your reports live here.
+  OLD: Track your Civic Points and find your reports here in Profile.
+
+tour.profile.title
+  NEW: Profile
+  OLD: Civic Points & reports
+
+tour.replay
+  NEW: Replay tour
+  OLD: Replay app tour
+
+tour.report.body
+  NEW: Tap here when you spot stagnant water.
+  OLD: Tap here to report stagnant water — it takes about 30 seconds.
+
+tour.report.title
+  NEW: Report in 30 sec
+  OLD: Report in 30 seconds
+
+tour.skip
+  NEW: Skip tour
+  OLD: Skip
