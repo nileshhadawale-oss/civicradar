@@ -61,8 +61,22 @@ def is_corrupted(val: str) -> bool:
 
 
 def fix_mojibake(val: str) -> str:
+    # Apostrophe contractions BEFORE generic mojibake→em-dash (avoids doesn—t / BMC—s)
+    v = val
+    for old, new in (
+        ("doesnï¿½t", "doesn't"),
+        ("itï¿½s", "it's"),
+        ("Monsoonï¿½s", "Monsoon's"),
+        ("youï¿½ll", "you'll"),
+        ("weï¿½ll", "we'll"),
+        ("Youï¿½re", "You're"),
+        ("thatï¿½s", "that's"),
+        ("wardï¿½s", "ward's"),
+        ("BMCï¿½s", "BMC's"),
+    ):
+        v = v.replace(old, new)
     v = (
-        val.replace("ï¿½", "—")
+        v.replace("ï¿½", "—")
         .replace("â€™", "'")
         .replace("â€œ", '"')
         .replace("â€", '"')

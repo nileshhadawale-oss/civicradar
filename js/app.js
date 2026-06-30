@@ -1,8 +1,8 @@
 /**
 
- * CivicRadar ï¿½ Core JavaScript Logic
+ * CivicRadar — Core JavaScript Logic
 
- * Strict DOMContentLoaded bindings ï¿½ localStorage ï¿½ Haversine spam filter
+ * Strict DOMContentLoaded bindings — localStorage — Haversine spam filter
 
  */
 
@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Build tag attached to feedback rows. Kept in step with the SW cache version.
 
-  const CIVIC_APP_VERSION = 'v98';
+  const CIVIC_APP_VERSION = 'v99';
 
   const PENDING_AUTH_FLOW_KEY = 'civicradar_pending_auth_flow';
 
@@ -116,7 +116,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Opt-in "report stagnant water when you encounter it" reminder (foreground-triggered;
 
-  // no background push ï¿½ honest about platform limits). See maybeShowReportReminder().
+  // no background push — honest about platform limits). See maybeShowReportReminder().
 
   const REPORT_REMINDER_OPTIN_KEY = 'civicradar_report_reminder_optin';
 
@@ -237,15 +237,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // NOTE: Demo-only client-side credentials. In production these MUST be validated
 
-  // server-side ï¿½ never trust client auth for BMC/NGO privileged actions.
+  // server-side — never trust client auth for BMC/NGO privileged actions.
 
   const DEMO_CREDENTIALS = {
 
     admin: { user: 'admin', pass: 'password' },
 
-    lead: { user: 'lead', pass: 'password', ward: 'G/N Ward ï¿½ Dadar, Shivaji Park', scope: 'ward' },
+    lead: { user: 'lead', pass: 'password', ward: 'G/N Ward — Dadar, Shivaji Park', scope: 'ward' },
 
-    leadNbh: { user: 'lead-nbh', pass: 'password', ward: 'G/S Ward ï¿½ Worli, Lower Parel', scope: 'neighbourhood', neighbourhood: 'Worli West ï¿½ Phoenix Mills area' },
+    leadNbh: { user: 'lead-nbh', pass: 'password', ward: 'G/S Ward — Worli, Lower Parel', scope: 'neighbourhood', neighbourhood: 'Worli West — Phoenix Mills area' },
 
   };
 
@@ -267,7 +267,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     aapleSarkar: 'https://aaplesarkar.mahaonline.gov.in/', // Maharashtra state grievance portal
 
-    participateUrl: 'https://participatemumbai.mcgm.gov.in/', // BMC civic engagement (volunteer / CSR ï¿½ not complaints)
+    participateUrl: 'https://participatemumbai.mcgm.gov.in/', // BMC civic engagement (volunteer / CSR — not complaints)
 
     margAppStoreUrl: 'https://apps.apple.com/app/mybmc-marg/id6759655448',
 
@@ -353,7 +353,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Native camera / file picker can pop history or deliver a ghost tap on Map nav
 
-  // before async photo processing finishes ï¿½ guard the report sheet until capture completes.
+  // before async photo processing finishes — guard the report sheet until capture completes.
 
   let reportPhotoFlowActive = false;
 
@@ -371,15 +371,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
   const DEMO_WARD_SEED = [
 
-    { name: 'G/N Ward ï¿½ Dadar, Shivaji Park', city: 'mumbai', points: 2840, reports: 142, isDemo: true },
+    { name: 'G/N Ward — Dadar, Shivaji Park', city: 'mumbai', points: 2840, reports: 142, isDemo: true },
 
-    { name: 'H/W Ward ï¿½ Bandra West, Khar West', city: 'mumbai', points: 2650, reports: 128, isDemo: true },
+    { name: 'H/W Ward — Bandra West, Khar West', city: 'mumbai', points: 2650, reports: 128, isDemo: true },
 
-    { name: 'K/E Ward ï¿½ Andheri East, Vile Parle East', city: 'mumbai', points: 2410, reports: 115, isDemo: true },
+    { name: 'K/E Ward — Andheri East, Vile Parle East', city: 'mumbai', points: 2410, reports: 115, isDemo: true },
 
-    { name: 'L Ward ï¿½ Kurla, Sakinaka', city: 'mumbai', points: 2180, reports: 98, isDemo: true },
+    { name: 'L Ward — Kurla, Sakinaka', city: 'mumbai', points: 2180, reports: 98, isDemo: true },
 
-    { name: 'F/N Ward ï¿½ Sion, Matunga', city: 'mumbai', points: 1950, reports: 87, isDemo: true },
+    { name: 'F/N Ward — Sion, Matunga', city: 'mumbai', points: 1950, reports: 87, isDemo: true },
 
   ];
 
@@ -471,7 +471,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
 
-  // Project config ï¿½ founder story & monetization (see js/config.js)
+  // Project config — founder story & monetization (see js/config.js)
 
   const CFG = window.CIVICRADAR_CONFIG || {};
 
@@ -1329,7 +1329,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (!ward) return '';
 
-    const parts = String(ward).split('ï¿½');
+    const parts = String(ward).split('—');
 
     return parts.length > 1 ? parts[parts.length - 1].trim() : String(ward).trim();
 
@@ -1623,7 +1623,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     }
 
-    if (parts.length) return parts.join(' ï¿½ ');
+    if (parts.length) return parts.join(' — ');
 
     const status = err.status || err.statusCode;
 
@@ -1777,11 +1777,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
       'onboard.ward': 'Your Ward',
 
-      'onboard.wardPh': 'Start typing your ward—',
+      'onboard.wardPh': 'Start typing your ward…',
 
       'onboard.wardHint': 'Pick from {city}\'s {n} official wards.',
 
-      'onboard.wardDetecting': 'Detecting your ward from location—',
+      'onboard.wardDetecting': 'Detecting your ward from location…',
 
       'onboard.wardDetectedHint': 'Approximate ward from GPS — not an official boundary survey.',
 
@@ -1829,7 +1829,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       'report.notes': 'Notes (optional)',
 
-      'report.notesPh': 'Add a note — lane, building, landmark—',
+      'report.notesPh': 'Add a note — lane, building, landmark…',
 
       'report.submit': 'Submit report',
 
@@ -1839,7 +1839,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       'moderation.guidelines': 'Photograph the actual stagnant water — not faces, documents, or unrelated objects. Location data is stripped for privacy.',
 
-      'moderation.scanning': 'Checking photo—',
+      'moderation.scanning': 'Checking photo…',
 
       'moderation.blocked.fileType': 'Only JPEG, PNG, or WebP hazard photos are allowed.',
 
@@ -1961,7 +1961,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       'success.weekBonus': '+{n} first report this week!',
 
-      'success.celebrateFirst': 'You—re protecting your ward — neighbours will thank you.',
+      'success.celebrateFirst': 'You\'re protecting your ward — neighbours will thank you.',
 
       'success.celebrateMilestone': '{n} reports logged — your lane is safer because of you!',
 
@@ -1971,7 +1971,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       'success.kudos3': 'Logged! Thanks for looking out for your neighbours.',
 
-      'success.kudos4': 'You showed up again — that—s how lanes get fixed.',
+      'success.kudos4': 'You showed up again — that\'s how lanes get fixed.',
 
       'success.kudos5': 'Another pin down — your street thanks you.',
 
@@ -2091,7 +2091,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       'esc.participate.title': 'Community action (optional)',
 
-      'esc.participate.hint': 'Participate Mumbai is BMC—s official portal for volunteering and CSR — not for filing pest-control complaints. Use it to join clean-ups or propose ward projects.',
+      'esc.participate.hint': 'Participate Mumbai is BMC\'s official portal for volunteering and CSR — not for filing pest-control complaints. Use it to join clean-ups or propose ward projects.',
 
       'esc.participate.btn': 'Participate Mumbai',
 
@@ -2133,7 +2133,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       'esc.tmc.complaintPh': 'e.g. TMC/2026/123456',
 
-      'esc.tmc.complaintWarn': 'This doesn—t look like a typical TMC reference — you can still save if it—s correct.',
+      'esc.tmc.complaintWarn': 'This doesn\'t look like a typical TMC reference — you can still save if it\'s correct.',
 
       'esc.tmc.filedNote': 'Filed with TMC — escalation steps unlock as deadlines pass.',
 
@@ -2203,7 +2203,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       'esc.pmc.complaintPh': 'e.g. PMC/2026/123456',
 
-      'esc.pmc.complaintWarn': 'This doesn—t look like a typical PMC reference — you can still save if it—s correct.',
+      'esc.pmc.complaintWarn': 'This doesn\'t look like a typical PMC reference — you can still save if it\'s correct.',
 
       'esc.pmc.filedNote': 'Filed with PMC — escalation steps unlock as deadlines pass.',
 
@@ -2483,9 +2483,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
       'soon.title': 'Coming soon',
 
-      'soon.notify': 'Notify me when it—s live',
+      'soon.notify': 'Notify me when it\'s live',
 
-      'soon.thanks': 'Thanks — we—ll notify you when this launches.',
+      'soon.thanks': 'Thanks — we\'ll notify you when this launches.',
 
       'soon.roadmap': 'More hazard types coming soon — garbage, potholes, and streetlights are live now.',
 
@@ -2731,7 +2731,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       'esc.fileTitle': 'File the complaint (free)',
 
-      'esc.fileHint': 'Stagnant water goes to your ward—s Pest Control Officer. Use any channel:',
+      'esc.fileHint': 'Stagnant water goes to your ward\'s Pest Control Officer. Use any channel:',
 
       'esc.recommended': 'Recommended: MyBMC WhatsApp — fastest for most Mumbai wards.',
 
@@ -2759,7 +2759,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       'esc.filedConsent': 'I filed on an official BMC channel (1916 / MyBMC / portal / app)',
 
-      'esc.complaintWarn': 'This doesn—t look like a typical BMC number — you can still save if it—s correct.',
+      'esc.complaintWarn': 'This doesn\'t look like a typical BMC number — you can still save if it\'s correct.',
 
       'esc.saveUnlock': 'After save: escalation ladder, days-since-filed tracker, and follow-up copy templates unlock.',
 
@@ -2879,11 +2879,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
       'esc.tier.file.title': '1 — File the official complaint',
 
-      'esc.tier.file.body': 'Free. Routed to your ward—s Pest Control Officer. Use any channel above, then save the complaint number here so the real clock starts.',
+      'esc.tier.file.body': 'Free. Routed to your ward\'s Pest Control Officer. Use any channel above, then save the complaint number here so the real clock starts.',
 
       'esc.tier.matrix.title': '2 — Day {n}+ — Ward escalation',
 
-      'esc.tier.matrix.body': 'BMC—s system auto-escalates unresolved complaints at 7 days. Follow up with your Ward Complaint Officer, quoting your complaint number.',
+      'esc.tier.matrix.body': 'BMC\'s system auto-escalates unresolved complaints at 7 days. Follow up with your Ward Complaint Officer, quoting your complaint number.',
 
       'esc.tier.zonal.title': '3 — Day {n}+ — Zonal + public pressure',
 
@@ -3025,7 +3025,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       'pledge.ward': 'Target ward',
 
-      'pledge.wardPh': 'Select ward—',
+      'pledge.wardPh': 'Select ward…',
 
       'pledge.message': 'Message',
 
@@ -3425,7 +3425,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       'ref.dismiss': 'Dismiss invite',
 
-      'season.monsoonPrep': 'Monsoon—s coming ?🦟 Clear stagnant water early — pin spots before the first heavy rain.',
+      'season.monsoonPrep': 'Monsoon\'s coming 🦟 Clear stagnant water early — pin spots before the first heavy rain.',
 
       'season.monsoonPeak': 'Peak monsoon ?🦟 Stagnant water breeds dengue. Report spots in your ward today.',
 
@@ -3529,7 +3529,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       'access.noteLabel': 'Anything else?',
 
-      'access.notePh': 'Ward focus, how you—ll use it, etc.',
+      'access.notePh': 'Ward focus, how you\'ll use it, etc.',
 
       'access.submit': 'Submit request',
 
@@ -11138,7 +11138,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       updateCommunityWinBadge();
 
-      // A backed hazard may have been resolved on another device ï¿½ notify on sync.
+      // A backed hazard may have been resolved on another device — notify on sync.
 
       checkConfirmedResolved();
 
@@ -11516,7 +11516,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const wardNote = s.wards && s.wards.length
 
-          ? `<span class="impact-wall__ward">${escapeHtml(s.wards[0].split('ï¿½')[0].trim())} ward</span>`
+          ? `<span class="impact-wall__ward">${escapeHtml(s.wards[0].split('—')[0].trim())} ward</span>`
 
           : '';
 
@@ -11524,7 +11524,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
           <span class="impact-wall__badge">${escapeHtml(t('about.sponsored'))}</span>
 
-          <p><strong>${escapeHtml(s.business)}</strong> ï¿½ ${escapeHtml(s.offer)}</p>
+          <p><strong>${escapeHtml(s.business)}</strong> — ${escapeHtml(s.offer)}</p>
 
           ${wardNote}`;
 
@@ -11596,11 +11596,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const date = new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' });
 
-    const highlights = (f.highlights || []).map((h) => `ï¿½ ${h}`).join('\n');
+    const highlights = (f.highlights || []).map((h) => `· ${h}`).join('\n');
 
     return [
 
-      `CivicRadar ï¿½ Community Impact Summary (${date})`,
+      `CivicRadar — Community Impact Summary (${date})`,
 
       '',
 
@@ -11612,15 +11612,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
       'Impact metrics:',
 
-      `ï¿½ Reports logged: ${s.totalReports}`,
+      `· Reports logged: ${s.totalReports}`,
 
-      `ï¿½ Hazards resolved: ${s.resolved}`,
+      `· Hazards resolved: ${s.resolved}`,
 
-      `ï¿½ Neighbour confirmations ("Me too"): ${s.confirmations}`,
+      `· Neighbour confirmations ("Me too"): ${s.confirmations}`,
 
-      `ï¿½ Volunteer pledges: ${s.pledges}`,
+      `· Volunteer pledges: ${s.pledges}`,
 
-      `ï¿½ BMC wards with activity: ${s.wardsActive}`,
+      `· BMC wards with activity: ${s.wardsActive}`,
 
       '',
 
@@ -11630,7 +11630,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       'Technical highlights:',
 
-      highlights || 'ï¿½ PWA ï¿½ Multi-language ï¿½ BMC escalation ï¿½ Role-based dashboards',
+      highlights || '· PWA — Multi-language — BMC escalation — Role-based dashboards',
 
       '',
 
@@ -11682,7 +11682,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
 
-  // Prefer execCommand ï¿½ reliable in WebViews, PWAs, and automated browsers.
+  // Prefer execCommand — reliable in WebViews, PWAs, and automated browsers.
 
   function copyTextSafe(text, toastKey, onSuccess) {
 
@@ -11722,7 +11722,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     try { localStorage.setItem(FEEDBACK_PENDING_KEY, JSON.stringify(list.slice(-50))); }
 
-    catch { /* storage full / unavailable ï¿½ non-fatal */ }
+    catch { /* storage full / unavailable — non-fatal */ }
 
   }
 
@@ -11730,7 +11730,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Assemble a feedback row. Only standard, non-personal context is attached
 
-  // automatically (anon uid, env, ward/city, coarse UA) ï¿½ no names.
+  // automatically (anon uid, env, ward/city, coarse UA) — no names.
 
   function buildFeedbackRow(message, category, contact) {
 
@@ -11922,7 +11922,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     try { localStorage.setItem(ACCESS_LOCAL_KEY, JSON.stringify(list.slice(-100))); }
 
-    catch { /* storage full ï¿½ non-fatal */ }
+    catch { /* storage full — non-fatal */ }
 
   }
 
@@ -13142,7 +13142,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const roleTag = n.role_type === 'neighbourhood' ? t('lead.tagNbh') : t('lead.tagWard');
 
-    const meta = [n.org_name, n.neighbourhood_label].filter(Boolean).map((m) => escapeHtml(m)).join(' ï¿½ ');
+    const meta = [n.org_name, n.neighbourhood_label].filter(Boolean).map((m) => escapeHtml(m)).join(' — ');
 
     const voted = !!n.i_voted;
 
@@ -13362,11 +13362,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const roleTag = accessRoleLabel(req.role_requested);
 
-    const contact = [req.contact_email, req.contact_phone].filter(Boolean).join(' ï¿½ ');
+    const contact = [req.contact_email, req.contact_phone].filter(Boolean).join(' — ');
 
     const meta = [req.org_name, req.ward, (CITIES[req.city] && CITIES[req.city].label) || req.city]
 
-      .filter(Boolean).map((m) => escapeHtml(m)).join(' ï¿½ ');
+      .filter(Boolean).map((m) => escapeHtml(m)).join(' — ');
 
     const status = req.status || 'pending';
 
@@ -13592,7 +13592,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     $('#founderRole').textContent = FOUNDER.role || FOUNDER.tagline || t('about.teamRole');
 
-    const schoolLoc = [FOUNDER.school, FOUNDER.location].filter(Boolean).join(' ï¿½ ');
+    const schoolLoc = [FOUNDER.school, FOUNDER.location].filter(Boolean).join(' — ');
 
     const schoolEl = $('#founderSchool');
 
@@ -13956,7 +13956,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function wardShortLabel(ward) {
 
-    return ward ? ward.split('ï¿½')[0].trim() : '';
+    return ward ? ward.split('—')[0].trim() : '';
 
   }
 
@@ -14046,7 +14046,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
 
-  /* ---------- In-app reminders (P0/P1) ï¿½ deduped, snooze-friendly ---------- */
+  /* ---------- In-app reminders (P0/P1) — deduped, snooze-friendly ---------- */
 
   let sessionReminderCount = 0;
 
@@ -14136,7 +14136,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (!ward) return '';
 
-    return ward.split('ï¿½')[0].trim();
+    return ward.split('—')[0].trim();
 
   }
 
@@ -14630,7 +14630,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
      otherwise fall back to the existing in-app reminder card. iOS / unsupported /
 
-     denied all degrade gracefully ï¿½ the app never blocks or errors on this. */
+     denied all degrade gracefully — the app never blocks or errors on this. */
 
   function isReportReminderOptedIn() {
 
@@ -15923,7 +15923,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
 
-  // "Looks fixed" ï¿½ community spot-check (not official BMC confirmation).
+  // "Looks fixed" — community spot-check (not official BMC confirmation).
 
   function confirmFix(reportId, opts) {
 
@@ -16153,7 +16153,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
 
-  // Launch hazard types ï¿½ each has i18n labels, map markers, share templates, and copy1916 categories.
+  // Launch hazard types — each has i18n labels, map markers, share templates, and copy1916 categories.
 
   const HAZARD_CATEGORIES = [
 
@@ -16483,7 +16483,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         key: 'unfiled', filed: false, days: loggedDays,
 
-        headline: loggedDays === 0 ? 'Logged on CivicRadar today' : `Logged ${dayWord(loggedDays)} ago ï¿½ not yet sent to BMC`,
+        headline: loggedDays === 0 ? 'Logged on CivicRadar today' : `Logged ${dayWord(loggedDays)} ago — not yet sent to BMC`,
 
         detail: 'BMC has not received this. File an official complaint to start the real clock.',
 
@@ -16497,7 +16497,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       return { key: 'grievance', filed: true, days,
 
-        headline: `${dayWord(days)} since filing ï¿½ overdue`,
+        headline: `${dayWord(days)} since filing — overdue`,
 
         detail: 'Past 30 days. Escalate to the Public Grievance Cell / Aaple Sarkar, or file an RTI.' };
 
@@ -16507,7 +16507,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       return { key: 'zonal', filed: true, days,
 
-        headline: `${dayWord(days)} since filing ï¿½ no action`,
+        headline: `${dayWord(days)} since filing — no action`,
 
         detail: 'Escalate to the Zonal Deputy Municipal Commissioner and add public pressure on X.' };
 
@@ -16517,17 +16517,17 @@ document.addEventListener('DOMContentLoaded', function () {
 
       return { key: 'matrix', filed: true, days,
 
-        headline: `${dayWord(days)} since filing ï¿½ escalate`,
+        headline: `${dayWord(days)} since filing — escalate`,
 
-        detail: 'Past BMCï¿½s 7-day matrix. Follow up with your Ward Complaint Officer / Asst. Commissioner.' };
+        detail: 'Past BMC\'s 7-day matrix. Follow up with your Ward Complaint Officer / Asst. Commissioner.' };
 
     }
 
     return { key: 'filed', filed: true, days,
 
-      headline: `Complaint filed ï¿½ ${dayWord(days)} in`,
+      headline: `Complaint filed — ${dayWord(days)} in`,
 
-      detail: 'With BMC. Charter target is ~3 days; weï¿½ll prompt escalation if it stalls.' };
+      detail: 'With BMC. Charter target is ~3 days; we\'ll prompt escalation if it stalls.' };
 
   }
 
@@ -16543,7 +16543,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (s.filed && report.complaintId) {
 
-      return `${getComplaintRefPrefix(city)} #${report.complaintId} ï¿½ ${s.headline}`;
+      return `${getComplaintRefPrefix(city)} #${report.complaintId} — ${s.headline}`;
 
     }
 
@@ -16595,7 +16595,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Role model. Elevated roles are granted only after authentication
 
-  // (gov-email magic link for BMC, NGO invite code for coordinators) ï¿½ see the login
+  // (gov-email magic link for BMC, NGO invite code for coordinators) — see the login
 
   // handlers and BACKEND_SETUP.md. In demo mode they map to the demo logins.
 
@@ -16725,13 +16725,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
       if (newPledges > 0) {
 
-        leadText += ' ï¿½ ' + t('persona.ngo.newPledges').replace('{n}', String(newPledges));
+        leadText += ' — ' + t('persona.ngo.newPledges').replace('{n}', String(newPledges));
 
       }
 
       if (newHazards > 0) {
 
-        leadText += ' ï¿½ ' + t('persona.ngo.newHazards').replace('{n}', String(newHazards));
+        leadText += ' — ' + t('persona.ngo.newHazards').replace('{n}', String(newHazards));
 
       }
 
@@ -16761,7 +16761,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       headerCtx.textContent = user.ward
 
-        ? user.ward.split('ï¿½')[0].trim()
+        ? user.ward.split('—')[0].trim()
 
         : t('header.context');
 
@@ -17529,7 +17529,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     } else {
 
-      const wardShort = user.ward ? user.ward.split('ï¿½')[0].trim() : (ward || '');
+      const wardShort = user.ward ? user.ward.split('—')[0].trim() : (ward || '');
 
       showToast(t('toast.coordScopeWard').replace('{ward}', wardShort), 'success', 5000);
 
@@ -18277,7 +18277,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       }
 
-    } catch { /* history unavailable ï¿½ Escape/close button still work */ }
+    } catch { /* history unavailable — Escape/close button still work */ }
 
   }
 
@@ -18485,7 +18485,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       } else if (user.ward) {
 
-        scopeEl.textContent = t('coord.scopeWard').replace('{ward}', user.ward.split('ï¿½')[0].trim());
+        scopeEl.textContent = t('coord.scopeWard').replace('{ward}', user.ward.split('—')[0].trim());
 
         scopeEl.classList.remove('hidden');
 
@@ -19007,7 +19007,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       const ward = getWardShortName(user.ward);
 
-      setMetaContent('meta[property="og:title"]', `CivicRadar ï¿½ ${ward} monsoon hazard map`);
+      setMetaContent('meta[property="og:title"]', `CivicRadar — ${ward} monsoon hazard map`);
 
       const pending = getWardReportStats().find((s) => s.name === user.ward);
 
@@ -19015,7 +19015,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       setMetaContent('meta[property="og:description"]',
 
-        `${ward}: ${openCount} open hazard(s) on the map ï¿½ pin, Me too, beat other wards. Free PWA ï¿½ #MonsoonGuardian`);
+        `${ward}: ${openCount} open hazard(s) on the map — pin, Me too, beat other wards. Free PWA — #MonsoonGuardian`);
 
     }
 
@@ -19035,7 +19035,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       if (!user.analyticsConsent) user.analyticsConsent = true;
 
-      if (!user.ward) user.ward = 'G/N Ward ï¿½ Dadar, Shivaji Park';
+      if (!user.ward) user.ward = 'G/N Ward — Dadar, Shivaji Park';
 
       if (!user.city) user.city = DEFAULT_CITY;
 
@@ -19511,7 +19511,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         <div class="popup__title">${escapeHtml(hazardLabel(report.hazard))}</div>
 
-        <div class="popup__meta">${escapeHtml(status)} ï¿½ ${escapeHtml((report.ward || getCityLabel(getReportCity(report))).split('ï¿½')[0].trim())}</div>
+        <div class="popup__meta">${escapeHtml(status)} — ${escapeHtml((report.ward || getCityLabel(getReportCity(report))).split('—')[0].trim())}</div>
 
         ${societyLine}
 
@@ -19785,7 +19785,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         CivicAnalytics.track('onboarding_complete', {
 
-          wardCode: ward.split('ï¿½')[0].trim(),
+          wardCode: ward.split('—')[0].trim(),
 
           city: user.city,
 
@@ -20285,7 +20285,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         btnPrivacyContact.href = 'mailto:' + grievanceEmail
 
-          + '?subject=' + encodeURIComponent('CivicRadar ï¿½ privacy / DPDP grievance');
+          + '?subject=' + encodeURIComponent('CivicRadar — privacy / DPDP grievance');
 
       } else {
 
@@ -20387,7 +20387,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       const email = getFounderContactEmail();
 
-      if (email) window.open(`mailto:${email}?subject=${encodeURIComponent('CivicRadar ï¿½ inquiry')}`, '_self');
+      if (email) window.open(`mailto:${email}?subject=${encodeURIComponent('CivicRadar — inquiry')}`, '_self');
 
     });
 
@@ -20995,7 +20995,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // return to the Map tab instead of navigating away from the app.
 
-    // Returning from the native camera also pops history ï¿½ keep the report sheet open.
+    // Returning from the native camera also pops history — keep the report sheet open.
 
     window.addEventListener('popstate', () => {
 
@@ -21587,7 +21587,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             }
 
-            // Don't create a duplicate ï¿½ offer to corroborate the existing pin instead.
+            // Don't create a duplicate — offer to corroborate the existing pin instead.
 
             const dupeId = r.id;
 
@@ -22075,7 +22075,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function getWardShortName(ward) {
 
-    return ward ? ward.split('ï¿½')[0].trim() : '';
+    return ward ? ward.split('—')[0].trim() : '';
 
   }
 
@@ -22159,7 +22159,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (!getPublicAppUrl() && isLocalhostOrigin()) {
 
-      console.warn('[CivicRadar] Set publicUrl in js/config.js before sharing ï¿½ WhatsApp links will point to localhost.');
+      console.warn('[CivicRadar] Set publicUrl in js/config.js before sharing — WhatsApp links will point to localhost.');
 
     }
 
@@ -23029,13 +23029,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
       } catch {
 
-        drawImagePlaceholder(ctx, leftX, imgY, imgW, imgH, 'ï¿½', dark);
+        drawImagePlaceholder(ctx, leftX, imgY, imgW, imgH, '—', dark);
 
       }
 
     } else {
 
-      drawImagePlaceholder(ctx, leftX, imgY, imgW, imgH, 'ï¿½', dark);
+      drawImagePlaceholder(ctx, leftX, imgY, imgW, imgH, '—', dark);
 
     }
 
@@ -23337,7 +23337,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       if (err && err.name === 'AbortError') return;
 
-      /* fall back silently ï¿½ WhatsApp/Twitter buttons remain available */
+      /* fall back silently — WhatsApp/Twitter buttons remain available */
 
     }
 
@@ -23417,7 +23417,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             <span class="proof-compare__label">${escapeHtml(t('profile.proofBefore'))}</span>
 
-            ${hasBefore ? `<img src="${report.image}" alt="">` : '<div class="proof-compare__placeholder">ï¿½</div>'}
+            ${hasBefore ? `<img src="${report.image}" alt="">` : '<div class="proof-compare__placeholder">—</div>'}
 
           </div>
 
@@ -23491,7 +23491,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function formatWardForCopy(wardParts) {
 
-    if (!wardParts || (!wardParts.shortCode && !wardParts.code)) return 'ï¿½';
+    if (!wardParts || (!wardParts.shortCode && !wardParts.code)) return '—';
 
     const code = wardParts.shortCode || wardParts.code;
 
@@ -23549,7 +23549,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const hazard = hazardLabel(report.hazard);
 
-    const title = `${hazard} ï¿½ ${ward} | CivicRadar #MonsoonGuardian`;
+    const title = `${hazard} — ${ward} | CivicRadar #MonsoonGuardian`;
 
     const desc = fillShareTemplate(t('success.shareMsg'), {
 
@@ -23881,11 +23881,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
         return [
 
-          `Follow-up ï¿½ ${corp} complaint ${cid}`,
+          `Follow-up — ${corp} complaint ${cid}`,
 
           `Ward: ${wardFull}`,
 
-          `Issue: ${hazard} / stagnant water ï¿½ still unresolved after ${ESCALATION_DAYS.matrix}+ days.`,
+          `Issue: ${hazard} / stagnant water — still unresolved after ${ESCALATION_DAYS.matrix}+ days.`,
 
           `Request: Please escalate for pest-control / drainage action.`,
 
@@ -23897,7 +23897,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       if (tier === 'zonal') {
 
-        return `${corp} complaint ${cid} ï¿½ ${hazard} in ${wardName} still unresolved after ${ESCALATION_DAYS.zonal}+ days. Please escalate to senior officer. ${link} #CivicRadar`;
+        return `${corp} complaint ${cid} — ${hazard} in ${wardName} still unresolved after ${ESCALATION_DAYS.zonal}+ days. Please escalate to senior officer. ${link} #CivicRadar`;
 
       }
 
@@ -23905,7 +23905,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         return [
 
-          'RTI / grievance follow-up (informational draft ï¿½ not legal advice)',
+          'RTI / grievance follow-up (informational draft — not legal advice)',
 
           `Complaint reference: ${cid}`,
 
@@ -23929,11 +23929,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
       return [
 
-        `Follow-up ï¿½ BMC complaint ${cid}`,
+        `Follow-up — BMC complaint ${cid}`,
 
         `Ward: ${wardFull}`,
 
-        `Issue: ${hazard} / stagnant water ï¿½ still unresolved after ${ESCALATION_DAYS.matrix}+ days.`,
+        `Issue: ${hazard} / stagnant water — still unresolved after ${ESCALATION_DAYS.matrix}+ days.`,
 
         `Request: Please escalate to Ward Complaint Officer / Assistant Municipal Commissioner for pest-control action.`,
 
@@ -23945,7 +23945,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (tier === 'zonal') {
 
-      return `@${BMC.twitter} Complaint ${cid} ï¿½ ${hazard} in ${wardName} still unresolved after ${ESCALATION_DAYS.zonal}+ days. Please escalate to Zonal DMC and depute Pest Control Officer. ${link} #CivicRadar #MumbaiMonsoon`;
+      return `@${BMC.twitter} Complaint ${cid} — ${hazard} in ${wardName} still unresolved after ${ESCALATION_DAYS.zonal}+ days. Please escalate to Zonal DMC and depute Pest Control Officer. ${link} #CivicRadar #MumbaiMonsoon`;
 
     }
 
@@ -23953,7 +23953,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       return [
 
-        'RTI application ï¿½ complaint status (informational draft ï¿½ not legal advice)',
+        'RTI application — complaint status (informational draft — not legal advice)',
 
         `Complaint reference: ${cid}`,
 
@@ -23991,11 +23991,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
       return [
 
-        `Follow-up ï¿½ TMC complaint ${cid}`,
+        `Follow-up — TMC complaint ${cid}`,
 
         `Ward: ${wardFull}`,
 
-        `Issue: ${hazard} / stagnant water ï¿½ still unresolved after ${ESCALATION_DAYS.matrix}+ days.`,
+        `Issue: ${hazard} / stagnant water — still unresolved after ${ESCALATION_DAYS.matrix}+ days.`,
 
         `Request: Please escalate to ward office / Health dept (022-25332685) for anti-larval treatment.`,
 
@@ -24007,7 +24007,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (tier === 'zonal') {
 
-      return `@TMCaTweetAway Complaint ${cid} ï¿½ ${hazard} in ${wardName} still unresolved after ${ESCALATION_DAYS.zonal}+ days. Please escalate to Municipal Commissioner (mc@thanecity.gov.in). ${link} #CivicRadar #ThaneMonsoon`;
+      return `@TMCaTweetAway Complaint ${cid} — ${hazard} in ${wardName} still unresolved after ${ESCALATION_DAYS.zonal}+ days. Please escalate to Municipal Commissioner (mc@thanecity.gov.in). ${link} #CivicRadar #ThaneMonsoon`;
 
     }
 
@@ -24015,7 +24015,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       return [
 
-        'Aaple Sarkar follow-up (informational draft ï¿½ not legal advice)',
+        'Aaple Sarkar follow-up (informational draft — not legal advice)',
 
         `TMC complaint reference: ${cid}`,
 
@@ -24057,11 +24057,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
       return [
 
-        `Follow-up ï¿½ PMC complaint ${cid}`,
+        `Follow-up — PMC complaint ${cid}`,
 
         `Ward: ${wardFull}`,
 
-        `Issue: ${hazard} / stagnant water ï¿½ still unresolved after ${ESCALATION_DAYS.matrix}+ days.`,
+        `Issue: ${hazard} / stagnant water — still unresolved after ${ESCALATION_DAYS.matrix}+ days.`,
 
         `Request: Please escalate via PMC CARE or toll-free helpline 1800 1030 222 for anti-larval treatment.`,
 
@@ -24075,7 +24075,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       return [
 
-        `PMC CARE follow-up ï¿½ complaint ${cid}`,
+        `PMC CARE follow-up — complaint ${cid}`,
 
         `Ward: ${wardFull}`,
 
@@ -24093,7 +24093,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       return [
 
-        'Aaple Sarkar follow-up (informational draft ï¿½ not legal advice)',
+        'Aaple Sarkar follow-up (informational draft — not legal advice)',
 
         `PMC complaint reference: ${cid}`,
 
@@ -24637,7 +24637,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (!email) return;
 
-    const subject = encodeURIComponent(`Stagnant water complaint ï¿½ ${getWardShortName(report?.ward) || 'Thane'}`);
+    const subject = encodeURIComponent(`Stagnant water complaint — ${getWardShortName(report?.ward) || 'Thane'}`);
 
     const body = encodeURIComponent(report ? buildCitizenComplaintText(report) : '');
 
@@ -25817,7 +25817,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
           </div>
 
-          <div class="profile-pledge-item__meta">${escapeHtml((p.ward || '').split('ï¿½')[0].trim())} ï¿½ ${escapeHtml(formatRelativeTime(p.timestamp))}</div>
+          <div class="profile-pledge-item__meta">${escapeHtml((p.ward || '').split('—')[0].trim())} — ${escapeHtml(formatRelativeTime(p.timestamp))}</div>
 
           ${p.message ? `<p class="profile-pledge-item__message">${escapeHtml(p.message)}</p>` : ''}
 
@@ -25983,7 +25983,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Detects the user's own reports that were resolved since last check and
 
-  // invites them to share the win ï¿½ a key viral re-engagement moment.
+  // invites them to share the win — a key viral re-engagement moment.
 
   function checkResolvedWins() {
 
@@ -26081,7 +26081,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
 
-    const wardName = fresh[0].ward ? fresh[0].ward.split('ï¿½')[0].trim() : 'your area';
+    const wardName = fresh[0].ward ? fresh[0].ward.split('—')[0].trim() : 'your area';
 
     const msg = fresh.length === 1
 
@@ -26141,7 +26141,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
 
-    const wardName = fresh[0].ward ? fresh[0].ward.split('ï¿½')[0].trim() : 'your area';
+    const wardName = fresh[0].ward ? fresh[0].ward.split('—')[0].trim() : 'your area';
 
     const msg = fresh.length === 1
 
@@ -26339,7 +26339,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const resolved = mine.filter((r) => r.status === 'resolved').length;
 
-    const wardLabel = user.ward ? user.ward.split('ï¿½')[0].trim() : t('header.context');
+    const wardLabel = user.ward ? user.ward.split('—')[0].trim() : t('header.context');
 
     el.textContent = pending > 0
 
@@ -26579,7 +26579,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
 
-  // Date-aware, India-context seasonal nudge. Returns null off-season (Novï¿½Apr).
+  // Date-aware, India-context seasonal nudge. Returns null off-season (Nov–Apr).
 
   function getSeasonalHook() {
 
@@ -27089,7 +27089,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       wardImpactEl.textContent = t('profile.wardImpact').replace('{n}', String(wardCount)) +
 
-        (streak >= 2 ? ` ï¿½ ${t('profile.streak').replace('{n}', String(streak))}` : '');
+        (streak >= 2 ? ` — ${t('profile.streak').replace('{n}', String(streak))}` : '');
 
     } else if (wardImpactEl) {
 
@@ -27151,7 +27151,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (streakInfo.nextKey && streakInfo.weeksToNext > 0) {
 
-          hint += ` ï¿½ ${t('profile.nextStreakBadge')
+          hint += ` — ${t('profile.nextStreakBadge')
 
             .replace('{n}', String(streakInfo.weeksToNext))
 
@@ -27347,7 +27347,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
               <div class="report-card__title">${escapeHtml(hazardLabel(r.hazard))}</div>
 
-              <div class="report-card__meta">${escapeHtml(formatRelativeTime(r.timestamp))}${r.notes ? ` ï¿½ ${escapeHtml(r.notes)}` : ''}</div>
+              <div class="report-card__meta">${escapeHtml(formatRelativeTime(r.timestamp))}${r.notes ? ` — ${escapeHtml(r.notes)}` : ''}</div>
 
               <div class="report-card__status">
 
@@ -27437,15 +27437,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
     $('#adminReportReporter').textContent = report.reporter || 'Citizen';
 
-    $('#adminReportWard').textContent = report.ward || 'ï¿½';
+    $('#adminReportWard').textContent = report.ward || '—';
 
     $('#adminReportStatus').textContent = t('popup.pending');
 
     $('#adminReportStatus').className = 'status-badge status-badge--pending';
 
-    $('#adminReportLat').textContent = report.lat != null ? report.lat.toFixed(6) : 'ï¿½';
+    $('#adminReportLat').textContent = report.lat != null ? report.lat.toFixed(6) : '—';
 
-    $('#adminReportLng').textContent = report.lng != null ? report.lng.toFixed(6) : 'ï¿½';
+    $('#adminReportLng').textContent = report.lng != null ? report.lng.toFixed(6) : '—';
 
     const conf = Number(report.confirmations) || 0;
 
@@ -27675,7 +27675,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (!ward) return { code: '', area: '', shortCode: '' };
 
-    const parts = ward.split('ï¿½').map((s) => s.trim());
+    const parts = ward.split('—').map((s) => s.trim());
 
     const code = parts[0] || ward;
 
@@ -27817,7 +27817,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const csv = [headers.map(escapeCsvField).join(','), ...csvRows].join('\r\n');
 
-    const wardSuffix = ($('#aqWardFilter')?.value || '').split('ï¿½')[0].trim().replace(/\s+/g, '-') || 'all-wards';
+    const wardSuffix = ($('#aqWardFilter')?.value || '').split('—')[0].trim().replace(/\s+/g, '-') || 'all-wards';
 
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
 
@@ -27953,7 +27953,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       lines.push(te('copy1916.marathiHeader'));
 
-      lines.push(`${wardLine} ï¿½ ${I18N.mr[`hazard.${report.hazard}`] || hazardEn}`);
+      lines.push(`${wardLine} — ${I18N.mr[`hazard.${report.hazard}`] || hazardEn}`);
 
     }
 
@@ -27997,7 +27997,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     selectEl.innerHTML = '<option value="">' + escapeHtml(t('admin.allWards')) + '</option>' +
 
-      wards.map((w) => `<option value="${escapeHtml(w)}">${escapeHtml(w.split('ï¿½')[0].trim())}</option>`).join('');
+      wards.map((w) => `<option value="${escapeHtml(w)}">${escapeHtml(w.split('—')[0].trim())}</option>`).join('');
 
     if (wards.includes(current)) selectEl.value = current;
 
@@ -28363,7 +28363,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       const extra = item.pending != null
 
-        ? ` ï¿½ ${item.pending} ${t('tracking.pending')}`
+        ? ` — ${item.pending} ${t('tracking.pending')}`
 
         : '';
 
@@ -28409,7 +28409,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       } else if (isLead && user.ward) {
 
-        scopeTag.textContent = t('coord.scopeWard').replace('{ward}', user.ward.split('ï¿½')[0].trim());
+        scopeTag.textContent = t('coord.scopeWard').replace('{ward}', user.ward.split('—')[0].trim());
 
         scopeTag.classList.remove('hidden');
 
@@ -28457,7 +28457,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
 
-    const set = (id, val) => { const el = $(id); if (el) el.textContent = val != null ? String(val) : 'ï¿½'; };
+    const set = (id, val) => { const el = $(id); if (el) el.textContent = val != null ? String(val) : '—'; };
 
     const pwaCount = (traffic.pwa_installs || 0) + (traffic.pwa_standalone_sessions || 0);
 
@@ -28669,9 +28669,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
             <div class="queue-item__body">
 
-              <div class="queue-item__title">${escapeHtml(hazardLabel(r.hazard))} ï¿½ ${escapeHtml((r.ward || getCityLabel(getReportCity(r))).split('ï¿½')[0].trim())}</div>
+              <div class="queue-item__title">${escapeHtml(hazardLabel(r.hazard))} — ${escapeHtml((r.ward || getCityLabel(getReportCity(r))).split('—')[0].trim())}</div>
 
-              <div class="queue-item__meta">${escapeHtml(formatRelativeTime(r.timestamp))} ï¿½ ${escapeHtml(getClockLine(r))}</div>
+              <div class="queue-item__meta">${escapeHtml(formatRelativeTime(r.timestamp))} — ${escapeHtml(getClockLine(r))}</div>
 
               <div class="queue-item__tags">${filedBadge}${confBadge}${overdueFlag ? '<span class="status-badge status-badge--overdue">Overdue</span>' : ''}</div>
 
@@ -29023,7 +29023,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         <strong>${escapeHtml(signup.neighbourhood)}</strong>
 
-        <div class="profile-volunteer-card__meta">${escapeHtml(t('volunteer.hoursLabel').replace('{n}', String(signup.hours)))} ï¿½ ${escapeHtml((signup.ward || '').split('ï¿½')[0].trim())}</div>
+        <div class="profile-volunteer-card__meta">${escapeHtml(t('volunteer.hoursLabel').replace('{n}', String(signup.hours)))} — ${escapeHtml((signup.ward || '').split('—')[0].trim())}</div>
 
         <div class="profile-volunteer-card__skills">${skills}</div>
 
@@ -29047,9 +29047,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
       type: 'Snacks',
 
-      ward: 'G/N Ward ï¿½ Dadar, Shivaji Park',
+      ward: 'G/N Ward — Dadar, Shivaji Park',
 
-      message: 'Volunteer cleanup shift ï¿½ 4 hours completed at Shivaji Park.',
+      message: 'Volunteer cleanup shift — 4 hours completed at Shivaji Park.',
 
       citizen: 'Priya S. (Mock)',
 
@@ -29191,7 +29191,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             <div class="pledge-item__header">
 
-              <span class="pledge-item__type">${escapeHtml(pledgeTypeLabel(p.type))}${isMock ? ' ï¿½ Demo' : ''}</span>
+              <span class="pledge-item__type">${escapeHtml(pledgeTypeLabel(p.type))}${isMock ? ' — Demo' : ''}</span>
 
               ${statusBadge}
 
@@ -29199,11 +29199,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
             <span class="pledge-item__ward">${escapeHtml(p.ward)}</span>
 
-            <p class="pledge-item__message">${escapeHtml(p.message || 'ï¿½')}</p>
+            <p class="pledge-item__message">${escapeHtml(p.message || '—')}</p>
 
             <div class="pledge-item__footer">
 
-              <span class="pledge-item__citizen">${escapeHtml(p.citizen || 'Anonymous')} ï¿½ ${escapeHtml(formatRelativeTime(p.timestamp))}</span>
+              <span class="pledge-item__citizen">${escapeHtml(p.citizen || 'Anonymous')} — ${escapeHtml(formatRelativeTime(p.timestamp))}</span>
 
               ${actionBtn}
 
@@ -29307,7 +29307,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
           .map((s) => escapeHtml(volunteerSkillLabel(s)))
 
-          .join(' ï¿½ ');
+          .join(' — ');
 
         return `
 
@@ -29321,9 +29321,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
             </div>
 
-            <span class="pledge-item__ward">${escapeHtml(v.neighbourhood)} ï¿½ ${escapeHtml((v.ward || '').split('ï¿½')[0].trim())}</span>
+            <span class="pledge-item__ward">${escapeHtml(v.neighbourhood)} — ${escapeHtml((v.ward || '').split('—')[0].trim())}</span>
 
-            <p class="pledge-item__message">${skills || 'ï¿½'}${v.contact ? ` ï¿½ ${escapeHtml(v.contact)}` : ''}</p>
+            <p class="pledge-item__message">${skills || '—'}${v.contact ? ` — ${escapeHtml(v.contact)}` : ''}</p>
 
           </li>`;
 
@@ -29377,9 +29377,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
             <div class="queue-item__body">
 
-              <div class="queue-item__title">${escapeHtml(task.volunteerName || 'Volunteer')} ï¿½ ${escapeHtml((task.neighbourhood || '').slice(0, 40))}</div>
+              <div class="queue-item__title">${escapeHtml(task.volunteerName || 'Volunteer')} — ${escapeHtml((task.neighbourhood || '').slice(0, 40))}</div>
 
-              <div class="queue-item__meta">${report ? escapeHtml(hazardLabel(report.hazard)) : 'Hazard'} ï¿½ ${escapeHtml((task.ward || '').split('ï¿½')[0].trim())}</div>
+              <div class="queue-item__meta">${report ? escapeHtml(hazardLabel(report.hazard)) : 'Hazard'} — ${escapeHtml((task.ward || '').split('—')[0].trim())}</div>
 
             </div>
 
@@ -29523,9 +29523,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
             <div class="queue-item__body">
 
-              <div class="queue-item__title">${escapeHtml(hazardLabel(r.hazard))} ï¿½ ${escapeHtml((r.ward || getCityLabel(getReportCity(r))).split('ï¿½')[0].trim())}</div>
+              <div class="queue-item__title">${escapeHtml(hazardLabel(r.hazard))} — ${escapeHtml((r.ward || getCityLabel(getReportCity(r))).split('—')[0].trim())}</div>
 
-              <div class="queue-item__meta">${escapeHtml(formatRelativeTime(r.timestamp))}${r.notes ? ` ï¿½ ${escapeHtml(r.notes)}` : ''}</div>
+              <div class="queue-item__meta">${escapeHtml(formatRelativeTime(r.timestamp))}${r.notes ? ` — ${escapeHtml(r.notes)}` : ''}</div>
 
               ${taskNote}
 

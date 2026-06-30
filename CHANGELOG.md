@@ -10,6 +10,7 @@ Release process and environment details live in [`RELEASE.md`](./RELEASE.md).
 ## [Unreleased]
 
 ### Fixed
+- **Encoding fix (v99)** — eliminated remaining `ï¿½` mojibake across app.js (ward separators, split/join, user-facing strings); restored apostrophes mangled by v98 em-dash over-replacement (`You—re` → `You're`, etc.); cache v99.
 - **i18n polish (v98)** — fixed remaining English `?` arrow placeholders (share, esc, official hints, toast); translated hi/mr/gu official garbage/waste hints and report photo cue keys; restored missing `community.subtitle` keys (fixes PMC/TMC subtitle in Community modal). Cache v98.
 - **First-run UX (v98)** — hide map-recenter while hero card is visible (dismiss no longer blocked); hero dismiss always chains to guided tour; location-banner E2E uses post-first-report state.
 - **i18n audit (v94)** — restored corrupted hi/mr/gu strings (legacy `?` placeholders and mojibake); fixed English em-dash/middle-dot encoding; added translations for peer-vote lead keys, analytics tracking dashboard, v93 hero/coach/tour polish, and society hints. Cache v94.

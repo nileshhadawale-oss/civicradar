@@ -3969,7 +3969,7 @@ async def run_extended_scenarios(s: Suite, browser):
 
     sw_ok = (
 
-        "civicradar-v98" in sw_src
+        "civicradar-v99" in sw_src
 
         and "'/index.html'" not in sw_src
 
@@ -4639,7 +4639,7 @@ async def run_tour_scenarios(s: Suite, browser):
 
     await page.wait_for_timeout(900)
 
-    hero_shown = not await page.evaluate(
+    hero_shown = await page.evaluate(
         '() => !document.getElementById("homeHero").classList.contains("hidden")'
     )
     if hero_shown:
@@ -4725,7 +4725,7 @@ async def run_tour_scenarios(s: Suite, browser):
 
     await page.wait_for_timeout(900)
 
-    hero_up = not await page.evaluate('() => !document.getElementById("homeHero").classList.contains("hidden")')
+    hero_up = await page.evaluate('() => !document.getElementById("homeHero").classList.contains("hidden")')
     if hero_up:
         await js_click(page, '#btnHeroDismiss')
     elif not await page.evaluate('() => document.getElementById("coachMark").classList.contains("hidden")'):

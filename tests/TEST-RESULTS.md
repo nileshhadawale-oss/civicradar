@@ -1,9 +1,9 @@
 # CivicRadar Test Results
 
-**Run:** 2026-06-29 00:07:58
+**Run:** 2026-06-29 21:39:50
 **Server:** http://localhost:9080/
 **Script:** `tests/e2e_comprehensive.py`
-**Total:** 366 | **Pass:** 363 | **Fail:** 3
+**Total:** 366 | **Pass:** 366 | **Fail:** 0
 
 ## Fixes applied this run
 
@@ -97,7 +97,7 @@
 - **Society:** 8 pass / 0 fail
 - **Storage:** 2 pass / 0 fail
 - **Sync:** 1 pass / 0 fail
-- **Tour:** 6 pass / 3 fail
+- **Tour:** 9 pass / 0 fail
 - **Tracking:** 5 pass / 0 fail
 - **UI:** 25 pass / 0 fail
 - **Viral:** 4 pass / 0 fail
@@ -107,9 +107,7 @@
 
 ## Failures
 
-- `TR03` **Tour auto-shows after coach explainer on first run** — failed
-- `TR04` **Completing tour hides overlay + sets seen flag** — failed
-- `TR05` **Skip hides tour + sets seen flag** — failed
+_None_
 
 ## Limitations
 
@@ -160,7 +158,7 @@
 | C27 | Citizen | Complaint ID saved | PASS |  |
 | C28 | Citizen | Invalid complaint # handled | PASS |  |
 | C29 | Citizen | Community modal opens | PASS |  |
-| C30 | Citizen | Leaderboard wards populated | PASS | items=6 |
+| C30 | Citizen | Leaderboard wards populated | PASS | items=5 |
 | C31 | Citizen | Pledge modal opens | PASS |  |
 | C32 | Citizen | Pledge saved | PASS |  |
 | C33 | Citizen | Sponsor wall renders | PASS |  |
@@ -200,8 +198,8 @@
 | E15b | Edge | Map empty share hidden first visit | PASS |  |
 | E16 | Edge | Invalid ward cleared on load | PASS |  |
 | L01 | Load | 15 parallel report contexts | PASS | 15/15 |
-| L02 | Load | 200 reports refresh under 3s | PASS | 0.02s |
-| L03 | Load | 50x loadReports parse under 500ms | PASS | 10ms |
+| L02 | Load | 200 reports refresh under 3s | PASS | 0.01s |
+| L03 | Load | 50x loadReports parse under 500ms | PASS | 9ms |
 | L04 | Load | Rapid corroboration increments | PASS | n=5 |
 | L05 | Load | Analytics batch enqueue | PASS |  |
 | M01 | Map | Leaflet map container | PASS |  |
@@ -324,7 +322,7 @@
 | RP06 | Report | Close without submit saves nothing | PASS |  |
 | RP07 | Report | Report stored in localStorage | PASS |  |
 | RP08 | Report | Success overlay has celebrate el | PASS |  |
-| RP13 | Report | First report shows celebrate + progress | PASS | celebrate="You—re protecting your ward — " progress="Badge unlocked! 2 more to your" |
+| RP13 | Report | First report shows celebrate + progress | PASS | celebrate="You're protecting your ward — " progress="Badge unlocked! 2 more to your" |
 | RP14 | Report | Non-milestone report shows rotating kudos | PASS | celebrate="Logged! Thanks for looking out for your " |
 | RP15 | Report | Non-milestone report shows progress-to-badge nudge | PASS | progress="Just 1 more report to your next badge." |
 | RW01 | Rewards | Second report shows week streak callout | PASS |  |
@@ -427,10 +425,10 @@
 | FB07 | Feedback | Feedback strings render (i18n, no key leak) | PASS |  |
 | TR01 | Tour | Tour overlay element present | PASS |  |
 | TR02 | Tour | Replay-tour entry present in Profile | PASS |  |
-| TR03 | Tour | Tour auto-shows after coach explainer on first run | **FAIL** |  |
-| TR04 | Tour | Completing tour hides overlay + sets seen flag | **FAIL** |  |
+| TR03 | Tour | Tour auto-shows after coach explainer on first run | PASS |  |
+| TR04 | Tour | Completing tour hides overlay + sets seen flag | PASS |  |
 | TR06 | Tour | Tour does not reappear on reload once seen | PASS |  |
-| TR05 | Tour | Skip hides tour + sets seen flag | **FAIL** |  |
+| TR05 | Tour | Skip hides tour + sets seen flag | PASS |  |
 | TR07 | Tour | Replay entry restarts tour on demand | PASS |  |
 | TR08 | Tour | Tour does NOT show in demo mode | PASS |  |
 | TR09 | Tour | Tour does NOT show for referral (?ref=) entry | PASS |  |

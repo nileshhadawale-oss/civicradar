@@ -1,0 +1,13 @@
+{
+  "mojibake_before": 139,
+  "mojibake_after": 0,
+  "body_fixes_approx": 139,
+  "i18n_key_fixes": 18,
+  "corrupted_remaining": {
+    "en": 0,
+    "hi": 0,
+    "mr": 0,
+    "gu": 0
+  },
+  "apostrophe_fixes": 0
+}
